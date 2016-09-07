@@ -8,9 +8,6 @@
 
 	chosen {
 		bootargs = "console=ttyS2,57600";
-/*
-		bootargs = "console=ttyS0,115200";
-*/
 	};
 
 	memory@0 {
@@ -116,7 +113,7 @@
 		};
 
 		pwm@5000 {
-			status = "disabled";
+			status = "okay";
 		};
 	};
 
@@ -133,7 +130,7 @@
 	bootstrap {
 		compatible = "mediatek,linkit";
 
-		status = "disabled";
+		status = "okay";
 	};
 
 	gpio-leds {
@@ -150,27 +147,10 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 		poll-interval = <20>;
-/*
 		wps {
 			label = "reset";
-			gpios = <&gpio0 18 1>;
-			linux,code = <0x211>;
-		};
-*/
-		volume-up {
-			label = "up";
-			gpios = <&gpio0 19 1>;
-			linux,code = <103>;
-		};
-		volume-down {
-			label = "down";
 			gpios = <&gpio1 6 1>;
-			linux,code = <108>;
-		};
-		play {
-			label = "play";
-			gpios = <&gpio1 10 1>;
-			linux,code = <28>;
+			linux,code = <0x211>;
 		};
 	};
 
