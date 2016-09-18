@@ -1284,7 +1284,6 @@ CONFIG_PACKAGE_gdbserver=y
 #
 # Extra packages
 #
-CONFIG_PACKAGE_mtk-linkit-webui=y
 
 #
 # Firmware
@@ -1384,7 +1383,7 @@ CONFIG_PACKAGE_kmod-fs-ext4=y
 CONFIG_PACKAGE_kmod-fs-nfs=y
 CONFIG_PACKAGE_kmod-fs-nfs-common=y
 # CONFIG_PACKAGE_kmod-fs-nfsd is not set
-# CONFIG_PACKAGE_kmod-fs-ntfs is not set
+CONFIG_PACKAGE_kmod-fs-ntfs=y
 # CONFIG_PACKAGE_kmod-fs-reiserfs is not set
 # CONFIG_PACKAGE_kmod-fs-udf is not set
 CONFIG_PACKAGE_kmod-fs-vfat=y
@@ -1900,7 +1899,7 @@ CONFIG_PACKAGE_lua=y
 #
 # Node.js
 #
-CONFIG_PACKAGE_node=y
+# CONFIG_PACKAGE_node is not set
 # CONFIG_PACKAGE_node-arduino-firmata is not set
 # CONFIG_PACKAGE_node-cylon is not set
 # CONFIG_PACKAGE_node-cylon-firmata is not set
@@ -2014,7 +2013,7 @@ CONFIG_PACKAGE_libxtables=y
 #
 # IoT
 #
-CONFIG_PACKAGE_libupm=y
+# CONFIG_PACKAGE_libupm is not set
 # CONFIG_PACKAGE_libupm-a110x is not set
 # CONFIG_PACKAGE_libupm-ad8232 is not set
 # CONFIG_PACKAGE_libupm-adafruitss is not set
@@ -2217,7 +2216,7 @@ CONFIG_PACKAGE_confuse=m
 # CONFIG_PACKAGE_engine_pkcs11 is not set
 # CONFIG_PACKAGE_fcgi is not set
 # CONFIG_PACKAGE_fftw3 is not set
-# CONFIG_PACKAGE_fftw3f is not set
+CONFIG_PACKAGE_fftw3f=y
 CONFIG_PACKAGE_glib2=y
 # CONFIG_PACKAGE_jansson is not set
 # CONFIG_PACKAGE_libaio is not set
@@ -2236,7 +2235,7 @@ CONFIG_PACKAGE_libavahi-nodbus-support=y
 # CONFIG_PACKAGE_libbfd is not set
 CONFIG_PACKAGE_libblkid=y
 CONFIG_PACKAGE_libblobmsg-json=y
-CONFIG_PACKAGE_libcap=m
+CONFIG_PACKAGE_libcap=y
 # CONFIG_PACKAGE_libcares is not set
 # CONFIG_PACKAGE_libcharset is not set
 # CONFIG_PACKAGE_libconfig is not set
@@ -2342,7 +2341,7 @@ CONFIG_PACKAGE_libjpeg=y
 CONFIG_PACKAGE_libjson-c=y
 # CONFIG_PACKAGE_libkmod is not set
 # CONFIG_PACKAGE_libldns is not set
-CONFIG_PACKAGE_libltdl=m
+CONFIG_PACKAGE_libltdl=y
 CONFIG_PACKAGE_liblua=y
 # CONFIG_PACKAGE_liblzo is not set
 CONFIG_PACKAGE_libmad=y
@@ -2436,7 +2435,7 @@ CONFIG_PACKAGE_libsndfile=y
 CONFIG_PACKAGE_libsoup=y
 CONFIG_PACKAGE_libsoxr=y
 CONFIG_PACKAGE_libspeex=m
-CONFIG_PACKAGE_libspeexdsp=m
+CONFIG_PACKAGE_libspeexdsp=y
 # CONFIG_PACKAGE_libssh is not set
 # CONFIG_PACKAGE_libssh2 is not set
 # CONFIG_PACKAGE_libstoken is not set
@@ -2580,7 +2579,7 @@ CONFIG_PACKAGE_luci-app-firewall=y
 # CONFIG_PACKAGE_luci-app-lxc is not set
 # CONFIG_PACKAGE_luci-app-meshwizard is not set
 # CONFIG_PACKAGE_luci-app-minidlna is not set
-CONFIG_PACKAGE_luci-app-mjpg-streamer=y
+# CONFIG_PACKAGE_luci-app-mjpg-streamer is not set
 # CONFIG_PACKAGE_luci-app-mmc-over-gpio is not set
 # CONFIG_PACKAGE_luci-app-multiwan is not set
 # CONFIG_PACKAGE_luci-app-mwan3 is not set
@@ -3047,14 +3046,7 @@ CONFIG_PACKAGE_gstreamer1-plugins-ugly=y
 CONFIG_PACKAGE_gstreamer1-utils=y
 # CONFIG_PACKAGE_icecast is not set
 CONFIG_PACKAGE_minidlna=m
-CONFIG_PACKAGE_mjpg-streamer=y
-# CONFIG_MJPG_STREAMER_V4L2 is not set
-# CONFIG_MJPG_STREAMER_INPUT_FILE is not set
-CONFIG_MJPG_STREAMER_INPUT_UVC=y
-# CONFIG_MJPG_STREAMER_INPUT_TESTPICTURE is not set
-# CONFIG_MJPG_STREAMER_OUTPUT_FILE is not set
-CONFIG_MJPG_STREAMER_OUTPUT_HTTP=y
-# CONFIG_MJPG_STREAMER_WWW is not set
+# CONFIG_PACKAGE_mjpg-streamer is not set
 # CONFIG_PACKAGE_motion is not set
 # CONFIG_PACKAGE_vips is not set
 # CONFIG_PACKAGE_xupnpd is not set
@@ -3527,8 +3519,7 @@ CONFIG_PACKAGE_avahi-nodbus-daemon=y
 #
 # Version Control Systems
 #
-CONFIG_PACKAGE_git=y
-CONFIG_PACKAGE_git-http=y
+# CONFIG_PACKAGE_git is not set
 
 #
 # Web Servers/Proxies
@@ -3728,20 +3719,26 @@ CONFIG_PACKAGE_mtk-sdk-wifi=y
 #
 CONFIG_PACKAGE_fasterconfig=y
 CONFIG_PACKAGE_gmrender-resurrect=y
+CONFIG_PACKAGE_gobject-introspection=y
+CONFIG_PACKAGE_libgirepository=y
+CONFIG_PACKAGE_pocketsphinx=y
 CONFIG_PACKAGE_python-backports-abc=y
 CONFIG_PACKAGE_python-certifi=y
 CONFIG_PACKAGE_python-futures=y
+CONFIG_PACKAGE_python-gi=y
+CONFIG_PACKAGE_python-gst=y
 CONFIG_PACKAGE_python-pyaudio=y
 CONFIG_PACKAGE_python-requests=y
 CONFIG_PACKAGE_python-six=y
 CONFIG_PACKAGE_python-tornado=y
 CONFIG_PACKAGE_python-webrtcvad=y
 CONFIG_PACKAGE_respeaker-os-file=y
+CONFIG_PACKAGE_sphinxbase=y
 
 #
 # Sound
 #
-CONFIG_PACKAGE_espeak=y
+# CONFIG_PACKAGE_espeak is not set
 CONFIG_PACKAGE_faad2=m
 CONFIG_PACKAGE_forked-daapd=m
 CONFIG_PACKAGE_ices=m
