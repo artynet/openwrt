@@ -1,0 +1,23 @@
+#!/bin/sh /etc/rc.common
+#
+# Copyright (C) 2009 OpenWrt.org
+#
+
+START=06
+
+start() {
+        . /lib/ar71xx.sh
+
+        local board=$(ar71xx_board_name)
+
+        [ ! -d /etc/defconfig/$board ] && return 0
+
+        for f in $( ls /etc/defconfig/$board/init ); do
+                if [ ! -e /etc/init.d/$f ]; then
+                        cp /etc/defconfig/$board/init/$f /etc/init.d
+                        chmod +x /etc/init.d/$f
+                        /etc/init.d/$f enable
+                        /etc/init.d/$f start
+                fi
+        done
+}

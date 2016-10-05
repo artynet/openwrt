@@ -1,0 +1,26 @@
+#!/bin/sh
+
+PROGRAM=$1
+LVL_SHI_SWD=15
+
+if [ ! `which openocd` ]
+then
+    echo "OpenOCD is not installed on your system ! Please take care of it before running again this script !"
+    exit 1
+fi
+
+if [ ! -f "$PROGRAM" ]
+then
+    echo "Missing binary file ! (i.e. firmware.bin/firmware.hex)"
+    exit 1
+fi
+
+# enable level shifter
+echo 1 > /sys/class/gpio/gpio$LVL_SHI_SWD/value
+
+# openocd -f board/ghostdog_samd21.cfg -c "program $PROGRAM verify reset" -c "exit"
+
+openocd  -f board/ghostdog_samd21.cfg -c "init" -c "halt" -c  "at91samd bootloader 0" -c "program $PROGRAM verify reset" -c "exit"
+
+# disable level shifter
+echo 0 > /sys/class/gpio/gpio$LVL_SHI_SWD/value

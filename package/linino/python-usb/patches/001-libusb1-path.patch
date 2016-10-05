@@ -1,0 +1,11 @@
+--- a/usb/backend/libusb1.py	2014-09-24 00:27:32.000000000 +0200
++++ bu/sb/backend/libusb1.py	2016-01-25 14:13:02.422414437 +0100
+@@ -876,7 +876,7 @@
+     global _lib
+     try:
+         if _lib is None:
+-            _lib = _load_library(find_library=find_library)
++            _lib = _load_library(find_library=lambda x: "/usr/lib/libusb-1.0.so")
+             _setup_prototypes(_lib)
+         return _LibUSB(_lib)
+     except usb.libloader.LibaryException:

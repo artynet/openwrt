@@ -1,0 +1,21 @@
+This patch adds the not-equal operator for EST_TList.
+This patch is not intended to alter the code in a substantive way.
+No copyright subsists in this patch as it is too trivial.
+
+Author: Peter Drysdale <drysdalepete@gmail.com>
+
+--- a/include/EST_TList.h
++++ b/include/EST_TList.h
+@@ -268,6 +268,12 @@
+ }
+ 
+ template<class T> 
++bool operator!=(const EST_TList<T> &a, const EST_TList<T> &b)
++{ 
++    return !(a==b); 
++}
++
++template<class T> 
+ int index(EST_TList<T> &l, T& val, bool (*eq)(const EST_UItem *, const EST_UItem *) = NULL)
+ { 
+   EST_TItem<T> item(val);

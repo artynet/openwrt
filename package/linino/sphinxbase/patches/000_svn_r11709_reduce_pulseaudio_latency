@@ -1,0 +1,18 @@
+Description: Reduce pulseaudio latency
+Author: Pete Woods <pete.woods@canonical.com>
+Origin: other
+Applied-Upstream: r11709
+Last-Update: 2013-02-25
+--- a/src/libsphinxad/ad_pulse.c
++++ b/src/libsphinxad/ad_pulse.c
+@@ -124,6 +124,10 @@
+     if (!r->recording)
+ 	return AD_EOF;
+ 	
++	if (max > 2048) {
++	    max = 2048;
++    }
++	
+     if (pa_simple_read(r->pa, (void*)buf, max * 2, &error) < 0) {
+ 	fprintf(stderr, "Failed to read speech: %s\n", pa_strerror(error));
+     }

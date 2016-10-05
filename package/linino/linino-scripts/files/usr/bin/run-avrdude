@@ -1,0 +1,3 @@
+#!/bin/sh
+
+/usr/bin/flash-samd21 $1
