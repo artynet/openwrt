@@ -1,0 +1,80 @@
+From 8b71a338d9927616d97b365a92f6d38260358827 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Fri, 6 May 2016 14:26:49 +0200
+Subject: [PATCH] adding 6lowpan patch from Nordic G.R. Bakke
+
+---
+ net/6lowpan/iphc.c      |  2 +-
+ net/bluetooth/6lowpan.c | 11 +++++------
+ 2 files changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/net/6lowpan/iphc.c b/net/6lowpan/iphc.c
+index 142eef55..6b4664f 100644
+--- a/net/6lowpan/iphc.c
++++ b/net/6lowpan/iphc.c
+@@ -385,7 +385,7 @@ int lowpan_process_data(struct sk_buff *skb, struct net_device *dev,
+ 		if (lowpan_fetch_skb(skb, &tmp, sizeof(tmp)))
+ 			goto drop;
+ 
+-		hdr.flow_lbl[0] = (skb->data[0] & 0x0F) | ((tmp >> 2) & 0x30);
++		hdr.flow_lbl[0] = (tmp & 0x0F) | ((tmp >> 2) & 0x30);
+ 		memcpy(&hdr.flow_lbl[1], &skb->data[0], 2);
+ 		skb_pull(skb, 2);
+ 		break;
+diff --git a/net/bluetooth/6lowpan.c b/net/bluetooth/6lowpan.c
+index cfbb39e..8f9e00a 100644
+--- a/net/bluetooth/6lowpan.c
++++ b/net/bluetooth/6lowpan.c
+@@ -828,7 +828,7 @@ static int setup_netdev(struct l2cap_chan *chan, struct lowpan_dev **dev)
+ 	set_dev_addr(netdev, &chan->src, chan->src_type);
+ 
+ 	netdev->netdev_ops = &netdev_ops;
+-	SET_NETDEV_DEV(netdev, &chan->conn->hcon->dev);
++	SET_NETDEV_DEV(netdev, &chan->conn->hcon->hdev->dev);
+ 	SET_NETDEV_DEVTYPE(netdev, &bt_type);
+ 
+ 	err = register_netdev(netdev);
+@@ -900,7 +900,7 @@ static void delete_netdev(struct work_struct *work)
+ 
+ 	unregister_netdev(entry->netdev);
+ 
+-	/* The entry pointer is deleted in device_event() */
++	/* The entry pointer is deleted by the netdev destructor. */
+ }
+ 
+ static void chan_close_cb(struct l2cap_chan *chan)
+@@ -910,7 +910,7 @@ static void chan_close_cb(struct l2cap_chan *chan)
+ 	struct lowpan_peer *peer;
+ 	int err = -ENOENT;
+ 	unsigned long flags;
+-	bool last = false, removed = true;
++	bool last = false, remove = true;
+ 
+ 	BT_DBG("chan %p conn %p", chan, chan->conn);
+ 
+@@ -921,7 +921,7 @@ static void chan_close_cb(struct l2cap_chan *chan)
+ 		/* If conn is set, then the netdev is also there and we should
+ 		 * not remove it.
+ 		 */
+-		removed = false;
++		remove = false;
+ 	}
+ 
+ 	write_lock_irqsave(&devices_lock, flags);
+@@ -951,7 +951,7 @@ static void chan_close_cb(struct l2cap_chan *chan)
+ 
+ 		ifdown(dev->netdev);
+ 
+-		if (!removed) {
++		if (remove) {
+ 			INIT_WORK(&entry->delete_netdev, delete_netdev);
+ 			schedule_work(&entry->delete_netdev);
+ 		}
+@@ -1370,7 +1370,6 @@ static int device_event(struct notifier_block *unused,
+ 				BT_DBG("Unregistered netdev %s %p",
+ 				       netdev->name, netdev);
+ 				list_del(&entry->list);
+-				kfree(entry);
+ 				break;
+ 			}
+ 		}
