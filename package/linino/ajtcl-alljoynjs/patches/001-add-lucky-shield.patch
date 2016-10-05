@@ -1,0 +1,43 @@
+Index: alljoyn-js-master/linux/lininoio/io_gpio.c
+===================================================================
+--- a/linux/lininoio/io_gpio.c	2015-08-31 13:21:58.107967879 +0200
++++ b/linux/lininoio/io_gpio.c	2015-08-31 13:22:27.998926962 +0200
+@@ -88,6 +88,15 @@
+     { 11, 107,  3, "D11" },
+     { 12, 122, -1, "D12" },
+     { 13, 115, -1, "D13" },
++    { 20, 208, -1, "gpio208"},
++    { 21, 209, -1, "gpio209"},
++    { 22, 211, -1, "gpio211"},
++    { 23, 210, -1, "gpio210"},
++    { 24, 212, -1, "gpio212"},
++    { 25, 204, -1, "gpio204"},
++    { 26, 205, -1, "gpio205"},
++    { 27, 206, -1, "gpio206"},
++    { 28, 207, -1, "gpio207"},
+ };
+
+ static GPIO* triggers[MAX_TRIGGERS];
+Index: alljoyn-js-master/linux/lininoio/io_info.c
+===================================================================
+--- a/linux/lininoio/io_info.c	2015-08-31 13:21:58.107967879 +0200
++++ b/linux/lininoio/io_info.c	2015-08-31 13:22:59.249831474 +0200
+@@ -41,7 +41,17 @@
+     { AJS_IO_FUNCTION_ANALOG_IN, 0xA2, "A2",  "",  "Analog Input Pin 2"   },
+     { AJS_IO_FUNCTION_ANALOG_IN, 0xA3, "A3",  "",  "Analog Input Pin 3"   },
+     { AJS_IO_FUNCTION_ANALOG_IN, 0xA4, "A4",  "",  "Analog Input Pin 4"   },
+-    { AJS_IO_FUNCTION_ANALOG_IN, 0xA5, "A5",  "",  "Analog Input Pin 5"   }
++    { AJS_IO_FUNCTION_ANALOG_IN, 0xA5, "A5",  "",  "Analog Input Pin 5"   },
++
++    { AJS_IO_FUNCTION_DIGITAL_IO,                             20, "UP", "",  "Digital Joy UP" },
++    { AJS_IO_FUNCTION_DIGITAL_IO,                             21, "DN", "",  "Digital Joy DN" },
++    { AJS_IO_FUNCTION_DIGITAL_IO,                             22, "RT", "",  "Digital Joy Rigth" },
++    { AJS_IO_FUNCTION_DIGITAL_IO,                             23, "LF", "",  "Digital Joy Left" },
++    { AJS_IO_FUNCTION_DIGITAL_IO,                             24, "CN", "",  "Digital Joy Center" },
++    { AJS_IO_FUNCTION_DIGITAL_IO,                             25, "LED1", "",  "Digital LED1" },
++    { AJS_IO_FUNCTION_DIGITAL_IO,                             26, "LED2", "",  "Digital LED2" },
++    { AJS_IO_FUNCTION_DIGITAL_IO,                             27, "REL1", "",  "Digital RELAY1" },
++    { AJS_IO_FUNCTION_DIGITAL_IO,                             28, "REL2", "",  "Digital RELAY2" },
+ };
+
+ uint16_t AJS_TargetIO_GetNumPins()

@@ -1,0 +1,6 @@
+# File /etc/config/mcuio, sourced by /etc/init.d/mcuio
+# Choose the desired baudrate uncommenting the proper line
+
+export BAUDRATE=460800
+#export BAUDRATE=230400
+export SHIELDS=lucky

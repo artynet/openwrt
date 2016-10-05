@@ -1,0 +1,12 @@
+--- a/package.json	2014-01-07 08:41:08.000000000 +0100
++++ b/package.json	2014-09-10 17:52:12.933441895 +0200
+@@ -10,8 +10,7 @@
+     "node": ">= 0.8.0"
+   },
+   "scripts": {
+-    "install": "./make_libmodbus.sh && node-gyp configure --python=python2 && node-gyp build",
+-    "preuninstall": "rm -rf libmodbus build"
++    "install": "./make_libmodbus.sh && node-gyp configure --python=python && node-gyp build"
+   },
+   "author": {
+     "name": "Davydov Denis",

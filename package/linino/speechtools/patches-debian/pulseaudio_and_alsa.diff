@@ -1,0 +1,185 @@
+--- a/audio/audioP.h
++++ b/audio/audioP.h
+@@ -40,6 +40,7 @@
+ #define __AUDIOP_H__
+ 
+ int play_nas_wave(EST_Wave &inwave, EST_Option &al);
++int play_pulse_wave(EST_Wave &inwave, EST_Option &al);
+ int play_esd_wave(EST_Wave &inwave, EST_Option &al);
+ int play_sun16_wave(EST_Wave &inwave, EST_Option &al);
+ int play_linux_wave(EST_Wave &inwave, EST_Option &al);
+@@ -49,6 +50,7 @@
+ int play_macosx_wave(EST_Wave &inwave, EST_Option &al);
+ 
+ int record_nas_wave(EST_Wave &inwave, EST_Option &al);
++int record_pulse_wave(EST_Wave &inwave, EST_Option &al);
+ int record_esd_wave(EST_Wave &inwave, EST_Option &al);
+ int record_sun16_wave(EST_Wave &inwave, EST_Option &al);
+ int record_linux_wave(EST_Wave &inwave, EST_Option &al);
+--- a/audio/gen_audio.cc
++++ b/audio/gen_audio.cc
+@@ -81,6 +81,8 @@
+     {
+ 	if (nas_supported)
+ 	    protocol = "netaudio";  // the default protocol
++	else if (pulse_supported)
++	    protocol = "pulseaudio";
+ 	else if (esd_supported)
+ 	    protocol = "esdaudio";
+ 	else if (sun16_supported)
+@@ -112,6 +114,8 @@
+ 
+     if (upcase(protocol) == "NETAUDIO")
+ 	return play_nas_wave(*toplay,al);
++    else if (upcase(protocol) == "PULSEAUDIO")
++	return play_pulse_wave(*toplay,al);
+     else if (upcase(protocol) == "ESDAUDIO")
+ 	return play_esd_wave(*toplay,al);
+     else if (upcase(protocol) == "SUNAUDIO")
+@@ -249,6 +253,8 @@
+ 	audios += " esdaudio";
+     if (sun16_supported)
+ 	audios += " sun16audio";
++    if (pulse_supported)
++	audios += " pulseaudio";
+     if (freebsd16_supported)
+ 	audios += " freebsd16audio";
+     if (linux16_supported)
+@@ -285,7 +291,9 @@
+ 	protocol = sr;
+     else if (protocol == "")
+     {
+-	if (nas_supported)
++    if (pulse_supported)
++        protocol = "pulseaudio";
++	else if (nas_supported)
+ 	    protocol = "netaudio";  // the default protocol
+ 	else if (esd_supported)
+ 	    protocol = "esdaudio";  // the default protocol
+@@ -307,6 +315,8 @@
+ 
+     if (upcase(protocol) == "NETAUDIO")
+ 	return record_nas_wave(wave,al);
++    else if (upcase(protocol) == "PULSEAUDIO")
++	return record_pulse_wave(wave,al);
+     else if (upcase(protocol) == "ESDAUDIO")
+         return record_esd_wave(wave,al);
+     else if (upcase(protocol) == "SUN16AUDIO")
+--- a/audio/linux_sound.cc
++++ b/audio/linux_sound.cc
+@@ -861,20 +861,38 @@
+     return 0;
+ }
+ 
+-#else
++#else /* ALSALINUX not supported */
++int freebsd16_supported = FALSE;
++int linux16_supported = FALSE;
++
++int play_linux_wave(EST_Wave &inwave, EST_Option &al)
++{
++    (void)inwave;
++    (void)al;
++    cerr << "ALSA audio support not compiled." << endl;
++    return -1;
++}
++int record_linux_wave(EST_Wave &inwave, EST_Option &al)
++{
++    (void)inwave;
++    (void)al;
++    cerr << "ALSA audio support not compiled." << endl;
++    return -1;
++}
++
++#endif /* ALSALINUX */
++#endif /* VOXWARE */
++
+ 
+ #ifdef SUPPORT_PULSEAUDIO
+ #include <pulse/simple.h>
+ 
+-int freebsd16_supported = FALSE;
+-int linux16_supported = TRUE;
+-
+-static const char *aud_sys_name = "PULSEAUDIO";
++int pulse_supported = TRUE;
+ 
+ #define AUDIOBUFFSIZE 256
+ // #define AUDIOBUFFSIZE 20480
+ 
+-int play_linux_wave(EST_Wave &inwave, EST_Option &al)
++int play_pulse_wave(EST_Wave &inwave, EST_Option &al)
+ {
+     pa_sample_spec *ss;
+     pa_simple *s;
+@@ -922,32 +940,29 @@
+     return 1;
+ }
+ 
+-int record_linux_wave(EST_Wave &inwave, EST_Option &al)
++int record_pulse_wave(EST_Wave &inwave, EST_Option &al)
+ {
+     return -1;
+ }
+ 
+ #else /* not supported */
+ 
+-int freebsd16_supported = FALSE;
+-int linux16_supported = FALSE;
++int pulse_supported = FALSE;
+ 
+-int play_linux_wave(EST_Wave &inwave, EST_Option &al)
++int play_pulse_wave(EST_Wave &inwave, EST_Option &al)
+ {
+     (void)inwave;
+     (void)al;
+-    cerr << "MacOS X audio support not compiled." << endl;
++    cerr << "PulseAudio audio support not compiled." << endl;
+     return -1;
+ }
+-int record_linux_wave(EST_Wave &inwave, EST_Option &al)
++int record_pulse_wave(EST_Wave &inwave, EST_Option &al)
+ {
+     (void)inwave;
+     (void)al;
+-    cerr << "MacOS X audio support not compiled." << endl;
++    cerr << "PulseAudio audio support not compiled." << endl;
+     return -1;
+ }
+ 
+-#endif /* ALSA */
+ #endif /* PULSEAUDIO */
+-#endif /* VOXWARE */
+ 
+--- a/include/EST_audio.h
++++ b/include/EST_audio.h
+@@ -43,6 +43,7 @@
+ #include "EST_Option.h"
+ 
+ extern int nas_supported;
++extern int pulse_supported;
+ extern int esd_supported;
+ extern int sun16_supported;
+ extern int freebsd16_supported;
+--- a/config/config.in
++++ b/config/config.in
+@@ -91,6 +91,8 @@
+ ## Under Linux there may be a choice of audio support
+ ## This is only used if we are under Linux (or a linux like system)
+ LINUXAUDIO = @LINUXAUDIO@
++# Change it to pulseaudio to enable pulseaudio
++PULSEAUDIO = pulseaudio
+ 
+ ## USER INTERFACE
+ 
+--- a/config/modules/linux16_audio.mak
++++ b/config/modules/linux16_audio.mak
+@@ -48,7 +48,7 @@
+    MODULE_LIBS += -lasound
+ endif
+ 
+-ifeq ($(LINUXAUDIO),pulseaudio)
++ifeq ($(PULSEAUDIO),pulseaudio)
+    AUDIO_DEFINES += -DSUPPORT_PULSEAUDIO
+    MODULE_LIBS += -lpulse-simple -lpulse
+ endif

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cd /usr/lib/python2.7/ciao
+
+exec python -u ciao.py 2> /tmp/ciao.py-stderr.log
