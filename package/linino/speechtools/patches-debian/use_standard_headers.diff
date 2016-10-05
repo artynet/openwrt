@@ -1,0 +1,46 @@
+This patch is for speech-tools for Debian GNU/Linux,
+so as to use the standard library rather than its older form.
+
+--- a/include/EST_dynamic_model.h
++++ b/include/EST_dynamic_model.h
+@@ -38,8 +38,8 @@
+ /*=======================================================================*/
+ 
+ #include <cstdlib>
+-#include <stdio.h>
+-#include <fstream.h>
++#include <cstdio>
++#include <fstream>
+ #include "EST.h"
+ #include "EST_model_types.h"
+ 
+--- a/base_class/EST_TSimpleVector.cc
++++ b/base_class/EST_TSimpleVector.cc
+@@ -43,8 +43,11 @@
+ #include "EST_TSimpleVector.h"
+ #include "EST_matrix_support.h"
+ #include <fstream>
++#include <cstring>
+ #include "EST_cutils.h"
+-#include <string.h>
++
++using std::memset;
++using std::memcpy;
+ 
+ template<class T> void EST_TSimpleVector<T>::copy(const EST_TSimpleVector<T> &a)
+ {
+--- a/base_class/EST_TSimpleMatrix.cc
++++ b/base_class/EST_TSimpleMatrix.cc
+@@ -44,8 +44,11 @@
+ #include "EST_TVector.h"
+ #include <fstream>
+ #include <iostream>
++#include <cstring>
+ #include "EST_cutils.h"
+-#include <string.h>
++
++using std::memcpy;
++
+ 
+ template<class T> 
+ void EST_TSimpleMatrix<T>::copy_data(const EST_TSimpleMatrix<T> &a)
