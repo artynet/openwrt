@@ -1,0 +1,25 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008 OpenWrt.org
+
+START=10
+
+boot() {
+	
+	boardname=$(awk '/machine/ {print tolower($4)}' /proc/cpuinfo)
+
+	case $boardname in 
+		'tian')
+			FILE="/etc/modules.d/95-spi-tty-plain"
+			
+			if [ -e $FILE ]
+			then
+				rm $FILE
+			fi
+			
+			;;
+		*)
+			/usr/bin/detect-console
+			;;
+	esac
+
+}
