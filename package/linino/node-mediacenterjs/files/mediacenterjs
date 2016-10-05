@@ -1,0 +1,13 @@
+#!/bin/sh
+
+DIR1=/usr/lib/node_modules
+DIR2=/opt/usr/lib/node_modules
+
+if [ -d $DIR1 ]
+then
+    cd $DIR1/mediacenterjs
+    node server.js
+else
+    cd $DIR2/mediacenterjs
+    node servers.js
+fi

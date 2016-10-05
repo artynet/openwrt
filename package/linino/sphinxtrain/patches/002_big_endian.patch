@@ -1,0 +1,18 @@
+Description: Fix build on big-endian architectures
+Author: Colin Watson <cjwatson@ubuntu.com>
+Forwarded: no
+Last-Update: 2013-04-23
+
+Index: b/src/programs/mk_s2sendump/mk_s2sendump.c
+===================================================================
+--- a/src/programs/mk_s2sendump/mk_s2sendump.c
++++ b/src/programs/mk_s2sendump/mk_s2sendump.c
+@@ -82,7 +82,7 @@
+ 
+ static void fwrite_int32 (FILE *fp, int32 val)
+ {
+-    SWAP_LE_32(val);
++    SWAP_LE_32(&val);
+     fwrite (&val, sizeof(int), 1, fp);
+ }
+ 

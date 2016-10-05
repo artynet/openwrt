@@ -1,0 +1,13 @@
+--- a/src/readline.c
++++ b/src/readline.c
+@@ -59,6 +59,10 @@
+ # define SIZE_T_MAX (size_t)(-1)
+ #endif
+ 
++#if !defined(PATH_MAX)
++# define PATH_MAX 4096
++#endif
++
+ void rl_prep_terminal(int);
+ void rl_deprep_terminal(void);
+ 

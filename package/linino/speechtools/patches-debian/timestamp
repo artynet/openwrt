@@ -1,0 +1,22 @@
+--- a/config/rules/modules.sh
++++ b/config/rules/modules.sh
+@@ -58,7 +58,7 @@ fi
+ echo ' ###########################################################################'
+ echo ' ## This file is created automatically from your config file.'
+ echo ' ## Do not hand edit.'
+-echo ' ## Created:'`date`
++echo ' ## Created:'`date -d @$SOURCE_DATE_EPOCH`
+ echo ' ###########################################################################'
+ 
+ echo ''
+--- a/config/system.sh
++++ b/config/system.sh
+@@ -102,7 +102,7 @@ fi
+ echo ' ###########################################################################'
+ echo ' ## This file is created automatically from your config file.'
+ echo ' ## Do not hand edit.'
+-echo ' ## Created:'`date`
++echo ' ## Created:'`date -d @$SOURCE_DATE_EPOCH`
+ echo ' ###########################################################################'
+ 
+ echo ''

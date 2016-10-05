@@ -1,0 +1,486 @@
+Description: Allow alaw output (asterisk interoperability)
+
+--- a/include/EST_wave_aux.h
++++ b/include/EST_wave_aux.h
+@@ -97,6 +97,7 @@
+ void uchar_to_short(const unsigned char *chars,short *data,int length);
+ void short_to_char(const short *data,unsigned char *chars,int length);
+ void short_to_ulaw(const short *data,unsigned char *ulaw,int length);
++void short_to_alaw(const short *data,unsigned char *alaw,int length);
+ 
+ // Used when setting Waves in Features
+ VAL_REGISTER_CLASS_DCLS(wave,EST_Wave)
+--- a/speech_class/EST_wave_aux.cc
++++ b/speech_class/EST_wave_aux.cc
+@@ -287,7 +287,7 @@
+ 	"    endian)\n\n"
+ 	"-iswap  Swap bytes. (For use on an unheadered input file)\n\n"
+ 	"-istype <string> Sample type in an unheadered input file:\n"
+-	"     short, mulaw, byte, ascii\n\n"
++	"     short, alaw, mulaw, byte, ascii\n\n"
+ 	"-c <string>  Select a single channel (starts from 0). \n"
+ 	"    Waveforms can have multiple channels. This option \n"
+         "    extracts a single channel for progcessing and \n"
+@@ -318,7 +318,7 @@
+ 	"    Intel, Alpha, DEC Mips, Vax are LSB \n"
+ 	"    (little endian)\n\n"
+ 	"-oswap Swap bytes when saving to output\n\n"+
+-	"-ostype <string> Output sample type: short, mulaw, byte or ascii\n\n";
++	"-ostype <string> Output sample type: short, alaw, mulaw, byte or ascii\n\n";
+ }
+ 
+ Declare_TNamedEnum(EST_sample_type_t)
+--- a/speech_class/EST_WaveFile.cc
++++ b/speech_class/EST_WaveFile.cc
+@@ -312,6 +312,27 @@
+     return save_using(save_wave_ulaw, fp, localwv, stype, bo);
+ }
+ 
++EST_read_status EST_WaveFile::load_alaw(EST_TokenStream &ts,
++  EST_Wave &wv,
++  int rate,
++  EST_sample_type_t stype, int bo, int nchan,
++  int offset, int length)
++{
++  return load_using(load_wave_alaw,
++    ts, wv, rate, 
++    stype, bo, nchan,
++    offset, length);
++}
++
++EST_write_status EST_WaveFile::save_alaw(FILE *fp,
++ const EST_Wave &wv,
++ EST_sample_type_t stype, int bo)
++{
++    EST_Wave localwv = wv;
++    localwv.resample(8000);
++    return save_using(save_wave_alaw, fp, localwv, stype, bo);
++}
++
+ static int parse_esps_r_option(EST_String arg, int &offset, int &length)
+ {
+     EST_String s, e;
+@@ -382,6 +403,11 @@
+ 	al.add_item("-itype","ulaw");
+ 	al.add_item("-f","8000");
+     }
++    if (al.present("-alaw"))
++    {
++al.add_item("-itype","alaw");
++al.add_item("-f","8000");
++    }
+     if (al.present("-iswap"))
+ 	al.add_item("-ibo","other");
+ 
+@@ -452,6 +478,11 @@
+ 	cerr << "Cannot recognize file format or cannot access file: \"" << in_file << "\"\n";
+ 	return read_error;
+     }
++    if (file_type == "alaw")
++    {
++sample_rate = 8000;
++sample_type = "alaw";
++    }
+ 
+     if (al.present("-start") || al.present("-end") 
+ 	|| al.present("-to") || al.present("-from"))
+--- a/speech_class/EST_WaveFile.h
++++ b/speech_class/EST_WaveFile.h
+@@ -57,7 +57,8 @@
+   wff_aiff,
+   wff_riff,
+   wff_raw,
+-  wff_ulaw
++  wff_ulaw,
++  wff_alaw
+ } EST_WaveFileType;
+ 
+ class EST_WaveFile {
+@@ -125,6 +126,9 @@
+   static EST_write_status save_ulaw(SaveWave_TokenStreamArgs);
+   static EST_read_status load_ulaw(LoadWave_TokenStreamArgs);
+ 
++  static EST_write_status save_alaw(SaveWave_TokenStreamArgs);
++  static EST_read_status load_alaw(LoadWave_TokenStreamArgs);
++
+   static EST_TNamedEnumI<EST_WaveFileType, Info> map;
+ 
+   static EST_String options_supported(void);
+--- a/speech_class/EST_wave_io.cc
++++ b/speech_class/EST_wave_io.cc
+@@ -107,15 +107,17 @@
+ {
+     const char *c;
+     switch (sample_type) {
+-    case st_unknown:  
++    case st_unknown:
+ 	c = ""; break;
+-    case st_schar:  
++    case st_schar:
+ 	c = "PCM-1"; break;
++    case st_alaw:
++	c = "ALAW"; break;
+     case st_mulaw:
+ 	c = "ULAW"; break;
+-    case st_short: 
++    case st_short:
+ 	c = "pcm"; break;
+-    case st_int:   
++    case st_int:
+ 	c = "PCM-4"; break;
+     case st_float:
+ 	c = "REAL"; break;
+@@ -141,6 +143,9 @@
+ 	     (EST_strcasecmp(type,"mu-law",NULL) == 0) ||
+ 	     (EST_strcasecmp(type,"mulaw",NULL) == 0))
+ 	return st_mulaw;
++    else if ((EST_strcasecmp(type,"ALAW",NULL) == 0) ||
++	     (EST_strcasecmp(type,"A-LAW",NULL) == 0))
++	return st_alaw;
+     else if (strcmp(type,"alaw") == 0)
+ 	return st_alaw;
+     else if (strcmp(type,"PCM-1") == 0)
+@@ -192,6 +197,11 @@
+ 	byte_order = wstrdup((EST_BIG_ENDIAN ? "10" : "01"));
+ 	sample_coding = wstrdup("ULAW");
+     }
++    if (streq(byte_order,"a-law"))
++    {
++	byte_order = wstrdup((EST_BIG_ENDIAN ? "10" : "01"));
++	sample_coding = wstrdup("ALAW");
++    }
+ 
+     /* code for reading in Tony Robinson's shorten files.
+        This is a temporary fix which calls the unshorten program on the
+@@ -473,12 +483,13 @@
+ 	/* The follow are registered proprietary WAVE formats  (?) */
+     case WAVE_FORMAT_MULAW:
+ 	actual_sample_type = st_mulaw; break;
++    case WAVE_FORMAT_ALAW:
++	actual_sample_type = st_alaw; break;
+     case WAVE_FORMAT_ADPCM:
+-	fprintf(stderr, "RIFF file: unsupported proprietary sample format ADPCM\n"); 
++	fprintf(stderr, "RIFF file: unsupported proprietary sample format ADPCM\n");
+ 	actual_sample_type = st_short;
+ 	break;
+ 	/*	  actual_sample_type = st_adpcm; break; */ /* yes but which adpcm ! */
+-    case WAVE_FORMAT_ALAW:
+     default:
+ 	fprintf(stderr, "RIFF file: unknown sample format\n");
+ 	actual_sample_type = st_short;
+@@ -843,50 +854,103 @@
+ {
+     unsigned char *ulaw;
+     int data_length,samps;
+-    
++
+     ts.seek_end();
+     samps = ts.tell();
+-    
++
+     if (length == 0)
+ 	data_length = samps - offset;
+     else
+ 	data_length = length;
+-    
++
+     ulaw = walloc(unsigned char, data_length);
+     ts.seek(offset);
+     if (ts.fread(ulaw,1,data_length) != data_length)
+     {
+-	wfree(ulaw); 
++	wfree(ulaw);
+ 	return misc_read_error;
+     }
+-    
++
+     *data = walloc(short,data_length);
+     ulaw_to_short(ulaw,*data,data_length);
+     wfree(ulaw);
+-    
++
+     *num_samples = data_length;
+     *sample_rate = 8000;
+     *num_channels = 1;
+     *sample_type = st_short;
+     *word_size = 2;
+     *bo = EST_NATIVE_BO;
+-    
++
+     return format_ok;
+ }
+ 
+ enum EST_write_status save_wave_ulaw(FILE *fp, const short *data, int offset,
+-				     int num_samples, int num_channels, 
+-				     int sample_rate, 
++				     int num_samples, int num_channels,
++				     int sample_rate,
+ 				     enum EST_sample_type_t sample_type, int bo)
+ {
+     (void)sample_rate;
+     (void)sample_type;
+     return save_wave_raw(fp,data,offset,num_samples,num_channels,
+ 			 8000,st_mulaw,bo);
+-    
+-    
++
++
+ }
+ 
++enum EST_read_status load_wave_alaw(EST_TokenStream &ts, short **data, int
++				    *num_samples, int *num_channels, int *word_size, int
++				    *sample_rate, enum EST_sample_type_t *sample_type, int *bo,
++				    int offset, int length)
++
++{
++    unsigned char *alaw;
++    int data_length,samps;
++
++    ts.seek_end();
++    samps = ts.tell();
++
++    if (length == 0)
++	data_length = samps - offset;
++    else
++	data_length = length;
++
++    alaw = walloc(unsigned char, data_length);
++    ts.seek(offset);
++    if (ts.fread(alaw,1,data_length) != data_length)
++    {
++	wfree(alaw);
++	return misc_read_error;
++    }
++
++    *data = walloc(short,data_length);
++    alaw_to_short(alaw,*data,data_length);
++    wfree(alaw);
++
++    *num_samples = data_length;
++    *sample_rate = 8000;
++    *num_channels = 1;
++    *sample_type = st_short;
++    *word_size = 2;
++    *bo = EST_NATIVE_BO;
++
++    return format_ok;
++}
++
++enum EST_write_status save_wave_alaw(FILE *fp, const short *data, int offset,
++				     int num_samples, int num_channels,
++				     int sample_rate,
++				     enum EST_sample_type_t sample_type, int bo)
++{
++    (void)sample_rate;
++    (void)sample_type;
++    return save_wave_raw(fp,data,offset,num_samples,num_channels,
++			 8000,st_alaw,bo);
++
++
++}
++
++
+ /*=======================================================================*/
+ /* Sun and Next snd files                                                */
+ /*=======================================================================*/
+--- a/speech_class/EST_wave_utils.cc
++++ b/speech_class/EST_wave_utils.cc
+@@ -53,7 +53,9 @@
+ #include "EST_error.h"
+ 
+ static short st_ulaw_to_short(unsigned char ulawbyte);
++static short st_alaw_to_short(unsigned char alawbyte);
+ static unsigned char st_short_to_ulaw(short sample);
++static unsigned char st_short_to_alaw(short sample);
+ 
+ /*
+  * This table is 
+@@ -202,6 +204,16 @@
+     
+ }
+ 
++void short_to_alaw(const short *data,unsigned char *alaw,int length)
++{
++    /* Convert alaw to shorts */
++    int i;
++
++    for (i=0; i<length; i++)
++	alaw[i] = st_short_to_alaw(data[i]);  /* alaw convert */
++    
++}
++
+ short *convert_raw_data(unsigned char *file_data,int data_length,
+ 			enum EST_sample_type_t sample_type,int bo)
+ {
+@@ -230,6 +242,13 @@
+ 	wfree(file_data);
+ 	return d;
+     }
++    else if (sample_type == st_alaw)
++    {
++	d = walloc(short,data_length);
++	alaw_to_short(file_data,d,data_length);
++	wfree(file_data);
++	return d;
++    }
+ #if 0
+     else if (sample_type == st_adpcm)
+     {   /* Not really checked yet */
+@@ -279,6 +298,16 @@
+ 	if (n != (num_channels * num_samples))
+ 	    return misc_write_error;
+     }
++    else if (sample_type == st_alaw)
++    {
++	unsigned char *alaw = walloc(unsigned char,num_samples*num_channels);
++	short_to_alaw(data+(offset*num_channels),
++		      alaw,num_samples*num_channels);
++	n = fwrite(alaw,1,num_channels * num_samples,fp);	
++	wfree(alaw);
++	if (n != (num_channels * num_samples))
++	    return misc_write_error;
++    }
+     else if (sample_type == st_ascii)
+     {
+ 	for (i=offset*num_channels; i < num_samples*num_channels; i++)
+@@ -354,6 +383,7 @@
+       case st_schar:  
+ 	word_size = 1;	break;
+       case st_mulaw:
++      case st_alaw:
+ 	word_size = 1;	break;
+ #if 0
+       case st_adpcm:  /* maybe I mean 0.5 */
+@@ -420,6 +450,7 @@
+       case st_short:   return "short";
+       case st_shorten:   return "shorten";
+       case st_mulaw:   return "ulaw";
++      case st_alaw:    return "alaw";
+       case st_schar:    return "char";
+       case st_uchar:    return "unsignedchar";
+       case st_int:     return "int";
+@@ -531,6 +562,77 @@
+     return sample;
+ }
+ 
++
++/* The following is copied from sox:g711.c */
++/*
++ * This source code is a product of Sun Microsystems, Inc. and is provided
++ * for unrestricted use.  Users may copy or modify this source code without
++ * charge.
++ * [ no warranties or liabilities whatsoever; see there for details. ]
++ */
++/* copy from CCITT G.711 specifications */
++static unsigned char _u2a[128] = {	/* u- to A-law conversions */
++	1,	1,	2,	2,	3,	3,	4,	4,
++	5,	5,	6,	6,	7,	7,	8,	8,
++	9,	10,	11,	12,	13,	14,	15,	16,
++	17,	18,	19,	20,	21,	22,	23,	24,
++	25,	27,	29,	31,	33,	34,	35,	36,
++	37,	38,	39,	40,	41,	42,	43,	44,
++	46,	48,	49,	50,	51,	52,	53,	54,
++	55,	56,	57,	58,	59,	60,	61,	62,
++	64,	65,	66,	67,	68,	69,	70,	71,
++	72,	73,	74,	75,	76,	77,	78,	79,
++	80,	82,	83,	84,	85,	86,	87,	88,
++	89,	90,	91,	92,	93,	94,	95,	96,
++	97,	98,	99,	100,	101,	102,	103,	104,
++	105,	106,	107,	108,	109,	110,	111,	112,
++	113,	114,	115,	116,	117,	118,	119,	120,
++	121,	122,	123,	124,	125,	126,	127,	128};
++
++static unsigned char _a2u[128] = {		/* A- to u-law conversions */
++	1,	3,	5,	7,	9,	11,	13,	15,
++	16,	17,	18,	19,	20,	21,	22,	23,
++	24,	25,	26,	27,	28,	29,	30,	31,
++	32,	32,	33,	33,	34,	34,	35,	35,
++	36,	37,	38,	39,	40,	41,	42,	43,
++	44,	45,	46,	47,	48,	48,	49,	49,
++	50,	51,	52,	53,	54,	55,	56,	57,
++	58,	59,	60,	61,	62,	63,	64,	64,
++	65,	66,	67,	68,	69,	70,	71,	72,
++	73,	74,	75,	76,	77,	78,	79,	80,
++	80,	81,	82,	83,	84,	85,	86,	87,
++	88,	89,	90,	91,	92,	93,	94,	95,
++	96,	97,	98,	99,	100,	101,	102,	103,
++	104,	105,	106,	107,	108,	109,	110,	111,
++	112,	113,	114,	115,	116,	117,	118,	119,
++	120,	121,	122,	123,	124,	125,	126,	127};
++
++/* A-law to u-law conversion */
++static inline unsigned char st_alaw2ulaw(
++	unsigned char	aval)
++{
++	aval &= 0xff;
++	return (unsigned char) ((aval & 0x80) ? (0xFF ^ _a2u[aval ^ 0xD5]) :
++	    (0x7F ^ _a2u[aval ^ 0x55]));
++}
++
++/* u-law to A-law conversion */
++static inline unsigned char st_ulaw2alaw(
++	unsigned char	uval)
++{
++	uval &= 0xff;
++	return (unsigned char) ((uval & 0x80) ? (0xD5 ^ (_u2a[0xFF ^ uval] - 1)) :
++	    (unsigned char) (0x55 ^ (_u2a[0x7F ^ uval] - 1)));
++}
++/* end of Sun code */
++
++/* This is somewhat simple-minded, but ... */
++static unsigned char st_short_to_alaw(short sample)
++{
++    return st_ulaw2alaw(st_short_to_ulaw(sample));
++}
++
++
+ /*
+  * C O N V E R T   T O   I E E E   E X T E N D E D
+  */
+--- a/speech_class/waveP.h
++++ b/speech_class/waveP.h
+@@ -41,7 +41,7 @@
+ 
+ #include <stdio.h>
+ 
+-/* The follow two (raw and ulaw) cannot be in the table as they cannot */
++/* The follow two (raw, alaw and ulaw) cannot be in the table as they cannot */
+ /* identify themselves from files (both are unheadered)                */
+ enum EST_read_status load_wave_raw(EST_TokenStream &ts, short **data, int
+ 	 *num_samples, int *num_channels, int *word_size, int
+@@ -61,6 +61,15 @@
+ 				int length, int num_channels, 
+ 				int sample_rate,
+ 				enum EST_sample_type_t, int bo);
++
++enum EST_read_status load_wave_alaw(EST_TokenStream &ts, short **data, int
++	 *num_samples, int *num_channels, int *word_size, int
++	 *sample_rate,  enum EST_sample_type_t *sample_type, int *bo, int
++	 offset, int length);
++enum EST_write_status save_wave_alaw(FILE *fp, const short *data, int offset,
++				int length, int num_channels, 
++				int sample_rate,
++				enum EST_sample_type_t, int bo);
+ 
+ enum EST_read_status load_wave_nist(EST_TokenStream &ts, short **data, int
+ 	 *num_samples, int *num_channels, int *word_size, int
+--- a/testsuite/correct/ch_wave_script.out
++++ b/testsuite/correct/ch_wave_script.out
+@@ -77,7 +77,7 @@
+ -iswap  Swap bytes. (For use on an unheadered input file)
+ 
+ -istype <string> Sample type in an unheadered input file:
+-     short, mulaw, byte, ascii
++     short, alaw, mulaw, byte, ascii
+ 
+ -c <string>  Select a single channel (starts from 0). 
+     Waveforms can have multiple channels. This option 
+@@ -112,7 +112,7 @@
+ 
+ -oswap Swap bytes when saving to output
+ 
+--ostype <string> Output sample type: short, mulaw, byte or ascii
++-ostype <string> Output sample type: short, alaw, mulaw, byte or ascii
+ 
+ -scale <float> Scaling factor. Increase or descrease the amplitude
+     of the whole waveform by the factor given

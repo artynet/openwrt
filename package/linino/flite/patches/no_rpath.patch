@@ -1,0 +1,15 @@
+Description: do not let flite add a dummy rpath
+Author: Samuel Thibault <sthibault@debian.org>
+diff --git a/main/Makefile b/main/Makefile
+index 8163e40..5ad6a14 100644
+--- a/main/Makefile
++++ b/main/Makefile
+@@ -82,7 +82,6 @@
+               flite_voice_list.c
+ 
+ ifdef SHFLAGS
+-flite_LIBS_flags += -Wl,-rpath $(LIBDIR) 
+ $(SHAREDMODS): $(LIBDIR)/libflite.so
+ $(SHAREDMODS): LDFLAGS+=-L../$(LIBDIR) -lflite
+ $(SHAREDusenMODS): $(LIBDIR)/libflite_usenglish.so
+
