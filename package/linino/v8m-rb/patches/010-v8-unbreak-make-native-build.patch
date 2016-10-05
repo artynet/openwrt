@@ -1,0 +1,45 @@
+From 3dcc9b93e1e4d80aa15a40a9d82a6b9f0bef0ec0 Mon Sep 17 00:00:00 2001
+From: Ben Noordhuis <info@bnoordhuis.nl>
+Date: Sat, 9 Nov 2013 22:24:22 +0100
+Subject: [PATCH] v8: unbreak `make native` build
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The security fix from commit 6b92a713 also back-ported the test case.
+Said test case relies on API that is only available in newer versions
+of V8 and, as a result, broke the `make native` and `make <arch.mode>`
+builds.  This commit reverts that part of the back-port.  Fixes the
+following build error:
+
+  ../test/cctest/test-api.cc: In function ‘void TestRegress260106()’:
+  ../test/cctest/test-api.cc:17712:34: error: ‘class v8::Context’ has
+  no member named ‘GetIsolate’
+---
+ deps/v8/test/cctest/test-api.cc | 11 -----------
+ 1 file changed, 11 deletions(-)
+
+diff --git a/deps/v8/test/cctest/test-api.cc b/deps/v8/test/cctest/test-api.cc
+index bcd28bd..728a8f7 100644
+--- a/test/cctest/test-api.cc
++++ b/test/cctest/test-api.cc
+@@ -17719,17 +17719,6 @@ THREADED_TEST(Regress157124) {
+ }
+
+
+-THREADED_TEST(Regress260106) {
+-  LocalContext context;
+-  v8::HandleScope scope(context->GetIsolate());
+-  Local<FunctionTemplate> templ = FunctionTemplate::New(DummyCallHandler);
+-  CompileRun("for (var i = 0; i < 128; i++) Object.prototype[i] = 0;");
+-  Local<Function> function = templ->GetFunction();
+-  CHECK(!function.IsEmpty());
+-  CHECK(function->IsFunction());
+-}
+-
+-
+ #ifndef WIN32
+ class ThreadInterruptTest {
+  public:
+--
+2.9.1
