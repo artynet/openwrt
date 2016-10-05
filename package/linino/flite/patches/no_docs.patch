@@ -1,0 +1,16 @@
+--- a/Makefile	2014-12-15 14:09:46.000000000 +0100
++++ b/Makefile	2016-07-21 10:03:04.376895495 +0200
+@@ -43,7 +43,7 @@
+ ###########################################################################
+ TOP=.
+ DIRNAME=
+-BUILD_DIRS = include src lang doc
++BUILD_DIRS = include src lang
+ ALL_DIRS=config $(BUILD_DIRS) testsuite \
+          wince windows android \
+          tools main 
+@@ -126,4 +126,3 @@
+ 
+ test:
+ 	@ $(MAKE) --no-print-directory -C testsuite test
+-
