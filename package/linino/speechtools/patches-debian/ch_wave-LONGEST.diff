@@ -1,0 +1,15 @@
+This patch allows providing "-pc LONGEST" argument in lowercase.
+Bug reported by chaered: https://bugs.launchpad.net/ubuntu/+source/speech-tools/+bug/723854
+Author: Sergio Oller <sergioller@gmail.com>
+
+--- a/main/ch_wave_main.cc
++++ b/main/ch_wave_main.cc
+@@ -199,7 +199,7 @@
+ 		wave_info(sigload);
+ 	    else if (al.present("-pc"))
+ 	    {
+-		if ((al.val("-pc") == "longest") &&
++		if ((downcase(al.val("-pc")) == "longest") &&
+ 		    (sig.num_samples() < sigload.num_samples()))
+ 		    sig.resize(sigload.num_samples());
+ 		else /* "first" or sig is longer */

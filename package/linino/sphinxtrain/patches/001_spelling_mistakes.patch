@@ -1,0 +1,52 @@
+Description: Fix spelling mistakes
+Author: Pete Woods <pete.woods@canonical.com>
+Origin: other
+Forwarded: no
+Last-Update: 2013-03-04
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/src/programs/init_mixw/main.c
++++ b/src/programs/init_mixw/main.c
+@@ -270,13 +270,13 @@
+ 	   
+     ts2cbfn = cmd_ln_str("-src_ts2cbfn");
+     if (strcmp(SEMI_LABEL, ts2cbfn) == 0) {
+-	E_INFO("Generating semi-continous ts2cb mapping\n");
++	E_INFO("Generating semi-continuous ts2cb mapping\n");
+ 	src_mdef->cb = semi_ts2cb(src_mdef->n_tied_state);
+ 	n_ts = src_mdef->n_tied_state;
+ 	n_cb = 1;
+     }
+     else if (strcmp(CONT_LABEL, ts2cbfn) == 0) {
+-	E_INFO("Generating continous ts2cb mapping\n");
++	E_INFO("Generating continuous ts2cb mapping\n");
+ 	src_mdef->cb = cont_ts2cb(src_mdef->n_tied_state);
+ 	n_ts = src_mdef->n_tied_state;
+ 	n_cb = src_mdef->n_tied_state;
+@@ -399,13 +399,13 @@
+ 
+     ts2cbfn = cmd_ln_str("-dest_ts2cbfn");
+     if (strcmp(SEMI_LABEL, ts2cbfn) == 0) {
+-	E_INFO("Generating semi-continous ts2cb mapping\n");
++	E_INFO("Generating semi-continuous ts2cb mapping\n");
+ 	dest_mdef->cb = semi_ts2cb(dest_mdef->n_tied_state);
+ 	n_ts = dest_mdef->n_tied_state;
+ 	n_cb = 1;
+     }
+     else if (strcmp(CONT_LABEL, ts2cbfn) == 0) {
+-	E_INFO("Generating continous ts2cb mapping\n");
++	E_INFO("Generating continuous ts2cb mapping\n");
+ 	dest_mdef->cb = cont_ts2cb(dest_mdef->n_tied_state);
+ 	n_ts = dest_mdef->n_tied_state;
+ 	n_cb = dest_mdef->n_tied_state;
+--- a/src/programs/kmeans_init/parse_cmd_ln.c
++++ b/src/programs/kmeans_init/parse_cmd_ln.c
+@@ -92,7 +92,7 @@
+ 	{ "-segext",
+ 	  ARG_STRING,
+ 	  "v8_seg",
+-	  "Extention of state segmentation files" },
++	  "Extension of state segmentation files" },
+ 
+ 	{ "-omoddeffn",
+ 	  ARG_STRING,
