@@ -1,0 +1,34 @@
+This patch is part of a series of patches for speech-tools for
+Debian GNU/Linux, to provide Debian specific building of speech-tools
+
+--- a/config/config.in
++++ b/config/config.in
+@@ -28,14 +28,14 @@
+ ## 
+ ## Examples: sparc_SunOS5 intel_Linux2.0
+ 
+-SYSTEM_TYPE=$(MACHINETYPE)_$(OSTYPE)$(OSREV)
++SYSTEM_TYPE=unknown_DebianGNULinux
+ 
+ ###########################################################################
+ ## Compiler.
+ ## The definitions are in compilers/$(COMPILER).mak
+ ## Examples: gcc suncc egcs gcc28
+ 
+-COMPILER=@COMPILERTYPE@
++COMPILER=gcc
+ 
+ ###########################################################################
+ ## Java system to use if you include the Java interface.
+@@ -59,9 +59,9 @@
+ OPTIMISE=3
+ WARN=1
+ # VERBOSE=1
+-#DEBUG=1
++DEBUG=1
+ # PROFILE=gprof
+-#SHARED=2
++SHARED=2
+ 
+ ## Directory specific selections which override the above
+ 
