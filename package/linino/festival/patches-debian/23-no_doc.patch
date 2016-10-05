@@ -1,0 +1,11 @@
+--- a/Makefile        2003-01-25 01:26:47.000000000 +0100
++++ b/Makefile 2016-07-21 11:58:10.205939770 +0200
+@@ -39,7 +39,7 @@
+ ###########################################################################
+ TOP=.
+ DIRNAME=.
+-BUILD_DIRS = src lib examples bin doc
++BUILD_DIRS = src lib examples bin
+ ALL_DIRS=config $(BUILD_DIRS) testsuite
+ CONFIG=configure configure.in config.sub config.guess \
+        missing install-sh mkinstalldirs

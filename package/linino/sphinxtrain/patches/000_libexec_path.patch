@@ -1,0 +1,32 @@
+Description: Fix the libexec path
+ Fix the libexec path to point at the standard Debian location.
+ .
+ sphinxtrain (1.0.8-1) raring; urgency=low
+ .
+   * Initial release.
+Author: Pete Woods <pete.woods@canonical.com>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- sphinxtrain-1.0.8.orig/scripts/sphinxtrain
++++ sphinxtrain-1.0.8/scripts/sphinxtrain
+@@ -6,7 +6,7 @@ import getopt, sys, os
+ # Find the location of the files
+ currentpath = os.path.dirname(os.path.abspath(__file__))
+ 
+-sphinxbinpath = os.path.abspath(currentpath + "/../libexec/sphinxtrain")
++sphinxbinpath = "/usr/lib/sphinxtrain/sphinxtrain"
+ if os.path.exists(currentpath + "/../bin/Release"):
+     sphinxbinpath = os.path.abspath(currentpath + "/../bin/Release")
+ 

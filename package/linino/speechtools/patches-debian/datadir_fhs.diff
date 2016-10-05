@@ -1,0 +1,152 @@
+--- a/include/EST_cutils.h
++++ b/include/EST_cutils.h
+@@ -48,6 +48,7 @@
+ extern const char * const est_tools_version;
+ extern const char * const est_name;
+ extern const char * const est_libdir;
++extern const char * const est_datadir;
+ extern const char * const est_ostype;
+ 
+ #include "EST_walloc.h"
+--- a/utils/Makefile
++++ b/utils/Makefile
+@@ -58,5 +58,5 @@
+ include $(TOP)/config/common_make_rules
+ 
+ EST_cutils.o: EST_cutils.c
+-	$(CC_COMMAND) -DESTNAME='$(PROJECT_NAME)' -DESTDATE='$(PROJECT_DATE)' -DESTVERSION='$(PROJECT_VERSION)' -DESTLIBDIRC='$(EST_HOME)/lib' -DESTSTATE='$(PROJECT_STATE)' -DESTOSTYPE='$(SYSTEM_TYPE)' EST_cutils.c
++	$(CC_COMMAND) -DESTNAME='$(PROJECT_NAME)' -DESTDATE='$(PROJECT_DATE)' -DESTVERSION='$(PROJECT_VERSION)' -DESTLIBDIR=\"$(EST_HOME)/lib\" -DESTDATADIR=\"$(EST_HOME)/share\" -DESTSTATE='$(PROJECT_STATE)' -DESTOSTYPE='$(SYSTEM_TYPE)' EST_cutils.c
+ 
+--- a/lib/siod/siod.scm
++++ b/lib/siod/siod.scm
+@@ -426,19 +426,28 @@
+ ;; will be set automatically on start-up
+ (defvar libdir '<automatically_set>
+   "libdir
+-  The pathname of the run-time libary directory.  Note reseting is 
+-  almost definitely not what you want to do.   This value is automatically
+-  set at start up from the value specifed at compile-time or the value
+-  specifed with --libdir on the command line.  A number of other variables
+-  depend on this value.")
++  The pathname of the architecture-dependent run-time libary directory.
++  Note reseting is almost definitely not what you want to do.   This
++  value is automatically set at start up from the value specifed at
++  compile-time or the value specifed with --libdir on the command line.
++  A number of other variables depend on this value.")
+ 
+-(defvar load-path (list libdir)
++(defvar datadir '<automatically_set>
++  "datadir
++  The pathname of the architecture-independent run-time libary
++  directory.  Note reseting is almost definitely not what you want to
++  do.   This value is automatically set at start up from the value
++  specifed at compile-time or the value specifed with --datadir on the
++  command line.  A number of other variables depend on this value.")
++
++(defvar load-path (list datadir)
+   "load-path
+   A list of directories containing .scm files.  Used for various functions
+   such as load_library and require.  Follows the same use as EMACS.  By
+-  default it is set up to the compile-time library directory but may be 
+-  changed by the user at run time, by adding a user's own library directory
+-  or even replacing all of the standard library. [see Site initialization]")
++  default it is set up to the compile-time architecture-independent
++  library directory but may be changed by the user at run time, by
++  adding a user's own library directory or even replacing all of the
++  standard library. [see Site initialization]")
+ 
+ ;; will be set automatically on start-up
+ (defvar *ostype* 'unknown
+@@ -447,12 +456,6 @@
+   on, e.g. SunOS5, FreeBSD, linux etc.  The value is taken from the Makefile
+   variable OSTYPE at compile time.")
+ 
+-(defvar etc-path (path-append libdir "etc/" *ostype*)
+-  "etc-path
+-  A list of directories where binaries specific to Festival may be located.
+-  This variable is automatically set to LIBDIR/etc/OSTYPE/
+-  and that path is added to the end of the UNIX PATH environment variable.")
+-
+ (define (library_expand_filename fname)
+ "(library_expand_filename FILENAME)
+   Search for filename by appending FILENAME to each member of load-path.
+--- a/utils/EST_cutils.c
++++ b/utils/EST_cutils.c
+@@ -54,12 +54,19 @@
+ #ifdef ESTLIBDIRC
+ #    define ESTLIBDIR STRINGIZE(ESTLIBDIRC)
+ #endif
+-
+ #ifndef ESTLIBDIR
+ #define ESTLIBDIR "/usr/local/lib/speech_tools"
+ #endif
+ 
++#ifdef ESTDATADIRC
++#    define ESTDATADIR STRINGIZE(ESTDATADIRC)
++#endif
++#ifndef ESTDATADIR
++#define ESTDATADIR "/usr/local/share/speech_tools"
++#endif
++
+ const char * const est_libdir = ESTLIBDIR;
++const char * const est_datadir = ESTDATADIR;
+ 
+ const char * const est_ostype = STRINGIZE(ESTOSTYPE);
+ 
+--- a/main/siod_main.cc
++++ b/main/siod_main.cc
+@@ -178,7 +178,7 @@
+     EST_Pathname initfile;
+ 
+     // Load library init first
+-    initfile = EST_Pathname(est_libdir).as_directory();
++    initfile = EST_Pathname(est_datadir).as_directory();
+     initfile += "siod";
+     initfile += "init.scm";
+ 
+@@ -197,9 +197,12 @@
+ 
+     lib = EST_Pathname(est_libdir).as_directory();
+     lib += "siod";
+-    
+     siod_set_lval("libdir",strintern(lib));
+ 
++    lib = EST_Pathname(est_datadir).as_directory();
++    lib += "siod";
++    siod_set_lval("datadir",strintern(lib));
++
+     if (!strcmp(est_ostype,""))
+       siod_set_lval("*ostype*",rintern(est_ostype));
+     siod_set_lval("est_version",
+@@ -221,19 +224,10 @@
+ 		       cons(flocons(minor),
+ 			    cons(flocons(subminor),NIL))));
+ 
+-    EST_Pathname etcdircommon = est_libdir;
+-    etcdircommon += "etc";
+-
+-    EST_Pathname etcdir = etcdircommon;
+-    etcdir += est_ostype;
+-    
+     //  Modify my PATH to include these directories
+-    siod_set_lval("etc-path",cons(rintern(etcdir),
+-				  cons(rintern(etcdircommon),NIL)));
+-
+     EST_String path = getenv("PATH");
+ 
+-    path += ":" + EST_String(etcdir) + ":" +  EST_String(etcdircommon);
++    path += ":" + EST_String(est_libdir);
+ 
+     putenv(wstrdup("PATH=" + path));
+     
+--- a/main/xml_parser_main.cc
++++ b/main/xml_parser_main.cc
+@@ -165,7 +165,7 @@
+ 		       al.sval("-sysdir") + "/\\1");
+ 
+   pclass.register_id("//CSTR//EST \\(.*\\)",
+-		     EST_String::cat(est_libdir, "/\\1.dtd"));
++		     EST_String::cat(est_datadir, "/\\1.dtd"));
+ 
+   /* An individual parser runs over a single source.
+     */
