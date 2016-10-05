@@ -1,0 +1,41 @@
+Index: pulseaudio-6.0/src/daemon/system.pa.in
+===================================================================
+--- pulseaudio-6.0.orig/src/daemon/system.pa.in	2015-02-12 15:10:35.000000000 +0100
++++ pulseaudio-6.0/src/daemon/system.pa.in	2015-10-12 15:46:32.443916884 +0200
+@@ -22,7 +22,7 @@
+ ### Automatically load driver modules depending on the hardware available
+ ifelse(@HAVE_UDEV@, 1, [dnl
+ .ifexists module-udev-detect@PA_SOEXT@
+-load-module module-udev-detect
++load-module module-udev-detect tsched=0
+ .else
+ ], @HAVE_HAL@, 1, [dnl
+ .ifexists module-hal-detect@PA_SOEXT@
+@@ -35,6 +35,19 @@
+ load-module module-detect
+ .endif
+ 
++### Automatically load driver modules for Bluetooth hardware
++.ifexists module-bluetooth-policy@PA_SOEXT@
++load-module module-bluetooth-policy
++.endif
++
++.ifexists module-bluetooth-discover@PA_SOEXT@
++load-module module-bluetooth-discover
++.endif
++
++.ifexists module-dbus-protocol@PA_SOEXT@
++load-module module-dbus-protocol
++.endif
++
+ ### Load several protocols
+ .ifexists module-esound-protocol-unix@PA_SOEXT@
+ load-module module-esound-protocol-unix
+@@ -44,6 +57,7 @@
+ ### Automatically restore the volume of streams and devices
+ load-module module-stream-restore
+ load-module module-device-restore
++load-module module-card-restore
+ 
+ ### Automatically restore the default sink/source when changed by the user
+ ### during runtime

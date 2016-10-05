@@ -1,0 +1,35 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2008 OpenWrt.org
+
+START=11
+STOP=11
+
+source /etc/config/mcuiocfg
+
+baudcmd="\xaa"
+
+start() {
+	# Remove spi-tty-ds if loaded
+	# /sbin/lsmod | grep spi_tty && /sbin/rmmod spi_tty_ds
+	# Reset mcu
+	mcu-reset
+	sleep 2
+	# Init serial port at 250kbps (default for bathos-mcuio.hex at boot)
+	stty 230400 -echo raw < /dev/ttyATH0
+	if [ $BAUDRATE -eq 230400 ]; then
+		baudcmd="\xaa"
+	elif [ $BAUDRATE -eq 460800 ]; then
+		baudcmd="\xab"
+	fi
+	# Make the atmega switch to mcuio mode
+	echo -n -e $baudcmd > /dev/ttyATH0
+	# Set serial port baudrate
+	stty $BAUDRATE -echo raw < /dev/ttyATH0
+	# Start ldattach to set line discipline
+	ldattach -s $BAUDRATE 29 /dev/ttyATH0
+}
+
+stop() {
+	killall ldattach
+	mcu-reset
+}
