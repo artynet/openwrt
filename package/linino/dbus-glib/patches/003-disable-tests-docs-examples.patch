@@ -1,0 +1,22 @@
+--- a/configure.ac	2016-05-04 15:47:25.297257366 +0200
++++ b/configure.ac	2016-05-04 15:47:40.941061969 +0200
+@@ -285,19 +285,7 @@
+ AC_CONFIG_FILES([
+ Makefile
+ m4/Makefile
+-doc/Makefile
+-doc/reference/Makefile
+-doc/reference/version.xml
+ dbus/Makefile
+-dbus/examples/Makefile
+-dbus/examples/statemachine/Makefile
+-test/Makefile
+-test/core/Makefile
+-test/interfaces/Makefile
+-test/data/valid-service-files/debug-glib.service
+-test/data/valid-service-files/debug-echo.service
+-test/data/valid-service-files/interfaces-test.service
+-test/lib/Makefile
+ tools/Makefile
+ dbus-glib-1.pc
+ dbus-glib-1-uninstalled.pc
