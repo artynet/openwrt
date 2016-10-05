@@ -1,0 +1,20 @@
+--- a/Makefile	2015-12-11 17:29:11.060087020 +0100
++++ b/Makefile	2015-12-11 17:29:33.756474356 +0100
+@@ -18,7 +18,7 @@
+ 
+ prefix = /usr
+ 
+-CC=gcc
++# CC=gcc
+ 
+ VERSION=1.7.0
+ TREE_DEST=tree
+@@ -30,7 +30,7 @@
+ # Uncomment options below for your particular OS:
+ 
+ # Linux defaults:
+-CFLAGS=-ggdb -Wall -DLINUX -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
++# CFLAGS=-ggdb -Wall -DLINUX -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+ #CFLAGS=-O4 -Wall  -DLINUX -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
+ #LDFLAGS=-s
+ 

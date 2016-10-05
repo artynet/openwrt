@@ -1,0 +1,2 @@
+# Update every 6 hours
+* */6 * * * /bin/opkg update >/dev/null 2>&1
