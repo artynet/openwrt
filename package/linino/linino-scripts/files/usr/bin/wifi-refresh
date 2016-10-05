@@ -1,0 +1,14 @@
+#!/bin/sh
+
+WIFI="/sbin/wifi"
+
+boardname=$(awk '/machine/ {print tolower($4)}' /proc/cpuinfo)
+
+case $boardname in
+    'lei'|'tian')
+        $WIFI up
+        ;;
+    *)
+        exit 0
+        ;;
+esac

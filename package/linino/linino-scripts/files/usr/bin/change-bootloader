@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Changing bootloader name in LUA executable
+
+FILE=/usr/bin/merge-sketch-with-bootloader.lua
+BOARD=`cat /proc/cpuinfo | grep machine | awk {'print $4'}`
+
+case $BOARD in
+    'One'|'Lei'|'Chiwawa'|'Yun-Mini')
+        sed -i -e "s/Caterina-Yun.hex/Caterina-$BOARD.hex/g" $FILE
+        ;;
+	'Tian')
+		sed -i -e "s/Caterina-Yun.hex/Sofia-Tian.hex/g" $FILE
+		;;
+esac
