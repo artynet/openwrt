@@ -1,8 +1,8 @@
 #!/bin/sh /etc/rc.common
 # Copyright (C) 2008 OpenWrt.org
 
-START=11
-STOP=11
+START=98
+STOP=98
 
 source /etc/config/mcuiocfg
 
@@ -26,7 +26,7 @@ start() {
 	# Set serial port baudrate
 	stty $BAUDRATE -echo raw < /dev/ttyATH0
 	# Start ldattach to set line discipline
-	ldattach -s $BAUDRATE 29 /dev/ttyATH0
+	ldattach -d -s $BAUDRATE 29 /dev/ttyATH0 &
 }
 
 stop() {
