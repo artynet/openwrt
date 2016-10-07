@@ -1,0 +1,31 @@
+From b974efdcfd8f53206626c071001c105d87aadf72 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Fri, 6 Mar 2015 16:24:09 +0100
+Subject: [PATCH 29/83] AR71XX SoC: define some more registers, related to gpio
+ in multiplexing
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ arch/mips/include/asm/mach-ath79/ar71xx_regs.h | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/arch/mips/include/asm/mach-ath79/ar71xx_regs.h b/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
+index bf78fa0..4e1ae02 100644
+--- a/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
++++ b/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
+@@ -850,6 +850,12 @@
+ #define AR934X_GPIO_REG_OUT_FUNC3	0x38
+ #define AR934X_GPIO_REG_OUT_FUNC4	0x3c
+ #define AR934X_GPIO_REG_OUT_FUNC5	0x40
++#define AR934X_GPIO_IN_ENABLE0	0x44
++#define AR934X_GPIO_IN_ENABLE1	0x48
++#define AR934X_GPIO_IN_ENABLE2	0x4c
++#define AR934X_GPIO_IN_ENABLE3	0x50
++#define AR934X_GPIO_IN_ENABLE4	0x54
++#define AR934X_GPIO_IN_ENABLE9	0x68
+ #define AR934X_GPIO_REG_FUNC		0x6c
+ 
+ #define QCA956X_GPIO_REG_OUT_FUNC0	0x2c
+-- 
+2.10.1
+
