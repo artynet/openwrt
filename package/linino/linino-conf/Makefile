@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linino-conf
 PKG_VERSION:=1.0
-PKG_RELEASE:=7
+PKG_RELEASE:=9
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -17,7 +17,7 @@ define Package/linino-conf
   SECTION:=utils
   CATEGORY:=Base system
   TITLE:=Custom Linino configurations
-  DEPENDS:=+avahi-daemon-service-http +base-files +triggerhappy
+  DEPENDS:=+avahi-daemon-service-http +base-files
 endef
 
 define Package/linino-conf/conffiles
@@ -31,7 +31,6 @@ define Package/linino-conf/conffiles
 /etc/rc.local
 /etc/shadow
 /etc/httpd.conf
-/etc/crontabs/root
 endef
 
 define Build/Compile
@@ -43,7 +42,6 @@ define Package/linino-conf/install
 	$(INSTALL_DIR) $(1)/etc/arduino
 	$(INSTALL_DIR) $(1)/etc/linino
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_DIR) $(1)/etc/crontabs
 	$(INSTALL_DIR) $(1)/etc/triggerhappy/triggers.d
 	
 	# /etc/avahi DIR
@@ -60,22 +58,17 @@ define Package/linino-conf/install
 	$(INSTALL_CONF) ./files/etc/httpd.conf $(1)/etc/
 	$(INSTALL_CONF) ./files/etc/fw_env.config $(1)/etc/
 
-	# /etc/crontabs DIR
-	$(INSTALL_CONF) ./files/etc/crontabs $(1)/etc/crontabs/root
-
 	# /etc/config DIR
 	$(INSTALL_CONF) ./files/etc/config/firewall $(1)/etc/config/
 	$(INSTALL_CONF) ./files/etc/config/system $(1)/etc/config/
 	$(INSTALL_CONF) ./files/etc/config/uhttpd $(1)/etc/config/
-	# $(INSTALL_CONF) ./files/etc/config/mcuiocfg $(1)/etc/config/
 	
 	# /etc/arduino DIR
-	# $(INSTALL_DATA) ./files/etc/arduino/Caterina-Yun.hex $(1)/etc/arduino/
-	# $(INSTALL_DATA) ./files/etc/arduino/Caterina-YunMini.hex $(1)/etc/arduino/
-	# $(INSTALL_DATA) ./files/etc/arduino/Caterina-One.hex $(1)/etc/arduino/
-	# $(INSTALL_DATA) ./files/etc/arduino/Caterina-Lei.hex $(1)/etc/arduino/
-	# $(INSTALL_DATA) ./files/etc/arduino/Caterina-Chiwawa.hex $(1)/etc/arduino/
-	$(INSTALL_DATA) ./files/etc/arduino/Sofia-Tian.hex $(1)/etc/arduino/
+	$(INSTALL_DATA) ./files/etc/arduino/Caterina-Yun.hex $(1)/etc/arduino/
+	$(INSTALL_DATA) ./files/etc/arduino/Caterina-Yun-Mini.hex $(1)/etc/arduino/
+	$(INSTALL_DATA) ./files/etc/arduino/Caterina-One.hex $(1)/etc/arduino/
+	$(INSTALL_DATA) ./files/etc/arduino/Caterina-Lei.hex $(1)/etc/arduino/
+	$(INSTALL_DATA) ./files/etc/arduino/Caterina-Chiwawa.hex $(1)/etc/arduino/
 	$(INSTALL_DATA) ./files/etc/arduino/linino-arduino-release $(1)/etc/arduino/
 	$(INSTALL_DATA) ./files/etc/arduino/gpg_gen_key_batch $(1)/etc/arduino/
 	$(INSTALL_DATA) ./files/etc/arduino/wifi_timezones.csv.gz $(1)/etc/arduino/
@@ -86,19 +79,19 @@ define Package/linino-conf/install
 	# /etc/linino DIR
 	$(INSTALL_DATA) ./files/etc/linino/prog_console.sh $(1)/etc/linino/
 	$(INSTALL_DATA) ./files/etc/linino/test_avrdude.sh $(1)/etc/linino/
-	# $(INSTALL_DATA) ./files/etc/linino/FirmataSPI.hex $(1)/etc/linino/
-	# $(INSTALL_DATA) ./files/etc/linino/LininoOneSerialTerminal.hex $(1)/etc/linino
-	# $(INSTALL_DATA) ./files/etc/linino/YunSerialTerminal.hex $(1)/etc/linino/
-	# $(INSTALL_DATA) ./files/etc/linino/LeiSerialTerminal.hex $(1)/etc/linino/
-	# $(INSTALL_DATA) ./files/etc/linino/YunMiniSerialTerminal.hex $(1)/etc/linino/
-	$(INSTALL_DATA) ./files/etc/linino/mips-onoff-tian.hex $(1)/etc/linino/
-	# $(INSTALL_DATA) ./files/etc/linino/bathos-tian.hex $(1)/etc/linino/
+	$(INSTALL_DATA) ./files/etc/linino/FirmataSPI.hex $(1)/etc/linino/
+	$(INSTALL_DATA) ./files/etc/linino/LininoOneSerialTerminal.hex $(1)/etc/linino
+	$(INSTALL_DATA) ./files/etc/linino/YunSerialTerminal.hex $(1)/etc/linino/
+	$(INSTALL_DATA) ./files/etc/linino/LeiSerialTerminal.hex $(1)/etc/linino/
+	$(INSTALL_DATA) ./files/etc/linino/YunMiniSerialTerminal.hex $(1)/etc/linino/
+	$(INSTALL_DATA) ./files/etc/linino/ChiwawaSerialTerminal.hex $(1)/etc/linino/
 
 	# /etc/linino DIR (bathos firmware)
-	# $(INSTALL_DATA) ./files/etc/linino/bathos-one.hex $(1)/etc/linino
-	# $(INSTALL_DATA) ./files/etc/linino/bathos-yun.hex $(1)/etc/linino/
-	# $(INSTALL_DATA) ./files/etc/linino/bathos-lei.hex $(1)/etc/linino/
-	# $(INSTALL_DATA) ./files/etc/linino/bathos-yun-mini.hex $(1)/etc/linino/
+	$(INSTALL_DATA) ./files/etc/linino/bathos-one.hex $(1)/etc/linino
+	$(INSTALL_DATA) ./files/etc/linino/bathos-yun.hex $(1)/etc/linino/
+	$(INSTALL_DATA) ./files/etc/linino/bathos-lei.hex $(1)/etc/linino/
+	$(INSTALL_DATA) ./files/etc/linino/bathos-yun-mini.hex $(1)/etc/linino/
+	$(INSTALL_DATA) ./files/etc/linino/bathos-chiwawa.hex $(1)/etc/linino/
 	$(INSTALL_DATA) ./files/etc/linino/fuses.txt $(1)/etc/linino/
 	$(INSTALL_DATA) ./files/etc/linino/LININO_CONTRIBUTORS.txt $(1)/etc/linino/
 endef

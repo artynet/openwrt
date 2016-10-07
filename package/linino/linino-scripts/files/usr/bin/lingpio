@@ -1,0 +1,84 @@
+#!/bin/sh
+
+#
+# v1.1
+#
+
+###  BOARD GPIO  ###
+#GPIO	OUTPUT	board
+# 104	D8
+# 105	D9
+# 106	D10
+# 107	D11
+# 114	D5
+# 115	D13
+# 116	D3
+# 117	D2
+# 120	D4
+# 122	D12
+# 123	D6
+
+if [ ! -d /sys/class/gpio/gpiochip100 ]
+then
+	echo ""
+	echo "LininoIO is not enabled ! Aborting...."
+	echo ""
+
+	exit 0
+fi
+
+BOARD=$(awk '/machine/ {print tolower($4)}' /proc/cpuinfo)
+
+case $BOARD in
+	'chiwawa')
+		echo 114 > /sys/class/gpio/export
+
+		echo ""
+		echo "GPIO exported"
+		echo ""
+
+		echo 4 > /sys/class/pwm/pwmchip0/export
+
+		echo ""
+		echo "PWM exported"
+		echo ""
+		
+		;;
+	'yun'|'yun-mini'|'one'|'lei')
+		for i in 104 105 106 107 114 115 116 117 120 122 123; do
+			echo $i > /sys/class/gpio/export
+		done
+	
+		echo out > /sys/class/gpio/D13/direction
+		
+		echo ""
+		echo "GPIO exported"
+		echo ""
+
+		#enable PWM
+		# PWM n.  OUTPUT
+		#   0	   D3
+		#   1	   D9
+		#   2	   D10
+		#   3	   D11
+		#   4	   D5
+		#   5	   D6
+
+		pwm=$(seq 0 5)
+
+		for i in $pwm;do
+			echo $i > /sys/class/pwm/pwmchip0/export
+		done
+
+		echo ""
+		echo "PWM exported"
+		echo ""
+		;;
+esac
+
+# enable ADC
+echo 1 > /sys/bus/iio/devices/iio:device0/enable
+
+echo ""
+echo "ADC enabled"
+echo ""
