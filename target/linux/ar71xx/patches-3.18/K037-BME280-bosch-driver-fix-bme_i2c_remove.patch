@@ -1,0 +1,32 @@
+From fd8cc0dbedc66bd00c5099de32f529004ebcc6f9 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Tue, 31 Mar 2015 17:12:54 +0200
+Subject: [PATCH 37/83] BME280 bosch driver: fix bme_i2c_remove
+
+bme_i2c_client pointer set to NULL, so that it does not fail if probed
+once again.
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/input/misc/bme280/bme280_i2c.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/input/misc/bme280/bme280_i2c.c b/drivers/input/misc/bme280/bme280_i2c.c
+index 5004e69..47c1ced 100644
+--- a/drivers/input/misc/bme280/bme280_i2c.c
++++ b/drivers/input/misc/bme280/bme280_i2c.c
+@@ -250,7 +250,10 @@ static void bme_i2c_shutdown(struct i2c_client *client)
+ */
+ static int bme_i2c_remove(struct i2c_client *client)
+ {
+-	return bme_remove(&client->dev);
++	int ret;
++	ret = bme_remove(&client->dev);
++	bme_i2c_client = NULL;
++	return ret;
+ }
+ 
+ #ifdef CONFIG_PM
+-- 
+2.10.1
+

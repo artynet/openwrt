@@ -1,0 +1,97 @@
+From 12c05a08a996113d14e95dc4a4b96d54e09d2497 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Thu, 7 May 2015 15:46:46 +0200
+Subject: [PATCH 21/83] MCUIO: shields driver copied from kernel 3.3.8
+
+Files were copied from Linino kernel_3.3.8 master branch
+
+git repository: git@github.com/linino/kernel_3.3.8
+git commit: a20da43584
+
+Only a trivial change was necessary, since pca953x.h file has been moved to
+linux/platform_data/ directory (was in linux/i2c).
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/mcuio-dio-shield.c     | 4 +++-
+ drivers/mcuio/mcuio-dogoled-shield.c | 2 ++
+ drivers/mcuio/mcuio-lucky-shield.c   | 7 ++++---
+ 3 files changed, 9 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/mcuio/mcuio-dio-shield.c b/drivers/mcuio/mcuio-dio-shield.c
+index 081bc2f..0123944 100644
+--- a/drivers/mcuio/mcuio-dio-shield.c
++++ b/drivers/mcuio/mcuio-dio-shield.c
+@@ -22,7 +22,7 @@
+ #include <linux/gpio.h>
+ #include <linux/i2c.h>
+ #include <linux/platform_device.h>
+-#include <linux/i2c/pca953x.h>
++#include <linux/platform_data/pca953x.h>
+ 
+ #include <linux/mcuio.h>
+ #include <linux/mcuio_ids.h>
+@@ -122,6 +122,8 @@ static const struct mcuio_device_id dio_drv_ids[] = {
+ 	{
+ 		.vendor = MCUIO_VENDOR_DOGHUNTER,
+ 		.device = MCUIO_DEVICE_DIGITALIO_SHIELD,
++		.class = MCUIO_CLASS_SHIELD,
++		.class_mask = 0xffff,
+ 	},
+ 	/* Terminator */
+ 	{
+diff --git a/drivers/mcuio/mcuio-dogoled-shield.c b/drivers/mcuio/mcuio-dogoled-shield.c
+index 5ef32f3..b530883 100644
+--- a/drivers/mcuio/mcuio-dogoled-shield.c
++++ b/drivers/mcuio/mcuio-dogoled-shield.c
+@@ -101,6 +101,8 @@ static const struct mcuio_device_id dogoled_drv_ids[] = {
+ 	{
+ 		.vendor = MCUIO_VENDOR_DOGHUNTER,
+ 		.device = MCUIO_DEVICE_DOGOLED_SHIELD,
++		.class = MCUIO_CLASS_SHIELD,
++		.class_mask = 0xffff,
+ 	},
+ 	/* Terminator */
+ 	{
+diff --git a/drivers/mcuio/mcuio-lucky-shield.c b/drivers/mcuio/mcuio-lucky-shield.c
+index 537bb3d..c2bc7b3 100644
+--- a/drivers/mcuio/mcuio-lucky-shield.c
++++ b/drivers/mcuio/mcuio-lucky-shield.c
+@@ -26,7 +26,7 @@
+ #include <linux/i2c.h>
+ #include <linux/platform_device.h>
+ #include <linux/platform_data/ssd1307.h>
+-#include <linux/i2c/pca953x.h>
++#include <linux/platform_data/pca953x.h>
+ 
+ #include <linux/mcuio.h>
+ #include <linux/mcuio_ids.h>
+@@ -52,7 +52,7 @@ module_param(sht21_addr, ushort, 0644);
+ module_param(ssd1307_addr, ushort, 0644);
+ module_param(mma8491_addr, ushort, 0644);
+ module_param(mma8491_rst, uint, 0644);
+-module_param(bme280_addr, uint, 0644);
++module_param(bme280_addr, ushort, 0644);
+ 
+ static struct ssd1307_platform_data ssd1307_plat = {
+ 	.type = SSD1307_TYPE_1306,
+@@ -149,6 +149,8 @@ static const struct mcuio_device_id lucky_drv_ids[] = {
+ 	{
+ 		.vendor = MCUIO_VENDOR_DOGHUNTER,
+ 		.device = MCUIO_DEVICE_LUCKY_SHIELD,
++		.class = MCUIO_CLASS_SHIELD,
++		.class_mask = 0xffff,
+ 	},
+ 	/* Terminator */
+ 	{
+@@ -171,7 +173,6 @@ static int i2cdev_notifier_call(struct notifier_block *nb, unsigned long action,
+ 			 void *data)
+ {
+ 	struct mcuio_shld_i2c_info *i;
+-	struct i2c_client *c = to_i2c_client(data);
+ 	int cnt;
+ 
+ 	if (action == BUS_NOTIFY_DEL_DEVICE) {
+-- 
+2.10.1
+

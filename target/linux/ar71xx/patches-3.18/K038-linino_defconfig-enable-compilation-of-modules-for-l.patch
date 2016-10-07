@@ -1,0 +1,54 @@
+From 5f8ad68520791e8540dd73c96e23e1eada4b9348 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Thu, 21 May 2015 10:51:16 +0200
+Subject: [PATCH 38/83] linino_defconfig: enable compilation of modules for
+ lucky shield
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ arch/mips/configs/linino_defconfig | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/arch/mips/configs/linino_defconfig b/arch/mips/configs/linino_defconfig
+index e0cff1d..094f1c2 100644
+--- a/arch/mips/configs/linino_defconfig
++++ b/arch/mips/configs/linino_defconfig
+@@ -1818,7 +1818,7 @@ CONFIG_MISDN_L1OIP=m
+ #
+ # Input device support
+ #
+-CONFIG_INPUT=m
++CONFIG_INPUT=y
+ # CONFIG_INPUT_FF_MEMLESS is not set
+ CONFIG_INPUT_POLLDEV=m
+ # CONFIG_INPUT_SPARSEKMAP is not set
+@@ -1886,6 +1886,8 @@ CONFIG_INPUT_GPIO_ROTARY_ENCODER=m
+ # CONFIG_INPUT_SOC_BUTTON_ARRAY is not set
+ # CONFIG_INPUT_DRV260X_HAPTICS is not set
+ # CONFIG_INPUT_DRV2667_HAPTICS is not set
++CONFIG_BME280=y
++CONFIG_BME280_I2C=y
+ 
+ #
+ # Hardware I/O ports
+@@ -2087,6 +2089,7 @@ CONFIG_ARCH_HAVE_CUSTOM_GPIO_H=y
+ CONFIG_ARCH_REQUIRE_GPIOLIB=y
+ CONFIG_GPIOLIB=y
+ CONFIG_GPIO_DEVRES=y
++CONFIG_GPIOLIB_IRQCHIP=y
+ # CONFIG_DEBUG_GPIO is not set
+ CONFIG_GPIO_SYSFS=y
+ 
+@@ -2104,7 +2107,8 @@ CONFIG_GPIO_MCUIO=y
+ #
+ # CONFIG_GPIO_MAX7300 is not set
+ # CONFIG_GPIO_MAX732X is not set
+-# CONFIG_GPIO_PCA953X is not set
++CONFIG_GPIO_PCA953X=y
++CONFIG_GPIO_PCA953X_IRQ=y
+ CONFIG_GPIO_PCF857X=y
+ # CONFIG_GPIO_SX150X is not set
+ # CONFIG_GPIO_ADP5588 is not set
+-- 
+2.10.1
+

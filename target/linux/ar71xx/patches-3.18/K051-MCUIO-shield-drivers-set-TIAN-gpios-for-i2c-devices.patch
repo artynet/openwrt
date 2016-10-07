@@ -1,0 +1,62 @@
+From d274da7d14d4fac0cb8b3766f3ae2b55b25cf91c Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Tue, 17 Nov 2015 13:01:27 +0100
+Subject: [PATCH 51/83] MCUIO: shield drivers, set TIAN gpios for i2c devices
+
+This patch is temporary and is needed to start using Lucky shield connected
+to Tian board. Mapping of gpios has been replaced from those for Yun to those
+for Tian. So, with this patch, shield drivers will not work for Yun anymore.
+
+The definitive solution is to use the new gpiolib interface which permits
+to define a gpio mapping based on the functionalities and abstracting it
+from gpio number.
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/mcuio-dio-shield.c     | 2 +-
+ drivers/mcuio/mcuio-dogoled-shield.c | 2 +-
+ drivers/mcuio/mcuio-lucky-shield.c   | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/mcuio/mcuio-dio-shield.c b/drivers/mcuio/mcuio-dio-shield.c
+index 0123944..c84096a 100644
+--- a/drivers/mcuio/mcuio-dio-shield.c
++++ b/drivers/mcuio/mcuio-dio-shield.c
+@@ -39,7 +39,7 @@ module_param(pca9555_base, uint, 0644);
+ static struct pca953x_platform_data pca9555_plat;
+ 
+ static struct mcuio_shld_i2c_info i2c_lst[] = {
+-	MCUIO_SHLD_I2C_DEV("pca9555", &pca9555_addr, &pca9555_plat, 104),
++	MCUIO_SHLD_I2C_DEV("pca9555", &pca9555_addr, &pca9555_plat, 111),
+ };
+ 
+ static int mcuio_dio_probe(struct mcuio_device *mdev)
+diff --git a/drivers/mcuio/mcuio-dogoled-shield.c b/drivers/mcuio/mcuio-dogoled-shield.c
+index b530883..b22f37f 100644
+--- a/drivers/mcuio/mcuio-dogoled-shield.c
++++ b/drivers/mcuio/mcuio-dogoled-shield.c
+@@ -32,7 +32,7 @@
+ #include "mcuio-shields.h"
+ 
+ static unsigned short ssd1307_addr = 0x3c;
+-static unsigned int ssd1307_rst = 120;
++static unsigned int ssd1307_rst = 108;
+ module_param(ssd1307_addr, ushort, 0644);
+ module_param(ssd1307_rst, uint, 0644);
+ 
+diff --git a/drivers/mcuio/mcuio-lucky-shield.c b/drivers/mcuio/mcuio-lucky-shield.c
+index c2bc7b3..dd8d690 100644
+--- a/drivers/mcuio/mcuio-lucky-shield.c
++++ b/drivers/mcuio/mcuio-lucky-shield.c
+@@ -66,7 +66,7 @@ static struct ssd1307_platform_data ssd1307_plat = {
+ static struct pca953x_platform_data pca9555_plat;
+ 
+ static struct mcuio_shld_i2c_info i2c_lst[] = {
+-	MCUIO_SHLD_I2C_DEV("pca9555", &pca9555_addr, &pca9555_plat, 122),
++	MCUIO_SHLD_I2C_DEV("pca9555", &pca9555_addr, &pca9555_plat, 115),
+ 	MCUIO_SHLD_I2C_DEV("mpl3115", &mpl3115_addr, NULL, -1),
+ 	MCUIO_SHLD_I2C_DEV("mma8491", &mma8491_addr, &mma8491_rst, -1),
+ 	MCUIO_SHLD_I2C_DEV("mag3110", &mag3110_addr, NULL, -1),
+-- 
+2.10.1
+

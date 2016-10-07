@@ -1,0 +1,4795 @@
+From e4308ca74d4a864aea492da030456f5852642fc5 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Wed, 22 Apr 2015 12:12:05 +0200
+Subject: [PATCH 04/83] mcuio core files imported from kernel_3.3.8
+
+Files were copied from Linino kernel_3.3.8 master branch
+
+git repository: git@github.com/linino/kernel_3.3.8
+git commit: a20da43584
+
+NOTE: in this commit, mcuio does not compile since it needs to be adapted
+to kernel 3.18. This will be done in the next patches.
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/Kconfig                                   |   2 +
+ drivers/Makefile                                  |   1 +
+ drivers/base/regmap/Kconfig                       |   4 +
+ drivers/base/regmap/Makefile                      |   1 +
+ drivers/base/regmap/regmap-mcuio-remote.c         | 259 ++++++++
+ drivers/mcuio/Kconfig                             |  59 ++
+ drivers/mcuio/Makefile                            |  15 +
+ drivers/mcuio/bus.c                               | 173 +++++
+ drivers/mcuio/core.c                              | 109 +++
+ drivers/mcuio/mcuio-dio-shield.c                  | 157 +++++
+ drivers/mcuio/mcuio-dogoled-shield.c              | 136 ++++
+ drivers/mcuio/mcuio-hc-dev.c                      |  88 +++
+ drivers/mcuio/mcuio-hc-drv.c                      | 764 ++++++++++++++++++++++
+ drivers/mcuio/mcuio-hc-ldisc.c                    | 151 +++++
+ drivers/mcuio/mcuio-internal.h                    |  48 ++
+ drivers/mcuio/mcuio-irq-test.c                    | 150 +++++
+ drivers/mcuio/mcuio-js-shield.c                   | 639 ++++++++++++++++++
+ drivers/mcuio/mcuio-lucky-shield.c                | 214 ++++++
+ drivers/mcuio/mcuio-shields-manprobe.c            | 175 +++++
+ drivers/mcuio/mcuio-shields.h                     |  23 +
+ drivers/mcuio/mcuio-soft-hc.c                     | 369 +++++++++++
+ drivers/mcuio/mcuio-soft-local-irq-ctrl-msg-dev.c | 278 ++++++++
+ drivers/mcuio/sysfs.c                             |  83 +++
+ include/linux/mcuio-hc.h                          |  76 +++
+ include/linux/mcuio-proto.h                       | 246 +++++++
+ include/linux/mcuio-soft-hc.h                     |  85 +++
+ include/linux/mcuio.h                             | 195 ++++++
+ include/linux/mcuio_ids.h                         |  46 ++
+ 28 files changed, 4546 insertions(+)
+ create mode 100644 drivers/base/regmap/regmap-mcuio-remote.c
+ create mode 100644 drivers/mcuio/Kconfig
+ create mode 100644 drivers/mcuio/Makefile
+ create mode 100644 drivers/mcuio/bus.c
+ create mode 100644 drivers/mcuio/core.c
+ create mode 100644 drivers/mcuio/mcuio-dio-shield.c
+ create mode 100644 drivers/mcuio/mcuio-dogoled-shield.c
+ create mode 100644 drivers/mcuio/mcuio-hc-dev.c
+ create mode 100644 drivers/mcuio/mcuio-hc-drv.c
+ create mode 100644 drivers/mcuio/mcuio-hc-ldisc.c
+ create mode 100644 drivers/mcuio/mcuio-internal.h
+ create mode 100644 drivers/mcuio/mcuio-irq-test.c
+ create mode 100644 drivers/mcuio/mcuio-js-shield.c
+ create mode 100644 drivers/mcuio/mcuio-lucky-shield.c
+ create mode 100644 drivers/mcuio/mcuio-shields-manprobe.c
+ create mode 100644 drivers/mcuio/mcuio-shields.h
+ create mode 100644 drivers/mcuio/mcuio-soft-hc.c
+ create mode 100644 drivers/mcuio/mcuio-soft-local-irq-ctrl-msg-dev.c
+ create mode 100644 drivers/mcuio/sysfs.c
+ create mode 100644 include/linux/mcuio-hc.h
+ create mode 100644 include/linux/mcuio-proto.h
+ create mode 100644 include/linux/mcuio-soft-hc.h
+ create mode 100644 include/linux/mcuio.h
+ create mode 100644 include/linux/mcuio_ids.h
+
+diff --git a/drivers/Kconfig b/drivers/Kconfig
+index 1a693d3..d55ad0f 100644
+--- a/drivers/Kconfig
++++ b/drivers/Kconfig
+@@ -182,4 +182,6 @@ source "drivers/ras/Kconfig"
+ 
+ source "drivers/thunderbolt/Kconfig"
+ 
++source "drivers/mcuio/Kconfig"
++
+ endmenu
+diff --git a/drivers/Makefile b/drivers/Makefile
+index 7b7a94f..4d71031 100644
+--- a/drivers/Makefile
++++ b/drivers/Makefile
+@@ -161,3 +161,4 @@ obj-$(CONFIG_POWERCAP)		+= powercap/
+ obj-$(CONFIG_MCB)		+= mcb/
+ obj-$(CONFIG_RAS)		+= ras/
+ obj-$(CONFIG_THUNDERBOLT)	+= thunderbolt/
++obj-$(CONFIG_MCUIO)		+= mcuio/
+diff --git a/drivers/base/regmap/Kconfig b/drivers/base/regmap/Kconfig
+index 66e8a5b..fd76195 100644
+--- a/drivers/base/regmap/Kconfig
++++ b/drivers/base/regmap/Kconfig
+@@ -31,3 +31,7 @@ config REGMAP_MMIO
+ config REGMAP_IRQ
+ 	select REGMAP
+ 	bool
++
++config REGMAP_MCUIO
++	select REGMAP
++	bool
+diff --git a/drivers/base/regmap/Makefile b/drivers/base/regmap/Makefile
+index 9f7da64..8cdd0ba 100644
+--- a/drivers/base/regmap/Makefile
++++ b/drivers/base/regmap/Makefile
+@@ -8,3 +8,4 @@ obj-$(CONFIG_REGMAP_SPI) += regmap-spi.o
+ obj-$(CONFIG_REGMAP_SPMI) += regmap-spmi.o
+ obj-$(CONFIG_REGMAP_MMIO) += regmap-mmio.o
+ obj-$(CONFIG_REGMAP_IRQ) += regmap-irq.o
++obj-$(CONFIG_REGMAP_MCUIO) += regmap-mcuio-remote.o
+diff --git a/drivers/base/regmap/regmap-mcuio-remote.c b/drivers/base/regmap/regmap-mcuio-remote.c
+new file mode 100644
+index 0000000..126f5ab
+--- /dev/null
++++ b/drivers/base/regmap/regmap-mcuio-remote.c
+@@ -0,0 +1,259 @@
++/*
++ * Regmap for remote mcuio devices (not living on this machine)
++ * Presently, all mcuio devices are remote devices except for the ho
++ * controller. Code comes from regmap-mmio
++ */
++
++#include <linux/err.h>
++#include <linux/init.h>
++#include <linux/io.h>
++#include <linux/module.h>
++#include <linux/slab.h>
++#include <linux/regmap.h>
++
++#include <linux/mcuio.h>
++#include <linux/mcuio-proto.h>
++
++#define MAX_RETRIES 3
++
++/**
++ * mcuio bus context
++ * @hc: pointer to host controller
++ * @dev: device number of mcuio device
++ * @func: function number of mcuio device
++ */
++struct regmap_mcuio_context {
++	struct mcuio_device *hc;
++	unsigned dev;
++	unsigned func;
++	unsigned val_bytes;
++};
++
++static int regmap_mcuio_gather_write(void *context,
++				     const void *reg, size_t reg_size,
++				     const void *val, size_t val_size)
++{
++	struct regmap_mcuio_context *ctx = context;
++	struct mcuio_request r;
++	u32 offset;
++	unsigned t;
++	int ret = 0;
++	int retries = MAX_RETRIES;
++
++	BUG_ON(reg_size != 4);
++
++	offset = *(u32 *)reg;
++
++	r.hc = ctx->hc;
++	r.dev = ctx->dev;
++	r.func = ctx->func;
++	r.offset = offset;
++
++	switch (ctx->val_bytes) {
++	case 1:
++		t = mcuio_type_wrb;
++		break;
++	case 2:
++		t = mcuio_type_wrw;
++		break;
++	case 4:
++		t = mcuio_type_wrdw;
++		break;
++	case 8:
++		t = mcuio_type_wrq;
++		break;
++	default:
++		BUG();
++	}
++
++	while (val_size && retries) {
++		int sz = ctx->val_bytes, fill = 0;
++
++		if (val_size >= sizeof(u64)) {
++			fill = 1;
++			sz = sizeof(u64);
++		}
++		memcpy(r.data, val, sz);
++		mcuio_init_request(&r, ctx->hc, ctx->dev, ctx->func,
++				   t, fill, offset, 0xffff);
++		ret = mcuio_submit_request(&r);
++		if (ret == -ETIMEDOUT) {
++			retries--;
++			continue;
++		}
++		if (ret)
++			break;
++		val_size -= sz;
++		val += sz;
++		offset += sz;
++	}
++
++	return ret;
++}
++
++static int regmap_mcuio_write(void *context, const void *data, size_t count)
++{
++	BUG_ON(count < 4);
++
++	return regmap_mcuio_gather_write(context, data, 4, data + 4, count - 4);
++}
++
++static int regmap_mcuio_read(void *context,
++			     const void *reg, size_t reg_size,
++			     void *val, size_t val_size)
++{
++	struct regmap_mcuio_context *ctx = context;
++	struct mcuio_request r;
++	u32 offset = *(u32 *)reg;
++	int ret = 0;
++	unsigned t;
++	int retries = MAX_RETRIES;
++
++	BUG_ON(reg_size != 4);
++	
++	switch (ctx->val_bytes) {
++	case 1:
++		t = mcuio_type_rdb;
++		break;
++	case 2:
++		t = mcuio_type_rdw;
++		break;
++	case 4:
++		t = mcuio_type_rddw;
++		break;
++	case 8:
++		t = mcuio_type_rdq;
++		break;
++	default:
++		return -EINVAL;
++	}
++	while (val_size && retries) {
++		int sz = ctx->val_bytes, fill = 0;
++
++		fill = 0;
++		if (val_size >= sizeof(u64)) {
++			fill = 1;
++			sz = sizeof(u64);
++		}
++		mcuio_init_request(&r, ctx->hc, ctx->dev, ctx->func, t,
++				   fill, offset, 0xffff);
++		ret = mcuio_submit_request(&r);
++		if (ret == -ETIMEDOUT) {
++			retries--;
++			continue;
++		}
++		if (ret)
++			break;
++		memcpy(val, r.data, sz);
++		val_size -= sz;
++		val += sz;
++		offset += sz;
++	}
++	return ret;
++}
++
++
++static void regmap_mcuio_free_context(void *context)
++{
++	struct regmap_mcuio_context *ctx = context;
++	kfree(ctx);
++}
++
++static struct regmap_bus regmap_mcuio = {
++	.write = regmap_mcuio_write,
++	.read = regmap_mcuio_read,
++	.free_context = regmap_mcuio_free_context,
++};
++
++static struct regmap_mcuio_context *
++regmap_mcuio_setup_context(struct mcuio_device *mdev,
++			   const struct regmap_config *config)
++{
++	struct mcuio_device *hc = to_mcuio_dev(mdev->dev.parent);
++	struct regmap_mcuio_context *ctx;
++	int min_stride;
++
++	if (config->reg_bits != 32)
++		return ERR_PTR(-EINVAL);
++
++	switch (config->val_bits) {
++	case 8:
++		/* The core treats 0 as 1 */
++		min_stride = 0;
++		break;
++	case 16:
++		min_stride = 2;
++		break;
++	case 32:
++		min_stride = 4;
++		break;
++#ifdef CONFIG_64BIT
++	case 64:
++		min_stride = 8;
++		break;
++#endif
++		break;
++	default:
++		return ERR_PTR(-EINVAL);
++	}
++
++	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
++	if (!ctx)
++		return ERR_PTR(-ENOMEM);
++
++	ctx->hc = hc;
++	ctx->dev = mdev->device;
++	ctx->func = mdev->fn;
++	ctx->val_bytes = config->val_bits / 8;
++	return ctx;
++}
++
++
++/**
++ * regmap_init_mcuio(): Initialise mcuio register map
++ *
++ * @dev: Device that will be interacted with
++ * @hc: mcuio system controller
++ * @config: Configuration for register map
++ *
++ * The return value will be an ERR_PTR() on error or a valid pointer to
++ * a struct regmap.
++ */
++struct regmap *regmap_init_mcuio(struct mcuio_device *mdev,
++				 const struct regmap_config *config)
++{
++	struct regmap_mcuio_context *ctx;
++	ctx = regmap_mcuio_setup_context(mdev, config);
++	if (IS_ERR(ctx))
++		return ERR_CAST(ctx);
++
++	return regmap_init(&mdev->dev, &regmap_mcuio, ctx, config);
++}
++EXPORT_SYMBOL_GPL(regmap_init_mcuio);
++
++/**
++ * devm_regmap_init_mcuio(): Initialise mcuio register map, device manage
++ * version
++ *
++ * @dev: Device that will be interacted with
++ * @hc: mcuio system controller
++ * @config: Configuration for register map
++ *
++ * The return value will be an ERR_PTR() on error or a valid pointer to
++ * a struct regmap.
++ */
++struct regmap *devm_regmap_init_mcuio(struct mcuio_device *mdev,
++				      const struct regmap_config *config)
++{
++	struct regmap_mcuio_context *ctx;
++	ctx = regmap_mcuio_setup_context(mdev, config);
++	if (IS_ERR(ctx))
++		return ERR_CAST(ctx);
++
++	return devm_regmap_init(&mdev->dev, &regmap_mcuio, ctx, config);
++}
++EXPORT_SYMBOL_GPL(devm_regmap_init_mcuio);
++
++MODULE_AUTHOR("Davide Ciminaghi");
++MODULE_DESCRIPTION("MCUIO bus regmap implementation");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mcuio/Kconfig b/drivers/mcuio/Kconfig
+new file mode 100644
+index 0000000..4588270
+--- /dev/null
++++ b/drivers/mcuio/Kconfig
+@@ -0,0 +1,59 @@
++menuconfig MCUIO
++	tristate "mcuio drivers"
++	select REGMAP_MCUIO
++	help
++	  MCUIO is a protocol and a set of drivers which let a Linux MPU
++	  (MPU = MicroProcessor Unit) control an MCU's peripherals
++	  (MCU = Micro Controller Unit, some kind of tiny microcontroller
++	  running a tiny OS or no OS at all).
++
++if MCUIO
++
++config MCUIO_LDISC_HC
++	tristate "mcuio line discipline host controller"
++	default y
++	help
++	  This adds a line-discipline based MCUIO host controller, which is
++	  the only host controller at present. Say Y if in doubt.
++
++config MCUIO_JS_SHIELD
++	tristate "mcuio joystick shield driver"
++	default y
++	help
++	  Adds a driver for a joystick + buttons shield (experimental)
++
++config MCUIO_LUCKY_SHIELD
++	tristate "mcuio lucky shield driver"
++	depends on I2C
++	default y
++	help
++	  Adds a driver for the Dog Hunter Lucky shield (experimental)
++
++config MCUIO_DIGITALIO_SHIELD
++	tristate "mcuio Digital I/O shield driver"
++	depends on I2C
++	default y
++	help
++	  Adds a driver for the Dog Hunter Digital IO shield (experimental)
++
++config MCUIO_DOGOLED_SHIELD
++	tristate "mcuio Dog OLED shield driver"
++	depends on (MCUIO && I2C)
++	default y
++	help
++	  Adds a driver for the Dog Hunter Dog OLED shield (experimental)
++
++config MCUIO_SHIELDS_MANUAL_PROBE
++	tristate "mcuio shields manual probe"
++	default y
++	help
++	  Since autoprobe of mcuio shields is not implemented yet, this option
++	  makes it possible to manually register shields (experimental).
++
++config MCUIO_IRQ_TEST
++        tristate "mcuio irq test function driver"
++	default n
++	help
++	  Adds a driver for the irq test mcuio function
++
++endif # MCUIO
+diff --git a/drivers/mcuio/Makefile b/drivers/mcuio/Makefile
+new file mode 100644
+index 0000000..9b01bf3
+--- /dev/null
++++ b/drivers/mcuio/Makefile
+@@ -0,0 +1,15 @@
++# This comes from the zio Makefile
++
++LINUX ?= /lib/modules/$(shell uname -r)/build
++
++mcuio-y := core.o bus.o sysfs.o
++
++obj-$(CONFIG_MCUIO) += mcuio.o mcuio-hc-drv.o mcuio-hc-dev.o mcuio-soft-hc.o \
++mcuio-soft-local-irq-ctrl-msg-dev.o
++obj-$(CONFIG_MCUIO_LDISC_HC) += mcuio-hc-ldisc.o
++obj-$(CONFIG_MCUIO_JS_SHIELD) += mcuio-js-shield.o
++obj-$(CONFIG_MCUIO_LUCKY_SHIELD) += mcuio-lucky-shield.o
++obj-$(CONFIG_MCUIO_DIGITALIO_SHIELD) += mcuio-dio-shield.o
++obj-$(CONFIG_MCUIO_DOGOLED_SHIELD) += mcuio-dogoled-shield.o
++obj-$(CONFIG_MCUIO_SHIELDS_MANUAL_PROBE) += mcuio-shields-manprobe.o
++obj-$(CONFIG_MCUIO_IRQ_TEST) += mcuio-irq-test.o
+diff --git a/drivers/mcuio/bus.c b/drivers/mcuio/bus.c
+new file mode 100644
+index 0000000..4cd30bc
+--- /dev/null
++++ b/drivers/mcuio/bus.c
+@@ -0,0 +1,173 @@
++/*
++ * Copyright 2011 Dog Hunter SA
++ * Author: Davide Ciminaghi <ciminaghi@gnudd.com>
++ *
++ * GNU GPLv2 or later
++ */
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/device.h>
++#include <linux/slab.h>
++#include <linux/types.h>
++#include <linux/err.h>
++
++#include <linux/mcuio.h>
++#include <linux/mcuio_ids.h>
++#include "mcuio-internal.h"
++
++static inline int mcuio_device_is_host_controller(struct mcuio_device *mdev)
++{
++	return mdev->id.class == MCUIO_CLASS_HOST_CONTROLLER ||
++	    mdev->id.class == MCUIO_CLASS_SOFT_HOST_CONTROLLER;
++}
++
++static struct bus_attribute def_bus_attrs[] = {
++	__ATTR_NULL,
++};
++
++static void mcuio_dev_default_release(struct device *dev)
++{
++	struct mcuio_device *mdev = to_mcuio_dev(dev);
++	kfree(mdev);
++}
++
++/*
++ * mcuio_match_device
++ * @drv driver to match
++ * @dev device to match
++ *
++ */
++static int mcuio_match_device(struct device *dev, struct device_driver *drv)
++{
++	struct mcuio_device *mdev = to_mcuio_dev(dev);
++	struct mcuio_driver *mdrv = to_mcuio_drv(drv);
++	const struct mcuio_device_id *id;
++	pr_debug("%s:%d\n", __func__, __LINE__);
++	for (id = mdrv->id_table;
++	     !(id->device == MCUIO_NO_DEVICE &&
++	       id->class == MCUIO_CLASS_UNDEFINED);
++	     id++) {
++		/* Device and vendor match first */
++		if (mdev->id.device == id->device &&
++		    mdev->id.vendor == id->vendor)
++			return 1;
++		/* Next try class match */
++		if (mdev->id.class == (id->class & id->class_mask))
++			return 1;
++	}
++	return 0;
++}
++
++struct bus_type mcuio_bus_type = {
++	.name = "mcuio",
++	.bus_attrs = def_bus_attrs,
++	.match = mcuio_match_device,
++};
++
++static int mcuio_drv_probe(struct device *_dev)
++{
++	struct mcuio_driver *drv = to_mcuio_drv(_dev->driver);
++	struct mcuio_device *dev = to_mcuio_dev(_dev);
++
++	if (!drv->probe)
++		return -ENODEV;
++	return drv->probe(dev);
++}
++
++static int mcuio_drv_remove(struct device *_dev)
++{
++	struct mcuio_driver *drv = to_mcuio_drv(_dev->driver);
++	struct mcuio_device *dev = to_mcuio_dev(_dev);
++
++	if (drv->remove)
++		return drv->remove(dev);
++	_dev->driver = NULL;
++	return 0;
++}
++
++int mcuio_driver_register(struct mcuio_driver *drv, struct module *owner)
++{
++	drv->driver.owner = owner;
++	drv->driver.bus = &mcuio_bus_type;
++	if (drv->probe)
++		drv->driver.probe = mcuio_drv_probe;
++	if (drv->remove)
++		drv->driver.remove = mcuio_drv_remove;
++	return driver_register(&drv->driver);
++}
++EXPORT_SYMBOL_GPL(mcuio_driver_register);
++
++void mcuio_driver_unregister(struct mcuio_driver *drv)
++{
++	driver_unregister(&drv->driver);
++}
++EXPORT_SYMBOL_GPL(mcuio_driver_unregister);
++
++struct device mcuio_bus = {
++	.init_name	= "mcuio",
++};
++EXPORT_SYMBOL_GPL(mcuio_bus);
++
++static const struct attribute_group *default_dev_attr_groups[] = {
++	&mcuio_default_dev_attr_group,
++	NULL,
++};
++
++struct device_type mcuio_default_device_type = {
++	.name = "mcuiodev",
++	.groups = default_dev_attr_groups,
++	.release = mcuio_dev_default_release,
++};
++
++struct mcuio_device *mcuio_bus_find_hc(int bus)
++{
++	char _name[8];
++	struct device *dev;
++	sprintf(_name, "%d:0.0", bus);
++	dev = bus_find_device_by_name(&mcuio_bus_type, NULL, _name);
++	if (!dev)
++		return ERR_PTR(-ENODEV);
++
++	return container_of(dev, struct mcuio_device, dev);
++}
++EXPORT_SYMBOL_GPL(mcuio_bus_find_hc);
++
++int mcuio_device_register(struct mcuio_device *mdev,
++			  struct device_type *type,
++			  struct device *parent)
++{
++	int ret;
++	if (!mdev)
++		return -EINVAL;
++	mdev->dev.parent = parent ? parent : &mcuio_bus;
++	mdev->dev.bus = &mcuio_bus_type;
++	mdev->dev.type = type ? type : &mcuio_default_device_type;
++	dev_set_name(&mdev->dev, "%d:%d.%d", mdev->bus, mdev->device, mdev->fn);
++	ret = device_register(&mdev->dev);
++	if (!ret)
++		return ret;
++	put_device(&mdev->dev);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(mcuio_device_register);
++
++static int __mcuio_device_unregister(struct device *dev, void *dummy)
++{
++	device_unregister(dev);
++	return 0;
++}
++
++static void mcuio_unregister_children(struct mcuio_device *mdev)
++{
++	device_for_each_child(&mdev->dev, NULL, __mcuio_device_unregister);
++}
++
++void mcuio_device_unregister(struct mcuio_device *mdev)
++{
++	if (mcuio_device_is_host_controller(mdev))
++		mcuio_unregister_children(mdev);
++	__mcuio_device_unregister(&mdev->dev, NULL);
++}
++EXPORT_SYMBOL_GPL(mcuio_device_unregister);
+diff --git a/drivers/mcuio/core.c b/drivers/mcuio/core.c
+new file mode 100644
+index 0000000..de9c614
+--- /dev/null
++++ b/drivers/mcuio/core.c
+@@ -0,0 +1,109 @@
++/*
++ * Copyright 2013 Dog Hunter SA
++ *
++ * Author Davide Ciminaghi
++ * GNU GPLv2
++ */
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/types.h>
++#include <linux/string.h>
++#include <linux/device.h>
++#include <linux/slab.h>
++#include <linux/mcuio.h>
++#include <linux/completion.h>
++#include <linux/spinlock.h>
++#include <linux/bitops.h>
++#include <linux/i2c.h>
++#include <linux/mcuio_ids.h>
++#include "mcuio-internal.h"
++
++unsigned long int busnum;
++spinlock_t busnum_lock;
++
++int mcuio_get_bus(void)
++{
++	int out;
++	spin_lock(&busnum_lock);
++	if (busnum == 0xffffffff) {
++		out = -ENOMEM;
++		goto end;
++	}
++	out = find_last_bit(&busnum, sizeof(busnum));
++	if (out == sizeof(busnum))
++		out = 0;
++	set_bit(out, &busnum);
++end:
++	spin_unlock(&busnum_lock);
++	return out;
++}
++EXPORT_SYMBOL(mcuio_get_bus);
++
++void mcuio_put_bus(unsigned n)
++{
++	clear_bit(n, &busnum);
++}
++EXPORT_SYMBOL(mcuio_put_bus);
++
++static int match_i2c_mcuio(struct device *dev, void *dummy)
++{
++	struct mcuio_device *mdev = to_mcuio_dev(dev);
++	return mdev->id.class == MCUIO_CLASS_I2C_CONTROLLER;
++}
++
++static int match_i2c_adap(struct device *dev, void *dummy)
++{
++	return dev->type == &i2c_adapter_type;
++}
++
++struct i2c_adapter *mcuio_get_i2c_adapter(struct mcuio_device *mdev)
++{
++	/* Look for mcuio i2c controller device */
++	struct device *hcdev = mdev->dev.parent;
++	struct device *mcuio_i2c_dev = device_find_child(hcdev,
++							 NULL,
++							 match_i2c_mcuio);
++	struct device *adap_dev;
++
++	if (!mcuio_i2c_dev) {
++		dev_err(&mdev->dev,
++			"Cannot find mcuio i2c adapter mcuio dev\n");
++		return NULL;
++	}
++	/* Found, now we need the corresponding adapter ... */
++	adap_dev = device_find_child(mcuio_i2c_dev, NULL, match_i2c_adap);
++	if (!adap_dev) {
++		dev_err(&mdev->dev, "Cannot find mcuio i2c adapter\n");
++		return NULL;
++	}
++	return to_i2c_adapter(adap_dev);
++}
++EXPORT_SYMBOL(mcuio_get_i2c_adapter);
++
++static int __init mcuio_init(void)
++{
++	int ret;
++	spin_lock_init(&busnum_lock);
++	ret = device_register(&mcuio_bus);
++	if (ret)
++		return ret;
++	/* Register mcuio bus */
++	return bus_register(&mcuio_bus_type);
++}
++
++static void __exit mcuio_exit(void)
++{
++	/* Remove mcuio bus */
++	device_unregister(&mcuio_bus);
++	bus_unregister(&mcuio_bus_type);
++	return;
++}
++
++postcore_initcall(mcuio_init);
++module_exit(mcuio_exit);
++
++MODULE_AUTHOR("Davide Ciminaghi");
++MODULE_DESCRIPTION("MCUIO subsys core module");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mcuio/mcuio-dio-shield.c b/drivers/mcuio/mcuio-dio-shield.c
+new file mode 100644
+index 0000000..081bc2f
+--- /dev/null
++++ b/drivers/mcuio/mcuio-dio-shield.c
+@@ -0,0 +1,157 @@
++/*
++ * Copyright 2014 Dog Hunter SA
++ * Author: Aurelio Colosimo <aurelio@aureliocolosimo.it>
++ *
++ * GNU GPLv2 or later
++ */
++
++#define DEBUG
++
++/* mcuio driver for DigitalIO shield */
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/device.h>
++#include <linux/slab.h>
++#include <linux/types.h>
++#include <linux/regmap.h>
++#include <linux/workqueue.h>
++#include <linux/irq.h>
++#include <linux/interrupt.h>
++#include <linux/gpio.h>
++#include <linux/i2c.h>
++#include <linux/platform_device.h>
++#include <linux/i2c/pca953x.h>
++
++#include <linux/mcuio.h>
++#include <linux/mcuio_ids.h>
++#include <linux/mcuio-proto.h>
++
++#include "mcuio-internal.h"
++#include "mcuio-shields.h"
++
++static unsigned short pca9555_addr = 0x27;
++static unsigned int pca9555_base = 216;
++module_param(pca9555_addr, ushort, 0644);
++module_param(pca9555_base, uint, 0644);
++
++static struct pca953x_platform_data pca9555_plat;
++
++static struct mcuio_shld_i2c_info i2c_lst[] = {
++	MCUIO_SHLD_I2C_DEV("pca9555", &pca9555_addr, &pca9555_plat, 104),
++};
++
++static int mcuio_dio_probe(struct mcuio_device *mdev)
++{
++	struct mcuio_shld_i2c_info *i;
++	int cnt;
++	int ret;
++	struct mcuio_shld_data *data;
++
++	dev_dbg(&mdev->dev, "%s entered\n", __func__);
++
++	data = devm_kzalloc(&mdev->dev, sizeof(*data), GFP_KERNEL);
++	if (!data)
++		return -ENOMEM;
++
++	dev_set_drvdata(&mdev->dev, data);
++
++	/* Apply module_param values to platform_data when needed */
++	pca9555_plat.gpio_base = pca9555_base;
++
++	data->i2c_adap = mcuio_get_i2c_adapter(mdev);
++
++	if (!data->i2c_adap) {
++		dev_err(&mdev->dev, "error setting up i2c adapter\n");
++		return -ENODEV;
++	}
++
++	data->i2c_info = i2c_lst;
++	data->i2c_cnt = ARRAY_SIZE(i2c_lst);
++
++	/* Register all devices in Digital IO shield */
++	for (cnt = 0; cnt < data->i2c_cnt; cnt++) {
++		i = &data->i2c_info[cnt];
++		i->info.addr = *i->paddr;
++
++		/* HACK this is needed to enable pullup */
++		ret = devm_gpio_request_one(&mdev->dev, i->gpio_irq, GPIOF_DIR_IN,
++				    "digitalio-shield");
++		if (ret < 0)
++			return ret;
++		gpio_direction_output(i->gpio_irq, 1);
++		gpio_direction_input(i->gpio_irq);
++		devm_gpio_free(&mdev->dev, i->gpio_irq);
++
++		i->info.irq = (i->gpio_irq >= 0) ?
++			gpio_to_irq(i->gpio_irq) : 0;
++
++		i->i2c_client = i2c_new_device(data->i2c_adap, &i->info);
++		if (!i->i2c_client)
++			dev_err(&mdev->dev,
++				"i2c_new_device %s failed\n", i->info.type);
++	}
++
++	dev_dbg(&mdev->dev, "%s returns ok\n", __func__);
++
++	return 0;
++}
++
++static int mcuio_dio_remove(struct mcuio_device *mdev)
++{
++	struct mcuio_shld_i2c_info *i;
++	struct mcuio_shld_data *data;
++
++	data = dev_get_drvdata(&mdev->dev);
++
++	/* Unregister all devices in Digital IO shield, in opposite order as they
++	 * had been registered */
++	for (i = &data->i2c_info[data->i2c_cnt - 1];
++	     data->i2c_cnt; i--, data->i2c_cnt--) {
++		if (i->i2c_client) {
++			i2c_unregister_device(i->i2c_client);
++			i->i2c_client = NULL;
++		}
++	}
++
++	return 0;
++}
++
++static const struct mcuio_device_id dio_drv_ids[] = {
++	{
++		.vendor = MCUIO_VENDOR_DOGHUNTER,
++		.device = MCUIO_DEVICE_DIGITALIO_SHIELD,
++	},
++	/* Terminator */
++	{
++		.device = MCUIO_NO_DEVICE,
++		.class = MCUIO_CLASS_UNDEFINED,
++	},
++};
++
++static struct mcuio_driver mcuio_dio_driver = {
++	.driver = {
++		.name = "mcuio-digitalio-shield",
++	},
++	.id_table = dio_drv_ids,
++	.probe = mcuio_dio_probe,
++	.remove = mcuio_dio_remove,
++};
++
++static int __init mcuio_dio_init(void)
++{
++	return mcuio_driver_register(&mcuio_dio_driver, THIS_MODULE);
++}
++
++static void __exit mcuio_dio_exit(void)
++{
++	return mcuio_driver_unregister(&mcuio_dio_driver);
++}
++
++subsys_initcall(mcuio_dio_init);
++module_exit(mcuio_dio_exit);
++
++MODULE_AUTHOR("Aurelio Colosimo");
++MODULE_DESCRIPTION("MCUIO driver for Digital IO shield");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mcuio/mcuio-dogoled-shield.c b/drivers/mcuio/mcuio-dogoled-shield.c
+new file mode 100644
+index 0000000..5ef32f3
+--- /dev/null
++++ b/drivers/mcuio/mcuio-dogoled-shield.c
+@@ -0,0 +1,136 @@
++/*
++ * Copyright 2014 Dog Hunter SA
++ * Author: Aurelio Colosimo <aurelio@aureliocolosimo.it>
++ *
++ * GNU GPLv2 or later
++ */
++
++#define DEBUG
++
++/* mcuio driver for Dog OLED shield */
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/device.h>
++#include <linux/slab.h>
++#include <linux/types.h>
++#include <linux/regmap.h>
++#include <linux/workqueue.h>
++#include <linux/irq.h>
++#include <linux/interrupt.h>
++#include <linux/gpio.h>
++#include <linux/i2c.h>
++#include <linux/platform_device.h>
++#include <linux/platform_data/ssd1307.h>
++
++#include <linux/mcuio.h>
++#include <linux/mcuio_ids.h>
++#include <linux/mcuio-proto.h>
++
++#include "mcuio-internal.h"
++#include "mcuio-shields.h"
++
++static unsigned short ssd1307_addr = 0x3c;
++static unsigned int ssd1307_rst = 120;
++module_param(ssd1307_addr, ushort, 0644);
++module_param(ssd1307_rst, uint, 0644);
++
++static struct ssd1307_platform_data ssd1307_plat = {
++	.type = SSD1307_TYPE_1306,
++	.width = 128,
++	.height = 64,
++	.page_offset = 0,
++	.pins_config = 0x12,
++	.display_offset = 0,
++};
++
++static struct mcuio_shld_i2c_info i2c_lst[] = {
++	MCUIO_SHLD_I2C_DEV("ssd1307fb", &ssd1307_addr, &ssd1307_plat, -1),
++};
++
++static int mcuio_dogoled_probe(struct mcuio_device *mdev)
++{
++	struct mcuio_shld_i2c_info *i;
++
++	struct mcuio_shld_data *data;
++
++	dev_dbg(&mdev->dev, "%s entered\n", __func__);
++
++	data = devm_kzalloc(&mdev->dev, sizeof(*data), GFP_KERNEL);
++	if (!data)
++		return -ENOMEM;
++
++	dev_set_drvdata(&mdev->dev, data);
++
++	/* Apply module_param values to ssd1307 platform_data */
++	ssd1307_plat.reset_gpio = ssd1307_rst;
++
++	data->i2c_adap = mcuio_get_i2c_adapter(mdev);
++
++	if (!data->i2c_adap) {
++		dev_err(&mdev->dev, "error setting up i2c adapter\n");
++		return -ENODEV;
++	}
++
++	data->i2c_info = i2c_lst;
++	data->i2c_cnt = ARRAY_SIZE(i2c_lst);
++
++	i = &data->i2c_info[0];
++	i->info.addr = *i->paddr;
++	i->i2c_client = i2c_new_device(data->i2c_adap, &i->info);
++
++	dev_dbg(&mdev->dev, "%s returns ok\n", __func__);
++
++	return 0;
++}
++
++static int mcuio_dogoled_remove(struct mcuio_device *mdev)
++{
++	struct mcuio_shld_i2c_info *i;
++	struct mcuio_shld_data *data;
++
++	data = dev_get_drvdata(&mdev->dev);
++	i = &data->i2c_info[0];
++	i2c_unregister_device(i->i2c_client);
++	i->i2c_client = NULL;
++	return 0;
++}
++
++static const struct mcuio_device_id dogoled_drv_ids[] = {
++	{
++		.vendor = MCUIO_VENDOR_DOGHUNTER,
++		.device = MCUIO_DEVICE_DOGOLED_SHIELD,
++	},
++	/* Terminator */
++	{
++		.device = MCUIO_NO_DEVICE,
++		.class = MCUIO_CLASS_UNDEFINED,
++	},
++};
++
++static struct mcuio_driver mcuio_dogoled_driver = {
++	.driver = {
++		.name = "mcuio-dogoled-shield",
++	},
++	.id_table = dogoled_drv_ids,
++	.probe = mcuio_dogoled_probe,
++	.remove = mcuio_dogoled_remove,
++};
++
++static int __init mcuio_dogoled_init(void)
++{
++	return mcuio_driver_register(&mcuio_dogoled_driver, THIS_MODULE);
++}
++
++static void __exit mcuio_dogoled_exit(void)
++{
++	return mcuio_driver_unregister(&mcuio_dogoled_driver);
++}
++
++subsys_initcall(mcuio_dogoled_init);
++module_exit(mcuio_dogoled_exit);
++
++MODULE_AUTHOR("Aurelio Colosimo");
++MODULE_DESCRIPTION("MCUIO driver for Dog OLED shield");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mcuio/mcuio-hc-dev.c b/drivers/mcuio/mcuio-hc-dev.c
+new file mode 100644
+index 0000000..4e1ff9a
+--- /dev/null
++++ b/drivers/mcuio/mcuio-hc-dev.c
+@@ -0,0 +1,88 @@
++/*
++ * Copyright 2011 Dog Hunter SA
++ * Author: Davide Ciminaghi <ciminaghi@gnudd.com>
++ *
++ * GNU GPLv2 or later
++ */
++
++/* mcuio host controller functions */
++
++#include <linux/mcuio.h>
++#include <linux/circ_buf.h>
++#include <linux/slab.h>
++#include <linux/sched.h>
++#include <linux/regmap.h>
++#include <linux/err.h>
++#include <linux/workqueue.h>
++#include <linux/circ_buf.h>
++#include <linux/mcuio_ids.h>
++#include <linux/mcuio-hc.h>
++#include <linux/mcuio-soft-hc.h>
++#include "mcuio-internal.h"
++
++static struct mcuio_device_id default_hc_id = {
++	.device = MCUIO_DEVICE_GENERIC_HC,
++	.vendor = MCUIO_VENDOR_DOGHUNTER,
++	.class = MCUIO_CLASS_HOST_CONTROLLER,
++};
++
++void mcuio_hc_dev_default_release(struct device *dev)
++{
++	struct mcuio_device *mdev = to_mcuio_dev(dev);
++	mcuio_put_bus(mdev->bus);
++	kfree(mdev);
++}
++EXPORT_SYMBOL(mcuio_hc_dev_default_release);
++
++static const struct attribute_group *hc_dev_attr_groups[] = {
++	&mcuio_default_dev_attr_group,
++	NULL,
++};
++
++static struct device_type hc_device_type = {
++	.name = "mcuio-host-controller",
++	.groups = hc_dev_attr_groups,
++};
++
++struct device *mcuio_add_hc_device(struct mcuio_device_id *id,
++				   struct mcuio_hc_platform_data *plat,
++				   void (*release)(struct device *))
++{
++	int b, ret = -ENOMEM;
++	struct mcuio_device *d = kzalloc(sizeof(*d), GFP_KERNEL);
++	if (!d)
++		return ERR_PTR(-ENOMEM);
++	b = mcuio_get_bus();
++	if (b < 0) {
++		ret = b;
++		goto err0;
++	}
++	d->bus = b;
++	d->device = 0;
++	d->fn = 0;
++	d->id = id ? *id : default_hc_id;
++	d->dev.platform_data = plat;
++	hc_device_type.release = release ? release :
++	    mcuio_hc_dev_default_release;
++	ret = mcuio_device_register(d, &hc_device_type, NULL);
++	if (ret < 0)
++		goto err1;
++	return &d->dev;
++
++err1:
++	mcuio_put_bus(b);
++err0:
++	kfree(d);
++	return ERR_PTR(ret);
++}
++EXPORT_SYMBOL(mcuio_add_hc_device);
++
++void mcuio_del_hc_device(struct device *dev)
++{
++	mcuio_device_unregister(to_mcuio_dev(dev));
++}
++EXPORT_SYMBOL(mcuio_del_hc_device);
++
++MODULE_AUTHOR("Davide Ciminaghi");
++MODULE_DESCRIPTION("MCUIO host controller code");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mcuio/mcuio-hc-drv.c b/drivers/mcuio/mcuio-hc-drv.c
+new file mode 100644
+index 0000000..c515b44
+--- /dev/null
++++ b/drivers/mcuio/mcuio-hc-drv.c
+@@ -0,0 +1,764 @@
++/*
++ * Copyright 2011 Dog Hunter SA
++ * Author: Davide Ciminaghi <ciminaghi@gnudd.com>
++ *
++ * GNU GPLv2 or later
++ */
++
++/* mcuio host controller driver */
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/device.h>
++#include <linux/slab.h>
++#include <linux/types.h>
++#include <linux/regmap.h>
++#include <linux/interrupt.h>
++#include <linux/workqueue.h>
++#include <linux/kthread.h>
++#include <linux/mutex.h>
++
++#include <linux/mcuio.h>
++#include <linux/mcuio_ids.h>
++#include <linux/mcuio-proto.h>
++#include <linux/mcuio-hc.h>
++
++#include "mcuio-internal.h"
++
++/* Max number of read descr timeout before skipping to next device */
++#define MAX_ENUM_RETRIES 2
++
++struct mcuio_request;
++
++typedef void (*___request_cb)(struct mcuio_request *);
++
++/* Host controller data */
++struct mcuio_hc_data {
++	unsigned bus;
++	struct mutex lock;
++	struct list_head request_queue;
++	struct list_head pending_requests;
++	atomic_t removing;
++
++	struct kthread_worker tx_kworker;
++	struct task_struct *tx_kworker_task;
++	struct kthread_work send_messages;
++
++	struct task_struct *rx_thread;
++	wait_queue_head_t rd_wq;
++
++	struct mcuio_device *mdev;
++	struct kthread_worker enum_kworker;
++	struct task_struct *enum_kworker_task;
++	struct kthread_work do_enum;
++
++	int *irqs[MCUIO_DEVS_PER_BUS];
++};
++
++typedef int (*mcuio_copy)(uint32_t *, const uint32_t *, int, int);
++
++int __mcuio_copyb(uint32_t *dst, const uint32_t *src, int fill, int ntoh)
++{
++	if (!fill) {
++		*(uint8_t *)dst = *(uint8_t *)src;
++		return sizeof(uint8_t);
++	}
++	memcpy(dst, src, sizeof(uint64_t));
++	return sizeof(uint64_t);
++}
++
++int __mcuio_copyw(uint32_t *__dst, const uint32_t *__src, int fill, int ntoh)
++{
++	uint16_t *dst = (uint16_t *)__dst;
++	uint16_t *src = (uint16_t *)__src;
++	int i, n = fill ? sizeof(uint64_t) / sizeof(uint16_t) : 1;
++	for (i = 0; i < n; i++)
++		*dst++ = ntoh ? mcuio_ntohs(*src++) : mcuio_htons(*src++);
++	return n * sizeof(uint16_t);
++}
++
++int __mcuio_copydw(uint32_t *dst, const uint32_t *src, int fill, int ntoh)
++{
++	*dst++ = mcuio_ntohl(*src++);
++	if (fill)
++		*dst++ = ntoh ? mcuio_ntohl(*src++) : mcuio_htonl(*src++);
++	return fill ? sizeof(uint64_t) : sizeof(uint32_t);
++}
++
++static const mcuio_copy __copy_table[] = {
++	[ mcuio_type_rdb ] = __mcuio_copyb,
++	[ mcuio_type_wrb ] = __mcuio_copyb,
++	[ mcuio_type_rdw ] = __mcuio_copyw,
++	[ mcuio_type_wrw ] = __mcuio_copyw,
++	[ mcuio_type_rddw ] = __mcuio_copydw,
++	[ mcuio_type_wrdw ] = __mcuio_copydw,
++	/* Unsupported */
++	[ mcuio_type_rdq ] = NULL,
++	[ mcuio_type_wrq ] = NULL,
++};
++
++static int __copy_data(uint32_t *addr, struct mcuio_packet *p, int ntoh)
++{
++	mcuio_copy cp = __copy_table[mcuio_packet_type(p) &
++				     mcuio_actual_type_mask];
++	uint32_t *__dst = ntoh ? addr : p->data;
++	uint32_t *__src = ntoh ? p->data : addr;
++	if (!cp)
++		return -ENOSYS;
++	return cp(__dst, __src, mcuio_packet_is_fill_data(p),
++		  ntoh ? mcuio_packet_is_read(p) : !mcuio_packet_is_read(p));
++}
++
++static void __free_request(struct mcuio_request *r)
++{
++	devm_kfree(&r->hc->dev, r);
++}
++
++static struct mcuio_request *mcuio_alloc_request(struct mcuio_device *mdev)
++{
++	struct mcuio_request *out = devm_kzalloc(&mdev->dev, sizeof(*out),
++						 GFP_KERNEL);
++	if (!out)
++		dev_err(&mdev->dev, "not enough memory for mcuio request\n");
++	out->release = __free_request;
++	return out;
++}
++
++
++static void __dequeue_request(struct mcuio_request *r)
++{
++	struct mcuio_hc_data *data;
++	data = dev_get_drvdata(&r->hc->dev);
++	mutex_lock(&data->lock);
++	list_del(&r->list);
++	mutex_unlock(&data->lock);
++}
++
++
++static void __request_to_packet(struct mcuio_request *r, struct mcuio_packet *p)
++{
++	mcuio_packet_set_addr(p, r->hc->bus, r->dev, r->func, r->offset,
++			      r->type, mcuio_request_is_fill(r));
++	if (mcuio_packet_is_read(p)) {
++		p->data[0] = p->data[1] = 0;
++		return;
++	}
++	/* Copy data to packet (host to network) */
++	__copy_data(r->data, p, 0);
++}
++
++static void __init_request(struct mcuio_request *r,
++			   struct mcuio_device *mdev,
++			   unsigned dev, unsigned func,
++			   unsigned type,
++			   int fill,
++			   unsigned offset,
++			   unsigned offset_mask)
++{
++	r->hc = mdev;
++	r->dev = dev;
++	r->func = func;
++	r->type = type;
++	r->offset = offset;
++	r->offset_mask = offset_mask;
++	r->status = -ETIMEDOUT;
++	mcuio_request_set_fill(r, fill);
++}
++
++struct mcuio_request *mcuio_make_request(struct mcuio_device *mdev,
++					 unsigned dev, unsigned func,
++					 unsigned type,
++					 int fill,
++					 unsigned offset,
++					 unsigned offset_mask)
++{
++	struct mcuio_request *out = mcuio_alloc_request(mdev);
++	if (!out)
++		return NULL;
++	__init_request(out, mdev, dev, func, type, fill, offset,
++		       offset_mask);
++	return out;
++}
++EXPORT_SYMBOL(mcuio_make_request);
++
++void mcuio_init_request(struct mcuio_request *r,
++			struct mcuio_device *mdev,
++			unsigned dev, unsigned func,
++			unsigned type,
++			int fill,
++			unsigned offset,
++			unsigned offset_mask)
++{
++	__init_request(r, mdev, dev, func, type, fill, offset, offset_mask);
++	r->release = NULL;
++}
++EXPORT_SYMBOL(mcuio_init_request);
++
++static void __request_timeout(struct work_struct *work)
++{
++	struct mcuio_request *r =
++		container_of(work, struct mcuio_request, to_work.work);
++	if (r->cb)
++		r->cb(r);
++	if (!mcuio_request_is_incoming(r))
++		__dequeue_request(r);
++}
++
++static int __write_message(struct regmap *map, const u32 *ptr, int count)
++{
++	int i, stat;
++
++	pr_debug("%s:", __func__);
++	dump_packet((struct mcuio_packet *)ptr);
++	for (i = 0; i < count; i++) {
++		stat = regmap_write(map,
++				    MCUIO_HC_OUTBUF + i * sizeof(u32), ptr[i]);
++		if (stat) {
++			pr_err("%s: error %d writing to hc\n", __func__, stat);
++			return stat;
++		}
++	}
++	return 0;
++}
++
++static int __do_request(struct mcuio_hc_data *data)
++{
++	struct mcuio_request *r;
++	struct mcuio_device *mdev;
++	struct regmap *map;
++	u32 buf[4];
++	struct mcuio_packet *p = (struct mcuio_packet *)buf;
++
++	mutex_lock(&data->lock);
++	if (list_empty(&data->request_queue)) {
++		mutex_unlock(&data->lock);
++		return 0;
++	}
++	r = list_entry(data->request_queue.next, struct mcuio_request, list);
++	__request_to_packet(r, p);
++	mdev = r->hc;
++	map = dev_get_regmap(&mdev->dev, NULL);
++	if (!map) {
++		mutex_unlock(&data->lock);
++		WARN_ON(1);
++		return -EIO;
++	}
++	list_move(&r->list, &data->pending_requests);
++	mutex_unlock(&data->lock);
++	/* Schedule timeout */
++	INIT_DELAYED_WORK(&r->to_work, __request_timeout);
++	/* FIXME: WHAT IS THE CORRECT DELAY ? */
++	schedule_delayed_work(&r->to_work, HZ/10);
++	if (__write_message(map, buf, 4) < 0) {
++		dev_err(&mdev->dev, "error writing to output fifo");
++		goto regmap_error;
++	}
++	return 1;
++
++regmap_error:
++	cancel_delayed_work_sync(&r->to_work);
++	return -EIO;
++}
++
++static irqreturn_t hc_irq_handler(int irq, void *__data)
++{
++	struct mcuio_device *mdev = __data;
++	struct regmap *map = dev_get_regmap(&mdev->dev, NULL);
++	struct mcuio_hc_data *data = dev_get_drvdata(&mdev->dev);
++	int ret;
++	u32 status;
++
++	if (!data) {
++		dev_err(&mdev->dev, "no drv data in irq handler\n");
++		return IRQ_NONE;
++	}
++	ret = regmap_read(map, MCUIO_IRQ_STAT, &status);
++	if (ret < 0)
++		return IRQ_NONE;
++	if (status & RX_RDY)
++		wake_up_interruptible(&data->rd_wq);
++	return IRQ_HANDLED;
++}
++
++static inline u32 __get_available(struct regmap *map)
++{
++	u32 out;
++	int stat = regmap_read(map, MCUIO_RX_CNT, &out);
++	if (stat < 0)
++		return 0;
++	return out;
++}
++
++static int __read_message(struct mcuio_hc_data *data,
++			  struct regmap *map, u32 *ptr, int count)
++{
++	int i, stat;
++
++	stat = wait_event_interruptible(data->rd_wq,
++					__get_available(map) >= count ||
++					kthread_should_stop());
++	/* FIXME: handle signals */
++	if (stat < 0 || kthread_should_stop()) {
++		pr_debug("%s returns %d\n", __func__, stat);
++		return stat;
++	}
++	for (i = 0; i < count; i++, ptr++) {
++		stat = regmap_read(map, MCUIO_HC_INBUF + i * sizeof(u32), ptr);
++		if (stat < 0) {
++			pr_err("%s error %d reading from hc\n", __func__, stat);
++			return stat;
++		}
++	}
++	return 0;
++}
++
++static struct mcuio_request *__find_request(struct mcuio_device *hc,
++					    struct mcuio_packet *p)
++{
++	struct mcuio_request *r;
++	struct mcuio_hc_data *data = dev_get_drvdata(&hc->dev);
++
++	mutex_lock(&data->lock);
++	list_for_each_entry(r, &data->pending_requests, list) {
++		if ((mcuio_packet_type(p) & mcuio_actual_type_mask) ==
++		    (r->type & mcuio_actual_type_mask) &&
++		    mcuio_packet_bus(p) == hc->bus &&
++		    mcuio_packet_dev(p) == r->dev &&
++		    mcuio_packet_func(p) == r->func &&
++		    (mcuio_packet_offset(p) & r->offset_mask) ==
++		    (r->offset & r->offset_mask)) {
++			mutex_unlock(&data->lock);
++			return r;
++		}
++	}
++	mutex_unlock(&data->lock);
++	return NULL;
++}
++
++static int __receive_messages(void *__data)
++{
++	struct mcuio_device *hc = __data;
++	struct mcuio_hc_data *data = dev_get_drvdata(&hc->dev);
++	struct regmap *map;
++	if (!data) {
++		dev_err(&hc->dev, "no driver data in %s\n", __func__);
++		return -EINVAL;
++	}
++	map = dev_get_regmap(&hc->dev, NULL);
++	while (!kthread_should_stop()) {
++		u32 buf[4];
++		int stat;
++		struct mcuio_packet *p;
++		struct mcuio_request *r;
++		stat = __read_message(data, map, buf, 4);
++		if (stat < 0) {
++			schedule();
++			continue;
++		}
++		p = (struct mcuio_packet *)buf;
++		pr_debug("%s %d, packet received, type = %d\n",
++			 __func__, __LINE__, mcuio_packet_type(p));
++		dump_packet(p);
++		if (!mcuio_packet_is_reply(p)) {
++			if (mcuio_packet_is_read(p)) {
++				/*
++				  Packet is a read request, we do not handle
++				  read requests at the moment
++				*/
++				pr_debug("%s %d: unexpected read req\n",
++					 __func__, __LINE__);
++				continue;
++			}
++		}
++		r = __find_request(hc, p);
++		if (!r) {
++			dev_err(&hc->dev, "unexpected reply");
++			dump_packet(p);
++			continue;
++		}
++		r->status = mcuio_packet_is_error(p);
++		pr_debug("%s %d, r->status = %d\n", __func__, __LINE__,
++			 r->status);
++		cancel_delayed_work_sync(&r->to_work);
++		if (mcuio_packet_is_reply(p)) {
++			if (mcuio_packet_is_read(p))
++				__copy_data(r->data, p, 1);
++		} else {
++			r->offset = mcuio_packet_offset(p);
++			mcuio_request_set_fill(r, mcuio_packet_is_fill_data(p));
++			__copy_data(r->data, p, 1);
++		}
++		if (r->cb)
++			r->cb(r);
++		if (!mcuio_request_is_incoming(r))
++			__dequeue_request(r);
++	}
++	return 0;
++}
++
++static void __send_messages(struct kthread_work *work)
++{
++	struct mcuio_hc_data *data =
++		container_of(work, struct mcuio_hc_data, send_messages);
++	while (__do_request(data) > 0);
++}
++
++static void __enqueue_request(struct mcuio_device *mdev,
++			      struct mcuio_hc_data *data,
++			      struct mcuio_request *r,
++			      int outgoing)
++{
++	mcuio_request_set_incoming(r, !outgoing);
++	mutex_lock(&data->lock);
++	list_add_tail(&r->list, outgoing ? &data->request_queue :
++		      &data->pending_requests);
++	mutex_unlock(&data->lock);
++	if (outgoing)
++		queue_kthread_work(&data->tx_kworker, &data->send_messages);
++}
++
++static int mcuio_hc_enqueue_request(struct mcuio_request *r, int outgoing)
++{
++	struct mcuio_hc_data *data;
++	if (!r || !r->hc)
++		return -EINVAL;
++	data = dev_get_drvdata(&r->hc->dev);
++	if (!data)
++		return -EINVAL;
++	if (atomic_read(&data->removing))
++		return -ENODEV;
++	__enqueue_request(r->hc, data, r, outgoing);
++	return 0;
++}
++
++static void __request_cb(struct mcuio_request *r)
++{
++	struct completion *c = r->cb_data;
++	complete(c);
++}
++
++int mcuio_submit_request(struct mcuio_request *r)
++{
++	int ret;
++	DECLARE_COMPLETION_ONSTACK(request_complete);
++	r->cb = __request_cb;
++	r->cb_data = &request_complete;
++	r->status = -ETIMEDOUT;
++	ret = mcuio_hc_enqueue_request(r, 1);
++	if (ret)
++		return ret;
++	wait_for_completion(&request_complete);
++	return r->status;
++}
++EXPORT_SYMBOL(mcuio_submit_request);
++
++int mcuio_setup_cb(struct mcuio_request *r)
++{
++	return mcuio_hc_enqueue_request(r, 0);
++}
++EXPORT_SYMBOL(mcuio_setup_cb);
++
++int mcuio_cancel_cb(struct mcuio_request *r)
++{
++	struct mcuio_request *ptr, *tmp;
++	struct mcuio_hc_data *data;
++
++	if (!r->hc)
++		return -EINVAL;
++	data = dev_get_drvdata(&r->hc->dev);
++	list_for_each_entry_safe(ptr, tmp, &data->pending_requests, list) {
++		if (ptr == r) {
++			mutex_lock(&data->lock);
++			list_del(&r->list);
++			mutex_unlock(&data->lock);
++			return 0;
++		}
++	}
++	return -ENOENT;
++}
++EXPORT_SYMBOL(mcuio_cancel_cb);
++
++int mcuio_hc_set_irqs(struct mcuio_device *hc, unsigned dev, int __irqs[])
++{
++	struct mcuio_hc_data *data = dev_get_drvdata(&hc->dev);
++	int *irqs, size = sizeof(int) * MCUIO_FUNCS_PER_DEV;
++	if (!data) {
++		WARN_ON(1);
++		return -ENODEV;
++	}
++	irqs = devm_kzalloc(&hc->dev, size, GFP_KERNEL);
++	if (!irqs) {
++		dev_err(&hc->dev, "No memory for irqs for %u:%u\n", hc->bus,
++			dev);
++		return -ENOMEM;
++	}
++	memcpy(irqs, __irqs, size);
++	data->irqs[dev] = irqs;
++	return 0;
++}
++EXPORT_SYMBOL(mcuio_hc_set_irqs);
++
++static int __do_one_enum(struct mcuio_device *mdev, unsigned edev,
++			 unsigned efunc, struct mcuio_request **out)
++{
++	struct mcuio_request *r;
++	int ret;
++
++	r = mcuio_make_request(mdev, edev, efunc,
++			       mcuio_type_rddw, 1, 0, 0xffff);
++	if (!r) {
++		*out = NULL;
++		return -ENOMEM;
++	}
++	ret = mcuio_submit_request(r);
++	*out = r;
++	return ret;
++}
++
++static void __register_device(struct mcuio_request *r)
++{
++	struct mcuio_func_descriptor d;
++	struct mcuio_device *hc = r->hc;
++	struct mcuio_hc_data *data = dev_get_drvdata(&hc->dev);
++	struct mcuio_device *new;
++	new = kzalloc(sizeof(*new), GFP_KERNEL);
++	if (!new) {
++		dev_err(&r->hc->dev,
++			"error allocating device %u:%u.%u\n",
++			hc->bus, r->dev, r->func);
++		return;
++	}
++	memcpy(&d, r->data, sizeof(d));
++	new->id.device = mcuio_get_device(&d);
++	new->id.vendor = mcuio_get_vendor(&d);
++	new->id.class = d.rev_class;
++	new->id.class_mask = 0xffffffff;
++	new->bus = hc->bus;
++	new->device = r->dev;
++	new->fn = r->func;
++	if (data->irqs[r->dev])
++		new->irq = (data->irqs[r->dev])[r->func];
++	pr_debug("%s %d, device = 0x%04x, vendor = 0x%04x, "
++		 "class = 0x%04x\n", __func__, __LINE__, new->id.device,
++		 new->id.vendor, new->id.class);
++	if (mcuio_device_register(new, NULL, &hc->dev) < 0) {
++		dev_err(&r->hc->dev,
++			"error registering device %u:%u.%u\n",
++			hc->bus, r->dev, r->func);
++		kfree(new);
++	}
++}
++
++static int __next_enum(unsigned *edev, unsigned *efunc, int *retry)
++{
++	if ((*retry) > 0) {
++		/* Doing retries */
++		(*retry)--;
++		return 0;
++	}
++	if (!(*retry)) {
++		/* No reply and no more attempts left, skip to next device */
++		*retry = -1;
++		if ((*edev)++ >= MCUIO_DEVS_PER_BUS - 1)
++			return 1;
++		*efunc = 0;
++		return 0;
++	}
++	if ((*efunc)++ >= MCUIO_FUNCS_PER_DEV - 1) {
++		*efunc = 0;
++		if ((*edev)++ >= MCUIO_DEVS_PER_BUS - 1)
++			return 1;
++	}
++	return 0;
++}
++
++static void __do_enum(struct kthread_work *work)
++{
++	struct mcuio_hc_data *data =
++		container_of(work, struct mcuio_hc_data, do_enum);
++	struct mcuio_device *mdev = data->mdev;
++	struct mcuio_request *r;
++	unsigned edev, efunc;
++	int stop_enum, stat, retry = -1;
++
++	for (edev = 1, efunc = 0, stop_enum = 0; !stop_enum;
++	     stop_enum = __next_enum(&edev, &efunc, &retry)) {
++		if (kthread_should_stop())
++			break;
++		stat = __do_one_enum(mdev, edev, efunc, &r);
++		if (!r) {
++			dev_err(&mdev->dev, "no request\n");
++			continue;
++		}
++		if (stat < 0) {
++			if (!r)
++				continue;
++			if (r->status == -ETIMEDOUT) {
++				/* No reply from target */
++				retry = retry == -1 ? MAX_ENUM_RETRIES :
++					retry - 1;
++				dev_dbg(&mdev->dev, "enum timeout %u.%u\n",
++					edev, efunc);
++				continue;
++			}
++			dev_err(&mdev->dev,
++				"error %d on enum of %u.%u\n",
++				r->status == -ETIMEDOUT ? r->status :
++				r->data[0], edev, efunc);
++			mcuio_free_request(r);
++			continue;
++		}
++		retry = -1;
++		/*
++		  Found a new devices, let's add it
++		*/
++		__register_device(r);
++		mcuio_free_request(r);
++	}
++}
++
++static int mcuio_host_controller_probe(struct mcuio_device *mdev)
++{
++	struct mcuio_hc_data *data;
++	struct mcuio_hc_platform_data *plat;
++	struct regmap *map;
++	u32 irq;
++	int ret = -ENOMEM;
++	/* Only manage local host controllers */
++	if (mdev->device)
++		return -ENODEV;
++	plat = dev_get_platdata(&mdev->dev);
++	if (!plat) {
++		dev_err(&mdev->dev, "No platform data\n");
++		return -EINVAL;
++	}
++	map = plat->setup_regmap(&mdev->dev, plat);
++	if (IS_ERR(map)) {
++		dev_err(&mdev->dev, "Error setting up regmap for device\n");
++		return PTR_ERR(map);
++	}
++	data = devm_kzalloc(&mdev->dev, sizeof(*data), GFP_KERNEL);
++	if (!data)
++		return ret;
++	dev_set_drvdata(&mdev->dev, data);
++	atomic_set(&data->removing, 0);
++	mutex_init(&data->lock);
++	data->mdev = mdev;
++	init_kthread_worker(&data->tx_kworker);
++	init_waitqueue_head(&data->rd_wq);
++	ret = regmap_read(map, MCUIO_IRQ, &irq);
++	if (ret < 0) {
++		dev_err(&mdev->dev, "Error %d reading irq number\n", ret);
++		return ret;
++	}
++	ret = devm_request_threaded_irq(&mdev->dev, irq, NULL,
++					hc_irq_handler,
++					IRQF_ONESHOT,
++					dev_name(&mdev->dev), mdev);
++	if (ret < 0) {
++		dev_err(&mdev->dev, "Error %d requesting irq\n", ret);
++		return ret;
++	}
++	data->tx_kworker_task = kthread_run(kthread_worker_fn,
++					    &data->tx_kworker,
++					    "%s_%s",
++					    dev_name(&mdev->dev), "tx");
++	if (IS_ERR(data->tx_kworker_task)) {
++		dev_err(&mdev->dev, "failed to create message tx task\n");
++		return -ENOMEM;
++	}
++	init_kthread_work(&data->send_messages, __send_messages);
++	INIT_LIST_HEAD(&data->request_queue);
++	INIT_LIST_HEAD(&data->pending_requests);
++	data->rx_thread = kthread_run(__receive_messages, mdev, "%s_%s",
++				      dev_name(&mdev->dev), "rx");
++	if (IS_ERR(data->rx_thread)) {
++		dev_err(&mdev->dev, "failed to create message rx task\n");
++		kthread_stop(data->tx_kworker_task);
++		return PTR_ERR(data->rx_thread);
++	}
++	init_kthread_worker(&data->enum_kworker);
++	data->enum_kworker_task = kthread_run(kthread_worker_fn,
++					      &data->enum_kworker,
++					      "%s_%s",
++					      dev_name(&mdev->dev), "enum");
++	if (IS_ERR(data->enum_kworker_task)) {
++		dev_err(&mdev->dev, "failed to create enum task\n");
++		return -ENOMEM;
++	}
++	init_kthread_work(&data->do_enum, __do_enum);
++	/* Immediately start enum */
++	queue_kthread_work(&data->enum_kworker, &data->do_enum);
++	return 0;
++}
++
++static void __cleanup_outstanding_requests(struct mcuio_hc_data *data)
++{
++	struct mcuio_request *r, *tmp;
++	list_for_each_entry_safe(r, tmp, &data->pending_requests, list) {
++		pr_debug("%s %d: freeing request %p\n", __func__,
++			 __LINE__, r);
++		cancel_delayed_work_sync(&r->to_work);
++		if (r->cb)
++			r->cb(r);
++		__dequeue_request(r);
++	}
++}
++
++static int mcuio_host_controller_remove(struct mcuio_device *mdev)
++{
++	struct mcuio_hc_data *data = dev_get_drvdata(&mdev->dev);
++	atomic_set(&data->removing, 1);
++	barrier();
++	kthread_stop(data->enum_kworker_task);
++	kthread_stop(data->rx_thread);
++	flush_kthread_worker(&data->tx_kworker);
++	kthread_stop(data->tx_kworker_task);
++	__cleanup_outstanding_requests(data);
++	devm_kfree(&mdev->dev, data);
++	return 0;
++}
++
++static const struct mcuio_device_id hc_drv_ids[] = {
++	{
++		.class = MCUIO_CLASS_HOST_CONTROLLER,
++		.class_mask = 0xffff,
++	},
++	{
++		.class = MCUIO_CLASS_SOFT_HOST_CONTROLLER,
++		.class_mask = 0xffff,
++	},
++	/* Terminator */
++	{
++		.device = MCUIO_NO_DEVICE,
++		.class = MCUIO_CLASS_UNDEFINED,
++	},
++};
++
++static struct mcuio_driver mcuio_host_controller_driver = {
++	.driver = {
++		.name = "mcuio-hc",
++	},
++	.id_table = hc_drv_ids,
++	.probe = mcuio_host_controller_probe,
++	.remove = mcuio_host_controller_remove,
++};
++
++static int __init mcuio_host_controller_init(void)
++{
++	return mcuio_driver_register(&mcuio_host_controller_driver,
++				     THIS_MODULE);
++}
++
++static void __exit mcuio_host_controller_exit(void)
++{
++	return mcuio_driver_unregister(&mcuio_host_controller_driver);
++}
++
++subsys_initcall(mcuio_host_controller_init);
++module_exit(mcuio_host_controller_exit);
++
++MODULE_AUTHOR("Davide Ciminaghi");
++MODULE_DESCRIPTION("MCUIO host controller driver");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mcuio/mcuio-hc-ldisc.c b/drivers/mcuio/mcuio-hc-ldisc.c
+new file mode 100644
+index 0000000..f2a0d3c
+--- /dev/null
++++ b/drivers/mcuio/mcuio-hc-ldisc.c
+@@ -0,0 +1,151 @@
++/*
++ * Copyright 2013 Dog Hunter SA
++ *
++ * Author Davide Ciminaghi
++ * GNU GPLv2
++ */
++
++/* Line discipline based mcuio host controller */
++
++#include <linux/module.h>
++#include <linux/tty.h>
++#include <linux/errno.h>
++#include <linux/circ_buf.h>
++
++#include <linux/mcuio.h>
++
++#include <linux/mcuio-proto.h>
++#include <linux/mcuio-hc.h>
++#include <linux/mcuio-soft-hc.h>
++
++#include "mcuio-internal.h"
++
++/*
++ * FIXME
++ */
++#define N_MCUIO 29
++
++#define PSIZE ((int)sizeof(struct mcuio_packet))
++
++struct ldisc_priv_data {
++	struct device *dev;
++	int blen;
++	char buf[PSIZE];
++};
++
++
++
++static int mcuio_ldisc_shc_write(struct mcuio_soft_hc *shc,
++				 const u8 *ptr, unsigned int len)
++{
++	int stat = 0, count;
++	struct tty_struct *tty = shc->priv;
++
++	for (count = 0; count < len; count += stat) {
++		stat = tty->ops->write(tty, (char *)&ptr[count], len - count);
++		if (stat <= 0)
++			break;
++	}
++	return stat <= 0 ? stat : 0;
++}
++
++static const struct mcuio_soft_hc_ops ops = {
++	.write = mcuio_ldisc_shc_write,
++};
++
++/*
++ * Open ldisc: register an mcuio controller
++ */
++static int mcuio_ldisc_open(struct tty_struct *tty)
++{
++	struct ldisc_priv_data *priv;
++	struct device *dev;
++	dev = mcuio_add_soft_hc(NULL, &ops, tty);
++	if (IS_ERR(dev))
++		return (PTR_ERR(dev));
++	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
++	if (!priv)
++		return -ENOMEM;
++	priv->dev = dev;
++	tty->disc_data = priv;
++	return 0;
++}
++
++static void mcuio_ldisc_close(struct tty_struct *tty)
++{
++	struct ldisc_priv_data *priv = tty->disc_data;
++	if (!priv)
++		return;
++	if (!priv->dev)
++		return;
++	mcuio_del_hc_device(priv->dev);
++	tty->disc_data = NULL;
++}
++
++static int mcuio_ldisc_hangup(struct tty_struct *tty)
++{
++	mcuio_ldisc_close(tty);
++	return 0;
++}
++
++static void mcuio_ldisc_receive_buf(struct tty_struct *tty,
++				    const unsigned char *cp,
++				    char *fp, int count)
++{
++	struct ldisc_priv_data *priv = tty->disc_data;
++	struct mcuio_hc_platform_data *plat;
++	struct device *dev;
++	int i, s, togo, done;
++
++	if (!priv)
++		return;
++	dev = priv->dev;
++	plat = dev_get_platdata(dev);
++	if (!plat) {
++		WARN_ON(1);
++		return;
++	}
++	for (i = 0; i < count; i++)
++		if (fp[i]) {
++			pr_err("%s: flags for char %d = 0x%02x\n",
++			       __func__, i, (u8)fp[i]);
++		}
++
++	for (togo = count, done = 0; togo; priv->blen = 0) {
++		s = min(togo, PSIZE - priv->blen);
++		memcpy(&priv->buf[priv->blen], &cp[done], s);
++		priv->blen += s;
++		togo -= s;
++		done += s;
++		if (priv->blen < PSIZE)
++			break;
++		mcuio_soft_hc_push_chars(plat->data, priv->buf, PSIZE);
++	}
++}
++
++static struct tty_ldisc_ops mcuio_ldisc = {
++	.owner 		= THIS_MODULE,
++	.magic 		= TTY_LDISC_MAGIC,
++	.name 		= "mcuio",
++	.open 		= mcuio_ldisc_open,
++	.close	 	= mcuio_ldisc_close,
++	.hangup	 	= mcuio_ldisc_hangup,
++	.receive_buf	= mcuio_ldisc_receive_buf,
++};
++
++static int __init mcuio_ldisc_init(void)
++{
++	return tty_register_ldisc(N_MCUIO, &mcuio_ldisc);
++}
++
++static void __exit mcuio_ldisc_exit(void)
++{
++	tty_unregister_ldisc(N_MCUIO);
++}
++
++module_init(mcuio_ldisc_init);
++module_exit(mcuio_ldisc_exit);
++
++MODULE_LICENSE("GPL v2");
++MODULE_ALIAS_LDISC(N_MCUIO);
++MODULE_AUTHOR("Davide Ciminaghi, derived from slip ldisc implementation");
+diff --git a/drivers/mcuio/mcuio-internal.h b/drivers/mcuio/mcuio-internal.h
+new file mode 100644
+index 0000000..2f8c469
+--- /dev/null
++++ b/drivers/mcuio/mcuio-internal.h
+@@ -0,0 +1,48 @@
++#ifndef __MCUIO_INTERNAL_H__
++#define __MCUIO_INTERNAL_H__
++
++#include <linux/version.h>
++#include <linux/mcuio-proto.h>
++
++extern struct bus_type mcuio_bus_type;
++extern struct device mcuio_bus;
++extern struct attribute_group mcuio_default_dev_attr_group;
++
++int mcuio_get_bus(void);
++void mcuio_put_bus(unsigned bus);
++
++struct i2c_adapter *mcuio_get_i2c_adapter(struct mcuio_device *mdev);
++
++struct mcuio_device *mcuio_bus_find_hc(int bus);
++
++struct mcuio_device *mcuio_add_soft_local_irq_ctrl(struct mcuio_device *hc,
++						   int fn, int base_irq);
++
++#ifdef DEBUG
++static inline void dump_packet(struct mcuio_packet *p)
++{
++	int i;
++	uint8_t *ptr;
++	pr_debug("Packet dump:\n");
++	pr_debug("\t%s,%s,%s,%u:%u.%u,%s,@0x%04x",
++		 mcuio_packet_is_error(p) ? "ERR" : "NOERR" ,
++		 mcuio_packet_is_reply(p) ? "REP" : "req",
++		 mcuio_packet_is_fill_data(p) ? "[FILL]" : "[NOFILL]",
++		 mcuio_packet_bus(p), mcuio_packet_dev(p),
++		 mcuio_packet_func(p),
++		 mcuio_packet_type_to_str(mcuio_packet_type(p)),
++		 mcuio_packet_offset(p));
++	printk(KERN_DEBUG "\tpacket: ");
++	for (i = 0, ptr = (uint8_t *)p; i < 2*sizeof(uint64_t); i++)
++		printk("0x%02x ", ptr[i]);
++	printk("\n");
++}
++#else
++static inline void dump_packet(const struct mcuio_packet *packet)
++{
++
++}
++#endif
++
++
++#endif /* __MCUIO_INTERNAL_H__ */
+diff --git a/drivers/mcuio/mcuio-irq-test.c b/drivers/mcuio/mcuio-irq-test.c
+new file mode 100644
+index 0000000..8c06b5a
+--- /dev/null
++++ b/drivers/mcuio/mcuio-irq-test.c
+@@ -0,0 +1,150 @@
++/*
++ * Copyright 2011 Dog Hunter SA
++ * Author: Davide Ciminaghi <ciminaghi@gnudd.com>
++ *
++ * GNU GPLv2 or later
++ */
++
++#define DEBUG
++
++/* mcuio driver for joystick shield */
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/device.h>
++#include <linux/slab.h>
++#include <linux/types.h>
++#include <linux/regmap.h>
++#include <linux/workqueue.h>
++#include <linux/irq.h>
++#include <linux/interrupt.h>
++#include <linux/gpio.h>
++#include <linux/hid.h>
++#include <linux/i2c.h>
++#include <linux/platform_device.h>
++#include <linux/platform_data/ssd1307.h>
++
++
++#include <linux/mcuio.h>
++#include <linux/mcuio_ids.h>
++
++#include "mcuio-internal.h"
++
++static const struct regmap_config mcuio_irq_test_regmap_config = {
++	.reg_bits = 32,
++	.val_bits = 32,
++	.max_register = 0x8,
++	.cache_type = REGCACHE_NONE,
++};
++
++
++static irqreturn_t mcuio_irq_test_irq_handler(int irq, void *__data)
++{
++	struct regmap *map = __data;
++	int stat;
++	u32 status;
++
++	stat = regmap_read(map, 0xc, &status);
++	WARN_ON(!status);
++
++	return IRQ_HANDLED;
++}
++
++static int mcuio_irq_test_probe(struct mcuio_device *mdev)
++{
++	int ret = 0;
++	unsigned int v = 1;
++	struct regmap *map;
++
++	dev_dbg(&mdev->dev, "%s entered\n", __func__);
++
++	map = devm_regmap_init_mcuio(mdev, &mcuio_irq_test_regmap_config);
++	if (IS_ERR(map)) {
++		dev_err(&mdev->dev, "cannot init regmap\n");
++		return PTR_ERR(map);
++	}
++
++	ret = devm_request_threaded_irq(&mdev->dev, mdev->irq,
++					NULL,
++					mcuio_irq_test_irq_handler,
++					0,
++					"mcuio-irq-test",
++					map);
++	if (ret < 0)
++		return ret;
++
++	ret = regmap_read(map, 0xc, &v);
++	if (ret < 0) {
++		dev_err(&mdev->dev, "Error cleaning up irq status\n");
++		return ret;
++	}
++
++	/* Immediately enable interrupt */
++	ret = regmap_write(map, 0xc, 1);
++	if (ret < 0) {
++		dev_err(&mdev->dev, "Error enabling interrupt\n");
++		return ret;
++	}
++
++
++	dev_set_drvdata(&mdev->dev, map);
++
++	dev_dbg(&mdev->dev, "%s returns ok\n", __func__);
++
++	return ret;
++}
++
++static int mcuio_irq_test_remove(struct mcuio_device *mdev)
++{
++	int ret;
++	unsigned int v = 0;
++	struct regmap *map;
++
++	map = dev_get_drvdata(&mdev->dev);
++
++	ret = regmap_write(map, 0xc, v);
++	if (ret < 0) {
++		dev_err(&mdev->dev, "Error stopping irq tester\n");
++		return ret;
++	}
++	return 0;
++}
++
++static const struct mcuio_device_id irq_test_drv_ids[] = {
++	{
++		.vendor = MCUIO_VENDOR_DOGHUNTER,
++		.device = 0x1212,
++	},
++	/* Terminator */
++	{
++		.device = MCUIO_NO_DEVICE,
++		.class = MCUIO_CLASS_UNDEFINED,
++	},
++};
++
++static struct mcuio_driver mcuio_irq_test_driver = {
++	.driver = {
++		.name = "mcuio-irq-test",
++	},
++	.id_table = irq_test_drv_ids,
++	.probe = mcuio_irq_test_probe,
++	.remove = mcuio_irq_test_remove,
++};
++
++static int __init mcuio_irq_test_init(void)
++{
++	return mcuio_driver_register(&mcuio_irq_test_driver, THIS_MODULE);
++}
++
++static void __exit mcuio_irq_test_exit(void)
++{
++	return mcuio_driver_unregister(&mcuio_irq_test_driver);
++}
++
++subsys_initcall(mcuio_irq_test_init);
++module_exit(mcuio_irq_test_exit);
++
++MODULE_AUTHOR("Davide Ciminaghi");
++MODULE_DESCRIPTION("MCUIO driver for irq test function");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mcuio/mcuio-js-shield.c b/drivers/mcuio/mcuio-js-shield.c
+new file mode 100644
+index 0000000..7f204a7
+--- /dev/null
++++ b/drivers/mcuio/mcuio-js-shield.c
+@@ -0,0 +1,639 @@
++/*
++ * Copyright 2011 Dog Hunter SA
++ * Author: Davide Ciminaghi <ciminaghi@gnudd.com>
++ *
++ * GNU GPLv2 or later
++ */
++
++#define DEBUG
++
++/* mcuio driver for joystick shield */
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/device.h>
++#include <linux/slab.h>
++#include <linux/types.h>
++#include <linux/regmap.h>
++#include <linux/workqueue.h>
++#include <linux/irq.h>
++#include <linux/interrupt.h>
++#include <linux/gpio.h>
++#include <linux/hid.h>
++#include <linux/i2c.h>
++#include <linux/platform_device.h>
++#include <linux/platform_data/ssd1307.h>
++
++
++#include <linux/mcuio.h>
++#include <linux/mcuio_ids.h>
++#include <linux/mcuio-proto.h>
++
++#include "mcuio-internal.h"
++
++#define JS_MAX_NLEDS 2
++#define LED_MAX_NAMELEN 40
++
++/* The HID report descriptor (just 4 buttons at present) */
++static char mcuio_js_report_descriptor[] = {
++	/* USAGE_PAGE (Button) */
++	0x05, 0x09,
++	/* USAGE_MINIMUM (Button 1) */
++	0x19, 0x01,
++	/* USAGE_MAXIMUM (Button 6) */
++	0x29, 0x06,
++	/* LOGICAL_MINIMUM (0) */
++	0x15, 0x00,
++	/* LOGICAL_MAXIMUM (1) */
++	0x25, 0x01,
++	/* REPORT_COUNT (6) */
++	0x95, 0x06,
++	/* REPORT_SIZE (1) */
++	0x75, 0x01,
++	/* INPUT (Data,Var,Abs) */
++	0x81, 0x02,
++	/* REPORT_COUNT (2) */
++	0x95, 0x02,
++	/* REPORT_SIZE (1) */
++	0x75, 0x01,
++};
++
++struct mcuio_js_data;
++struct mcuio_js_gpio;
++struct mcuio_js_led;
++
++struct mcuio_js_gpio_config {
++	const char *name;
++	int (*setup)(struct mcuio_device *mdev, struct mcuio_js_gpio *data,
++		     int index);
++};
++
++struct mcuio_js_gpio {
++	const struct mcuio_js_gpio_config *cfg;
++	unsigned gpio;
++	int irq;
++	int index;
++	struct mcuio_js_data *js_data;
++	struct mcuio_js_led *led;
++	struct list_head list;
++};
++
++struct mcuio_js_led {
++	struct mcuio_js_gpio *gpio;
++	enum led_brightness curr_brightness;
++	struct led_classdev led;
++	struct work_struct work;
++};
++
++struct mcuio_js_data {
++	struct hid_device *hid;
++	u8 cached_gpios;
++	int oled_reset_gpio;
++	struct i2c_adapter *i2c_adap;
++	struct i2c_client *oled_i2c_client;
++	struct list_head gpios;
++};
++
++
++static int __match_gpiochip(struct gpio_chip *chip, void *__gpio_data)
++{
++	struct mcuio_js_gpio *data = __gpio_data;
++	const char *ptr;
++	int i;
++
++	pr_debug("%s entered (name = %s)\n", __func__, data->cfg->name);
++
++	if (!chip->names) {
++		pr_debug("%s: gpiochip has no names\n", __func__);
++		return 0;
++	}
++	for (i = 0; i < chip->ngpio; i++, ptr++) {
++		ptr = chip->names[i];
++		if (!ptr)
++			continue;
++		pr_debug("%s: found gpio %s\n", __func__, chip->names[i]);
++		if (!strcmp(ptr, data->cfg->name)) {
++			data->gpio = i + chip->base;
++			pr_debug("%s: gpiochip found\n", __func__);
++			return 1;
++		}
++	}
++	pr_debug("%s: gpiochip not found\n", __func__);
++	return 0;
++}
++
++static int __setup_button(struct mcuio_device *mdev, struct mcuio_js_gpio *data,
++			  int index)
++{
++	int ret = -ENODEV;
++	ret = devm_gpio_request_one(&mdev->dev, data->gpio, GPIOF_DIR_IN,
++				    "js-shield");
++	if (ret < 0)
++		return ret;
++	/* HACK FOR ATMEGA : THIS IS NEEDED TO ENABLE PULLUP */
++	ret = gpio_direction_output(data->gpio, 1);
++	if (ret) {
++		dev_err(&mdev->dev,
++			"gpio%u: error setting direction to output\n",
++			data->gpio);
++		return ret;
++	}
++	ret = gpio_direction_input(data->gpio);
++	if (ret) {
++		dev_err(&mdev->dev,
++			"gpio%u: error setting direction to input\n",
++			data->gpio);
++		return ret;
++	}
++	ret = gpio_to_irq(data->gpio);
++	if (ret < 0) {
++		dev_err(&mdev->dev,
++			"gpio%u: gpio_to_irq returned error\n",
++			data->gpio);
++		return ret;
++	}
++	data->irq = ret;
++	data->index = index;
++	return 0;
++}
++
++static void mcuio_js_led_work(struct work_struct *work)
++{
++	struct mcuio_js_led *led =
++		container_of(work, struct mcuio_js_led, work);
++	struct mcuio_js_gpio *gpio = led->gpio;
++
++	/* Active low gpios */
++	gpio_set_value_cansleep(gpio->gpio,
++				led->curr_brightness != LED_OFF ? 0 : 1);
++}
++
++
++static void mcuio_js_led_brightness_set(struct led_classdev *led_cdev,
++					enum led_brightness brightness)
++{
++	struct mcuio_js_led *led = container_of(led_cdev,
++						struct mcuio_js_led,
++						led);
++	led->curr_brightness = brightness;
++	schedule_work(&led->work);
++}
++
++static int __setup_led(struct mcuio_device *mdev, struct mcuio_js_gpio *data,
++		       int index)
++{
++	int ret;
++	char *n;
++	const char *color;
++
++	ret = devm_gpio_request_one(&mdev->dev, data->gpio, GPIOF_DIR_IN,
++				    "js-shield");
++	if (ret < 0)
++		return ret;
++	ret = gpio_direction_output(data->gpio, 1);
++	if (ret) {
++		dev_err(&mdev->dev,
++			"gpio%u: error setting direction to output\n",
++			data->gpio);
++		return ret;
++	}
++
++	data->led = devm_kzalloc(&mdev->dev, sizeof(*data->led), GFP_KERNEL);
++	if (!data->led)
++		return -ENOMEM;
++	n = devm_kzalloc(&mdev->dev, LED_MAX_NAMELEN, GFP_KERNEL);
++	if (!n)
++		return -ENOMEM;
++	color = !strncmp(data->cfg->name, "LEDR", 4) ? "red" : "green";
++	snprintf(n, LED_MAX_NAMELEN, "mcuio-%s-%s:%s:", dev_name(&mdev->dev),
++		 data->cfg->name, color);
++	data->led->gpio = data;
++	data->led->led.name = n;
++	data->led->led.brightness = LED_OFF;
++	data->led->led.max_brightness = LED_FULL;
++	data->led->led.brightness_set = mcuio_js_led_brightness_set;
++	ret = led_classdev_register(&mdev->dev, &data->led->led);
++	if (ret)
++		return ret;
++
++	INIT_WORK(&data->led->work, mcuio_js_led_work);
++	data->irq = 0;
++	data->index = index;
++	return 0;
++}
++
++static int __setup_oled_reset(struct mcuio_device *mdev,
++			      struct mcuio_js_gpio *data,
++			      int index)
++{
++	data->js_data->oled_reset_gpio = data->gpio;
++	data->irq = 0;
++	data->index = index;
++	return 0;
++}
++
++static irqreturn_t mcuio_js_irq_handler(int irq, void *__data)
++{
++	int v;
++	struct mcuio_js_gpio *gpio_data = __data;
++	struct mcuio_js_data *js_data = gpio_data->js_data;
++	int gpio_index = gpio_data->index;
++	pr_debug("%s entered (gpio %u), index = %d", __func__, gpio_data->gpio,
++		 gpio_data->index);
++
++	v = !!!gpio_get_value_cansleep(gpio_data->gpio);
++	js_data->cached_gpios &= ~(1 << gpio_index);
++	if (v)
++		js_data->cached_gpios |= (1 << gpio_index);
++
++	/* Send out a report now */
++	hid_input_report(js_data->hid, HID_INPUT_REPORT, &js_data->cached_gpios,
++			 1, 1);
++
++	return IRQ_HANDLED;
++}
++
++static int mcuio_js_hid_get_raw_report(struct hid_device *hid,
++				       unsigned char report_number,
++				       __u8 *buf, size_t count,
++				       unsigned char report_type)
++{
++	struct mcuio_device *mdev = hid->driver_data;
++	struct mcuio_js_data *js_data;
++	pr_debug("%s invoked, report_number = %u, report_type = %u\n",
++		 __func__, report_number, report_type);
++	if (!mdev) {
++		pr_err("no mcuio device !\n");
++		return -ENODEV;
++	}
++	js_data = dev_get_drvdata(&mdev->dev);
++	if (!js_data) {
++		dev_err(&mdev->dev, "no drv data !\n");
++		return -ENODEV;
++	}
++	if (report_type == HID_OUTPUT_REPORT)
++		return -EINVAL;
++	if (report_type == HID_FEATURE_REPORT)
++		/* Unsupported at the moment */
++		return -EINVAL;
++	if (count != 1) {
++		pr_err("%s: invalid count %zu\n", __func__, count);
++		return -EINVAL;
++	}
++	/* FIXME !! */
++	buf[0] = js_data->cached_gpios;
++	return 1;
++}
++
++
++static int mcuio_js_hid_output_raw_report(struct hid_device *hid, __u8 *buf,
++					  size_t count,
++					  unsigned char report_type)
++{
++	pr_debug("%s invoked, report_type = %u\n", __func__, report_type);
++	return -EINVAL;
++}
++
++
++static int mcuio_js_hid_start(struct hid_device *hid)
++{
++	struct mcuio_device *mdev = hid->driver_data;
++	struct mcuio_js_data *js_data;
++	struct mcuio_js_gpio *data;
++	int i = 0, ret;
++
++	hid_dbg(hid, "%s invoked\n", __func__);
++	if (!mdev) {
++		hid_err(hid, "%s: mdev is NULL\n", __func__);
++		return -ENODEV;
++	}
++	js_data = dev_get_drvdata(&mdev->dev);
++	if (!js_data) {
++		hid_err(hid, "%s: js_data is NULL\n", __func__);
++		return -ENODEV;
++	}
++	list_for_each_entry(data, &js_data->gpios, list) {
++		unsigned int v;
++		if (!data->irq) {
++			i++;
++			continue;
++		}
++		ret = devm_request_threaded_irq(&mdev->dev, data->irq,
++						NULL,
++						mcuio_js_irq_handler,
++						IRQF_TRIGGER_RISING |
++						IRQF_TRIGGER_FALLING,
++						"mcuio-js",
++						data);
++		if (ret)
++			return ret;
++		v = !!!gpio_get_value_cansleep(data->gpio);
++		if (v)
++			js_data->cached_gpios |= (1 << i);
++		i++;
++	}
++	hid_dbg(hid, "hw start ok\n");
++	return 0;
++}
++
++static void mcuio_js_hid_stop(struct hid_device *hid)
++{
++}
++
++static int mcuio_js_hid_open(struct hid_device *hid)
++{
++	pr_debug("%s invoked\n", __func__);
++	return 0;
++}
++
++static void mcuio_js_hid_close(struct hid_device *hid)
++{
++	pr_debug("%s invoked\n", __func__);
++}
++
++static int mcuio_js_hid_input(struct input_dev *input, unsigned int type,
++			      unsigned int code, int value)
++{
++	pr_debug("%s invoked\n", __func__);
++	return 0;
++}
++
++static int mcuio_js_hid_parse(struct hid_device *hid)
++{
++	return hid_parse_report(hid, mcuio_js_report_descriptor,
++				sizeof(mcuio_js_report_descriptor));
++}
++
++
++static struct hid_ll_driver mcuio_js_hid_ll_driver = {
++	.start = mcuio_js_hid_start,
++	.stop = mcuio_js_hid_stop,
++	.open = mcuio_js_hid_open,
++	.close = mcuio_js_hid_close,
++	.hidinput_input_event = mcuio_js_hid_input,
++	.parse = mcuio_js_hid_parse,
++};
++
++/* gpio configs for "old" joystick shield */
++static const struct mcuio_js_gpio_config js_gpios[] = {
++	{
++		.name = "SCL",
++		.setup = __setup_button,
++	},
++	{
++		.name = "D4",
++		.setup = __setup_button,
++	},
++	{
++		.name = "D5",
++		.setup = __setup_button,
++	},
++	{
++		.name = "D6",
++		.setup = __setup_button,
++	},
++	{
++		.name = NULL,
++	},
++};
++
++static const struct mcuio_js_gpio_config lucky_gpios[] = {
++	{
++		.name = "JOYU",
++		.setup = __setup_button,
++	},
++#if 0
++	/* D7 is the handshake signal, not available */
++	{
++		.name = "JOYC",
++		.setup = __setup_button,
++	},
++#endif
++	{
++		.name = "JOYR",
++		.setup = __setup_button,
++	},
++	{
++		.name = "JOYD",
++		.setup = __setup_button,
++	},
++	{
++		.name = "JOYL",
++		.setup = __setup_button,
++	},
++	{
++		.name = "PB1",
++		.setup = __setup_button,
++	},
++	{
++		.name = "LEDR",
++		.setup = __setup_led,
++	},
++	{
++		.name = "LEDY",
++		.setup = __setup_led,
++	},
++	{
++		.name = "ORES",
++		.setup = __setup_oled_reset,
++	},
++	{
++		.name = NULL,
++	},
++};
++
++static int __setup_i2c_adapter(struct mcuio_device *mdev,
++			      struct mcuio_js_data *js_data)
++{
++	js_data->i2c_adap = mcuio_get_i2c_adapter(mdev);
++	return js_data->i2c_adap ? 0 : -ENODEV;
++}
++
++static int __instantiate_oled(struct mcuio_device *mdev,
++			      struct mcuio_js_data *js_data)
++{
++	struct ssd1307_platform_data plat = {
++		.type = SSD1307_TYPE_1306,
++		.reset_gpio = js_data->oled_reset_gpio,
++		.width = 128,
++		.height = 64,
++		.page_offset = 0,
++		.pins_config = 0x12,
++		.display_offset = 0,
++	};
++	struct i2c_board_info oled_board_info = {
++		I2C_BOARD_INFO("ssd1307fb", 0x3c),
++	};
++	struct i2c_board_info *binfo = devm_kzalloc(&mdev->dev,
++						    sizeof(plat) +
++						    sizeof(oled_board_info),
++						    GFP_KERNEL);
++	if (!binfo)
++		return -ENOMEM;
++
++	memcpy(binfo, &oled_board_info, sizeof(*binfo));
++	binfo->platform_data = &binfo[1];
++	memcpy(&binfo[1], &plat, sizeof(plat));
++
++	js_data->oled_i2c_client = i2c_new_device(js_data->i2c_adap, binfo);
++	if (IS_ERR(js_data->oled_i2c_client))
++		return PTR_ERR(js_data->oled_i2c_client);
++	return 0;
++}
++
++static int mcuio_js_probe(struct mcuio_device *mdev)
++{
++	int i, ret = 0;
++	struct hid_device *hid;
++	struct mcuio_js_data *js_data;
++	const struct mcuio_js_gpio_config *cfg = NULL;
++
++	dev_dbg(&mdev->dev, "%s entered\n", __func__);
++	js_data = devm_kzalloc(&mdev->dev, sizeof(*js_data), GFP_KERNEL);
++	if (!js_data) {
++		dev_err(&mdev->dev, "no memory for js data structure\n");
++		return -ENOMEM;
++	}
++	js_data->oled_reset_gpio = -1;
++	INIT_LIST_HEAD(&js_data->gpios);
++	dev_dbg(&mdev->dev, "%s: device = 0x%04x\n", __func__, mdev->device);
++	if (mdev->id.device == MCUIO_DEVICE_JOYSTICK_SHIELD)
++		cfg = js_gpios;
++	if (mdev->id.device == MCUIO_DEVICE_LUCKY_SHIELD)
++		cfg = lucky_gpios;
++	if (!cfg) {
++		WARN_ON(1);
++		return -ENODEV;
++	}
++
++	for (i = 0; cfg->name && cfg->name[0]; cfg++, i++) {
++		struct gpio_chip *chip;
++		struct mcuio_js_gpio *data = devm_kzalloc(&mdev->dev,
++							  sizeof(*data),
++							  GFP_KERNEL);
++		if (!data) {
++			dev_err(&mdev->dev, "no memory for gpio structure\n");
++			return -ENOMEM;
++		}
++		data->cfg = cfg;
++		data->js_data = js_data;
++		chip = gpiochip_find(data, __match_gpiochip);
++		if (!chip) {
++			dev_dbg(&mdev->dev,
++				"%s: gpiochip not found\n", __func__);
++			return ret;
++		}
++		if (data->cfg->setup) {
++			ret = data->cfg->setup(mdev, data, i);
++			if (ret < 0)
++				return ret;
++		}
++		list_add_tail(&data->list, &js_data->gpios);
++	}
++
++	ret = __setup_i2c_adapter(mdev, js_data);
++	if (ret < 0) {
++		dev_err(&mdev->dev, "error setting up i2c adapter\n");
++		return ret;
++	}
++
++	if (js_data->oled_reset_gpio >= 0) {
++		ret = __instantiate_oled(mdev, js_data);
++		if (ret < 0) {
++			dev_err(&mdev->dev,
++				"error instantiating oled device\n");
++			return ret;
++		}
++	}
++
++	hid = hid_allocate_device();
++	if (IS_ERR(hid)) {
++		dev_err(&mdev->dev, "error allocating hid device\n");
++		return PTR_ERR(hid);
++	}
++
++	js_data->hid = hid;
++	dev_set_drvdata(&mdev->dev, js_data);
++
++	hid->driver_data = mdev;
++	hid->ll_driver = &mcuio_js_hid_ll_driver;
++	hid->hid_get_raw_report = mcuio_js_hid_get_raw_report;
++	hid->hid_output_raw_report = mcuio_js_hid_output_raw_report;
++	hid->dev.parent = &mdev->dev;
++	hid->bus = BUS_VIRTUAL;
++	hid->version = 0;
++	hid->vendor = MCUIO_VENDOR_DOGHUNTER;
++	hid->product = mdev->device;
++
++	snprintf(hid->name, sizeof(hid->name), "mcuio-js-shield %04hX:%04hX",
++		 hid->vendor, hid->product);
++
++	ret = hid_add_device(hid);
++	if (ret) {
++		if (ret != -ENODEV)
++			hid_err(mdev, "can't add hid device: %d\n", ret);
++		hid_destroy_device(hid);
++	}
++	dev_dbg(&mdev->dev, "%s returns ok\n", __func__);
++
++	return 0;
++}
++
++static int mcuio_js_remove(struct mcuio_device *mdev)
++{
++	struct mcuio_js_gpio *gpio;
++	struct mcuio_js_data *js_data = dev_get_drvdata(&mdev->dev);
++	if (!js_data) {
++		WARN_ON(1);
++		return -ENODEV;
++	}
++	list_for_each_entry(gpio, &js_data->gpios, list) {
++		if (!gpio->led)
++			continue;
++		led_classdev_unregister(&gpio->led->led);
++	}
++
++	i2c_unregister_device(js_data->oled_i2c_client);
++
++	hid_destroy_device(js_data->hid);
++	return 0;
++}
++
++static const struct mcuio_device_id js_drv_ids[] = {
++	{
++		.vendor = MCUIO_VENDOR_DOGHUNTER,
++		.device = MCUIO_DEVICE_JOYSTICK_SHIELD,
++	},
++	/* Terminator */
++	{
++		.device = MCUIO_NO_DEVICE,
++		.class = MCUIO_CLASS_UNDEFINED,
++	},
++};
++
++static struct mcuio_driver mcuio_js_driver = {
++	.driver = {
++		.name = "mcuio-js-shield",
++	},
++	.id_table = js_drv_ids,
++	.probe = mcuio_js_probe,
++	.remove = mcuio_js_remove,
++};
++
++static int __init mcuio_js_init(void)
++{
++	return mcuio_driver_register(&mcuio_js_driver, THIS_MODULE);
++}
++
++static void __exit mcuio_js_exit(void)
++{
++	return mcuio_driver_unregister(&mcuio_js_driver);
++}
++
++subsys_initcall(mcuio_js_init);
++module_exit(mcuio_js_exit);
++
++MODULE_AUTHOR("Davide Ciminaghi");
++MODULE_DESCRIPTION("MCUIO driver for joystick shield");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mcuio/mcuio-lucky-shield.c b/drivers/mcuio/mcuio-lucky-shield.c
+new file mode 100644
+index 0000000..537bb3d
+--- /dev/null
++++ b/drivers/mcuio/mcuio-lucky-shield.c
+@@ -0,0 +1,214 @@
++/*
++ * Copyright 2014 Dog Hunter SA
++ * Author: Aurelio Colosimo <aurelio@aureliocolosimo.it>
++ * Originally copied from mcuio-js-shield.c,
++ *      by Davide Ciminaghi <ciminaghi@gnudd.com>
++ *
++ * GNU GPLv2 or later
++ */
++
++#define DEBUG
++
++/* mcuio driver for Lucky shield */
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/device.h>
++#include <linux/slab.h>
++#include <linux/types.h>
++#include <linux/regmap.h>
++#include <linux/workqueue.h>
++#include <linux/irq.h>
++#include <linux/interrupt.h>
++#include <linux/gpio.h>
++#include <linux/hid.h>
++#include <linux/i2c.h>
++#include <linux/platform_device.h>
++#include <linux/platform_data/ssd1307.h>
++#include <linux/i2c/pca953x.h>
++
++#include <linux/mcuio.h>
++#include <linux/mcuio_ids.h>
++#include <linux/mcuio-proto.h>
++
++#include "mcuio-internal.h"
++#include "mcuio-shields.h"
++
++static unsigned int pca9555_base = 200;
++static unsigned short pca9555_addr = 0x20;
++static unsigned short mpl3115_addr = 0x60;
++static unsigned short mag3110_addr = 0x0e;
++static unsigned short sht21_addr = 0x40;
++static unsigned short ssd1307_addr = 0x3c;
++static unsigned short mma8491_addr = 0x55;
++static unsigned int mma8491_rst = 200;
++static unsigned short bme280_addr = 0x77;
++module_param(pca9555_base, uint, 0644);
++module_param(pca9555_addr, ushort, 0644);
++module_param(mpl3115_addr, ushort, 0644);
++module_param(mag3110_addr, ushort, 0644);
++module_param(sht21_addr, ushort, 0644);
++module_param(ssd1307_addr, ushort, 0644);
++module_param(mma8491_addr, ushort, 0644);
++module_param(mma8491_rst, uint, 0644);
++module_param(bme280_addr, uint, 0644);
++
++static struct ssd1307_platform_data ssd1307_plat = {
++	.type = SSD1307_TYPE_1306,
++	.width = 128,
++	.height = 64,
++	.page_offset = 0,
++	.pins_config = 0x12,
++	.display_offset = 0,
++};
++
++static struct pca953x_platform_data pca9555_plat;
++
++static struct mcuio_shld_i2c_info i2c_lst[] = {
++	MCUIO_SHLD_I2C_DEV("pca9555", &pca9555_addr, &pca9555_plat, 122),
++	MCUIO_SHLD_I2C_DEV("mpl3115", &mpl3115_addr, NULL, -1),
++	MCUIO_SHLD_I2C_DEV("mma8491", &mma8491_addr, &mma8491_rst, -1),
++	MCUIO_SHLD_I2C_DEV("mag3110", &mag3110_addr, NULL, -1),
++	MCUIO_SHLD_I2C_DEV("sht21", &sht21_addr, NULL, -1),
++	MCUIO_SHLD_I2C_DEV("ssd1307fb", &ssd1307_addr, &ssd1307_plat, -1),
++	MCUIO_SHLD_I2C_DEV("bme280", &bme280_addr, NULL, -1),
++};
++
++static int mcuio_lucky_probe(struct mcuio_device *mdev)
++{
++	struct mcuio_shld_i2c_info *i;
++	int cnt;
++
++	struct mcuio_shld_data *data;
++
++	dev_dbg(&mdev->dev, "%s entered\n", __func__);
++
++	data = devm_kzalloc(&mdev->dev, sizeof(*data), GFP_KERNEL);
++	if (!data)
++		return -ENOMEM;
++
++	dev_set_drvdata(&mdev->dev, data);
++
++	/* Apply module_param values to platform_data when needed */
++	pca9555_plat.gpio_base = pca9555_base;
++	ssd1307_plat.reset_gpio = pca9555_base + 15;
++
++	data->i2c_adap = mcuio_get_i2c_adapter(mdev);
++
++	if (!data->i2c_adap) {
++		dev_err(&mdev->dev, "error setting up i2c adapter\n");
++		return -ENODEV;
++	}
++
++	data->i2c_info = i2c_lst;
++	data->i2c_cnt = ARRAY_SIZE(i2c_lst);
++
++	/* Register all devices in Lucky shield */
++	for (cnt = 0; cnt < data->i2c_cnt; cnt++) {
++		i = &data->i2c_info[cnt];
++		i->info.addr = *i->paddr;
++		i->info.irq = (i->gpio_irq >= 0) ?
++			gpio_to_irq(i->gpio_irq) : 0;
++
++		i->i2c_client = i2c_new_device(data->i2c_adap, &i->info);
++
++		if (!i->i2c_client)
++			dev_err(&mdev->dev,
++				"i2c_new_device %s failed\n", i->info.type);
++	}
++
++	put_device(&data->i2c_adap->dev);
++
++	dev_dbg(&mdev->dev, "%s returns ok\n", __func__);
++
++	return 0;
++}
++
++static int mcuio_lucky_remove(struct mcuio_device *mdev)
++{
++	struct mcuio_shld_i2c_info *i;
++	struct mcuio_shld_data *data;
++
++	data = dev_get_drvdata(&mdev->dev);
++
++	/* Unregister all devices in Lucky shield, in reverse order as
++	 * they were registered */
++	for (i = &data->i2c_info[data->i2c_cnt - 1];
++	     data->i2c_cnt; i--, data->i2c_cnt--) {
++		if (i->i2c_client) {
++			i2c_unregister_device(i->i2c_client);
++			i->i2c_client = NULL;
++		}
++	}
++
++	return 0;
++}
++
++static const struct mcuio_device_id lucky_drv_ids[] = {
++	{
++		.vendor = MCUIO_VENDOR_DOGHUNTER,
++		.device = MCUIO_DEVICE_LUCKY_SHIELD,
++	},
++	/* Terminator */
++	{
++		.device = MCUIO_NO_DEVICE,
++		.class = MCUIO_CLASS_UNDEFINED,
++	},
++};
++
++static struct mcuio_driver mcuio_lucky_driver = {
++	.driver = {
++		.name = "mcuio-lucky-shield",
++	},
++	.id_table = lucky_drv_ids,
++	.probe = mcuio_lucky_probe,
++	.remove = mcuio_lucky_remove,
++};
++
++
++static int i2cdev_notifier_call(struct notifier_block *nb, unsigned long action,
++			 void *data)
++{
++	struct mcuio_shld_i2c_info *i;
++	struct i2c_client *c = to_i2c_client(data);
++	int cnt;
++
++	if (action == BUS_NOTIFY_DEL_DEVICE) {
++		for (cnt = 0; cnt < ARRAY_SIZE(i2c_lst); cnt++) {
++			i = &i2c_lst[cnt];
++			if (i->i2c_client == to_i2c_client(data))
++				i->i2c_client = NULL;
++		}
++	}
++	return 0;
++}
++
++static struct notifier_block i2cdev_notifier = {
++	.notifier_call = i2cdev_notifier_call,
++};
++
++static int __init mcuio_lucky_init(void)
++{
++	int ret;
++
++	/* Keep track of devices which will be added or removed later */
++	ret = bus_register_notifier(&i2c_bus_type, &i2cdev_notifier);
++	if (ret)
++		return ret;
++
++	return mcuio_driver_register(&mcuio_lucky_driver, THIS_MODULE);
++}
++
++static void __exit mcuio_lucky_exit(void)
++{
++	bus_unregister_notifier(&i2c_bus_type, &i2cdev_notifier);
++	return mcuio_driver_unregister(&mcuio_lucky_driver);
++}
++
++subsys_initcall(mcuio_lucky_init);
++module_exit(mcuio_lucky_exit);
++
++MODULE_AUTHOR("Aurelio Colosimo");
++MODULE_DESCRIPTION("MCUIO driver for Lucky shield");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mcuio/mcuio-shields-manprobe.c b/drivers/mcuio/mcuio-shields-manprobe.c
+new file mode 100644
+index 0000000..6bc16a8
+--- /dev/null
++++ b/drivers/mcuio/mcuio-shields-manprobe.c
+@@ -0,0 +1,175 @@
++/*
++ * Copyright 2014 Dog Hunter SA
++ * Author: Aurelio Colosimo <aurelio@aureliocolosimo.it>
++ *
++ * GNU GPLv2 or later
++ */
++
++#define DEBUG
++
++/* mcuio module for manual probe of shields */
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/slab.h>
++#include <linux/ctype.h>
++#include <linux/device.h>
++#include <linux/err.h>
++#include <linux/mcuio.h>
++#include <linux/mcuio_ids.h>
++
++#include "mcuio-internal.h"
++
++struct shld_probe_info {
++	char *name;
++	unsigned int dev_nr;
++	struct mcuio_device *mdev;
++	struct mcuio_device_id mdev_id;
++	int probed;
++};
++
++#define DH_SHLD(n, did, dnr) { \
++	.name = n, \
++	.dev_nr = dnr, \
++	.mdev_id = { \
++		.device = did, \
++		.vendor = MCUIO_VENDOR_DOGHUNTER, \
++		.class = MCUIO_CLASS_SHIELD, \
++		.class_mask = 0xffffffff,\
++	}\
++}
++
++struct shld_probe_info shld_list[] = {
++	DH_SHLD("lucky", MCUIO_DEVICE_LUCKY_SHIELD, 32),
++	DH_SHLD("digitalio", MCUIO_DEVICE_DIGITALIO_SHIELD, 33),
++	DH_SHLD("dogoled", MCUIO_DEVICE_DOGOLED_SHIELD, 34),
++	{.name = NULL},
++};
++
++int shld_register(struct shld_probe_info *info)
++{
++	int ret = -ENOMEM;
++	struct mcuio_device *mdev;
++	struct mcuio_device *hc;
++
++	/* FIXME shld_register always acts on bus=0
++	 * (only one bus is supported at present) */
++	hc = mcuio_bus_find_hc(0);
++	if (IS_ERR(hc))
++		return -ENODEV;
++
++	mdev = kzalloc(sizeof(*mdev), GFP_KERNEL);
++	if (!mdev)
++		return -ENOMEM;
++
++	mdev->id = info->mdev_id;
++	mdev->device = info->dev_nr;
++
++	pr_debug("mcuio shield: device = 0x%04x, vendor = 0x%04x, "
++		 "class = 0x%04x\n", mdev->id.device,
++		 mdev->id.vendor, mdev->id.class);
++
++	if (mcuio_device_register(mdev, NULL, &hc->dev) < 0) {
++		dev_err(&hc->dev,
++			"error registering device %u:%u.%u\n",
++			hc->bus, mdev->device, mdev->fn);
++		goto err0;
++	}
++
++	info->mdev = mdev;
++
++	return 0;
++
++err0:
++	kfree(mdev);
++	return ret;
++}
++
++void shld_unregister(struct shld_probe_info *info)
++{
++	mcuio_device_unregister(info->mdev);
++	info->mdev = NULL;
++}
++
++
++static int shld_probe(const char *shld_name)
++{
++	struct shld_probe_info *i;
++	for (i = shld_list; i->name; i++)
++		if (sysfs_streq(shld_name, i->name) && !i->probed) {
++			if (!shld_register(i))
++				i->probed = 1;
++			return 0;
++		}
++	return -EINVAL;
++}
++
++static void shld_remove(const char *shld_name)
++{
++	struct shld_probe_info *i;
++	for (i = shld_list; i->name; i++)
++		if (sysfs_streq(shld_name, i->name) && i->probed) {
++			shld_unregister(i);
++			i->probed = 0;
++		}
++}
++
++static ssize_t show_shld_list(struct device *dev, struct device_attribute *attr,
++			char *buf)
++{
++	struct shld_probe_info *i;
++	buf[0] = '\0';
++	for (i = shld_list; i->name; i++) {
++		strcat(buf, i->name);
++		strcat(buf, "\t");
++	}
++	strcat(buf, "\n");
++	return strlen(buf);
++}
++
++static DEVICE_ATTR(shield_list, S_IRUSR, show_shld_list, NULL);
++
++static ssize_t store_shld_register(struct device *dev,
++				     struct device_attribute *attr,
++				     const char *buf, size_t count)
++{
++	int ret;
++	ret = shld_probe(buf);
++	if (ret)
++		dev_err(dev, "%s probe failed ret=%d\n", buf, ret);
++	return count;
++}
++
++static DEVICE_ATTR(shield_register, S_IWUSR, NULL, store_shld_register);
++
++static ssize_t store_shld_unregister(struct device *dev,
++				       struct device_attribute *attr,
++				       const char *buf, size_t count)
++{
++	shld_remove(buf);
++	return count;
++}
++
++static DEVICE_ATTR(shield_unregister, S_IWUSR, NULL, store_shld_unregister);
++
++static int __init shld_core_init(void)
++{
++	device_create_file(&mcuio_bus, &dev_attr_shield_list);
++	device_create_file(&mcuio_bus, &dev_attr_shield_register);
++	device_create_file(&mcuio_bus, &dev_attr_shield_unregister);
++	return 0;
++}
++
++static void __exit shld_core_exit(void)
++{
++	device_remove_file(&mcuio_bus, &dev_attr_shield_list);
++	device_remove_file(&mcuio_bus, &dev_attr_shield_register);
++	device_remove_file(&mcuio_bus, &dev_attr_shield_unregister);
++}
++
++late_initcall(shld_core_init);
++module_exit(shld_core_exit);
++
++MODULE_AUTHOR("Aurelio Colosimo");
++MODULE_DESCRIPTION("driver for MCUIO shields manual probe");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mcuio/mcuio-shields.h b/drivers/mcuio/mcuio-shields.h
+new file mode 100644
+index 0000000..4ec0515
+--- /dev/null
++++ b/drivers/mcuio/mcuio-shields.h
+@@ -0,0 +1,23 @@
++#ifndef __MCUIO_SHIELDS_H__
++#define __MCUIO_SHIELDS_H__
++
++#include <linux/i2c.h>
++
++struct mcuio_shld_i2c_info {
++	unsigned short *paddr;
++	struct i2c_client *i2c_client;
++	struct i2c_board_info info;
++	int gpio_irq;
++};
++
++struct mcuio_shld_data {
++	struct i2c_adapter *i2c_adap;
++	struct mcuio_shld_i2c_info *i2c_info;
++	int i2c_cnt;
++};
++
++#define MCUIO_SHLD_I2C_DEV(t, pa, p, g) \
++	{.paddr = pa, .gpio_irq = g,\
++		.info = {.platform_data = p, .type = t}}
++
++#endif /* __MCUIO_SHIELDS_H__ */
+diff --git a/drivers/mcuio/mcuio-soft-hc.c b/drivers/mcuio/mcuio-soft-hc.c
+new file mode 100644
+index 0000000..a364fa2
+--- /dev/null
++++ b/drivers/mcuio/mcuio-soft-hc.c
+@@ -0,0 +1,369 @@
++/*
++ * Copyright 2011 Dog Hunter SA
++ * Author: Davide Ciminaghi <ciminaghi@gnudd.com>
++ *
++ * GNU GPLv2 or later
++ */
++
++/* mcuio generic soft host controller functions */
++
++#include <linux/mcuio.h>
++#include <linux/circ_buf.h>
++#include <linux/slab.h>
++#include <linux/sched.h>
++#include <linux/regmap.h>
++#include <linux/err.h>
++#include <linux/workqueue.h>
++#include <linux/interrupt.h>
++#include <linux/irq.h>
++#include <linux/circ_buf.h>
++#include <linux/mcuio_ids.h>
++
++#include <linux/mcuio.h>
++#include <linux/mcuio-proto.h>
++#include <linux/mcuio-hc.h>
++#include <linux/mcuio-soft-hc.h>
++#include "mcuio-internal.h"
++
++static struct notifier_block device_nb;
++
++static bool mcuio_soft_hc_readable(struct device *dev, unsigned int reg)
++{
++	return true;
++}
++
++static bool mcuio_soft_hc_writeable(struct device *dev, unsigned int reg)
++{
++	return (reg >= MCUIO_HC_OUTBUF && reg < MCUIO_HC_INBUF) ||
++		reg == MCUIO_IRQ_CLR;
++	return true;
++}
++
++/*
++ * regmap config for line discipline based mcuio host controller
++ */
++static struct regmap_config proto = {
++	.name = "mcuio-ldisc",
++	.reg_bits = 8,
++	.val_bits = 32,
++	.max_register = MCUIO_HC_MAX_REGISTER,
++	.readable_reg = mcuio_soft_hc_readable,
++	.writeable_reg = mcuio_soft_hc_writeable,
++	.cache_type = REGCACHE_NONE,
++};
++
++static int mcuio_soft_hc_read_inbuf(struct mcuio_soft_hc *shc,
++			       unsigned int reg,
++			       unsigned int *val)
++{
++	int i, s = sizeof(shc->rx_buf);
++	u8 *out = (u8 *)val;
++	struct circ_buf *buf = &shc->rx_circ_buf;
++
++	if (CIRC_CNT(buf->head, buf->tail, s) < sizeof(u32))
++		return -EAGAIN;
++	for (i = 0; i < sizeof(u32); i++) {
++		out[i] = buf->buf[buf->tail++];
++		buf->tail &= (s - 1);
++	}
++	return sizeof(unsigned int);
++}
++
++static int mcuio_soft_hc_reg_read(void *context, unsigned int reg,
++				  unsigned int *val)
++{
++	struct mcuio_soft_hc *shc = context;
++	if (!shc)
++		return -EINVAL;
++	if (reg >= MCUIO_HC_INBUF && reg < MCUIO_RX_CNT)
++		return mcuio_soft_hc_read_inbuf(shc, reg, val);
++	switch(reg) {
++	case MCUIO_RX_CNT:
++	{
++		struct circ_buf *buf = &shc->rx_circ_buf;
++		*val = CIRC_CNT(buf->head, buf->tail, sizeof(shc->rx_buf));
++		return sizeof(*val);
++	}
++	case MCUIO_IRQ:
++		*val = shc->irqno;
++		return sizeof(*val);
++	case MCUIO_IRQ_STAT:
++	{
++		struct circ_buf *buf = &shc->rx_circ_buf;
++		unsigned int new_irqstat;
++
++		*val = shc->irqstat;
++
++		pr_debug("%s: autoclear shc irqstat\n", __func__);
++		new_irqstat = CIRC_CNT(buf->head, buf->tail,
++				       sizeof(shc->rx_buf)) ? RX_RDY : 0;
++		shc->irqstat = new_irqstat;
++		pr_debug("%s: new shc irqstat = 0x%08x\n", __func__,
++			shc->irqstat);
++		return sizeof(*val);
++	}
++	default:
++		return -EPERM;
++	}
++	/* NEVER REACHED */
++	return -EPERM;
++}
++
++static int mcuio_soft_hc_reg_write(void *context,
++				   unsigned int reg, unsigned int val)
++{
++	struct mcuio_soft_hc *shc = context;
++	u8 *out = (u8 *)&val;
++	if (!shc)
++		return -EINVAL;
++	if (reg >= MCUIO_HC_OUTBUF && reg < MCUIO_HC_INBUF)
++		return shc->ops->write(shc, out, sizeof(val));
++	if (reg == MCUIO_IRQ_CLR) {
++		shc->irqstat &= ~val;
++		return 0;
++	}
++	return -EPERM;
++}
++
++int mcuio_soft_hc_push_chars(struct mcuio_soft_hc *shc, const u8 *in, int len)
++{
++	int s = sizeof(shc->rx_buf), available, actual;
++	struct circ_buf *buf = &shc->rx_circ_buf;
++	available = CIRC_SPACE_TO_END(buf->head, buf->tail, s);
++	if (available < sizeof(u32)) {
++		pr_debug("%s %d\n", __func__, __LINE__);
++		return -EAGAIN;
++	}
++	actual = min(len, available);
++	memcpy(&buf->buf[buf->head], in, actual);
++	buf->head = (buf->head + actual) & (s - 1);
++	/* set irq status register RX_RDY bit */
++	shc->irqstat |= RX_RDY;
++	if (shc->irq_enabled)
++		queue_kthread_work(&shc->irq_kworker, &shc->do_irq);
++	return actual;
++}
++EXPORT_SYMBOL(mcuio_soft_hc_push_chars);
++
++static struct regmap_config *mcuio_soft_hc_setup_regmap_config(void)
++{
++	struct regmap_config *out = kzalloc(sizeof(*out), GFP_KERNEL);
++	if (!out)
++		return out;
++	*out = proto;
++	out->reg_read = mcuio_soft_hc_reg_read;
++	out->reg_write = mcuio_soft_hc_reg_write;
++	return out;
++}
++
++static struct regmap *
++mcuio_soft_hc_setup_regmap(struct device *dev,
++			   void *__plat)
++{
++	struct mcuio_hc_platform_data *plat = __plat;
++	struct regmap_config *map_cfg = mcuio_soft_hc_setup_regmap_config();
++	struct mcuio_soft_hc *shc;
++	struct regmap *out = ERR_PTR(-ENOMEM);
++	if (!map_cfg) {
++		dev_err(dev, "%s: cannot setup regmap config\n", __func__);
++		return ERR_PTR(-ENOMEM);
++	}
++	shc = plat->data;
++	if (!shc) {
++		dev_err(dev, "%s: no platform data\n", __func__);
++		return out;
++	}
++	/*
++	  no_bus regmap with reg_read and reg_write, use soft controller
++	  structure as regmap context
++	*/
++	return regmap_init(dev, NULL, shc, map_cfg);
++}
++
++static void mcuio_soft_hc_irq_mask(struct irq_data *d)
++{
++	struct irq_chip *chip = irq_data_get_irq_chip(d);
++	struct mcuio_soft_hc *shc =
++		container_of(chip, struct mcuio_soft_hc, chip);
++
++	shc->irq_enabled = 0;
++}
++
++static void mcuio_soft_hc_irq_unmask(struct irq_data *d)
++{
++	struct irq_chip *chip = irq_data_get_irq_chip(d);
++	struct mcuio_soft_hc *shc =
++		container_of(chip, struct mcuio_soft_hc, chip);
++
++	shc->irq_enabled = 1;
++}
++
++static void __do_irq(struct kthread_work *work)
++{
++	struct mcuio_soft_hc *shc =
++		container_of(work, struct mcuio_soft_hc, do_irq);
++
++	handle_nested_irq(shc->irqno);
++}
++
++static struct mcuio_soft_hc *__setup_shc(const struct mcuio_soft_hc_ops *ops,
++					 void *priv)
++{
++	struct mcuio_soft_hc *shc = kzalloc(sizeof(*shc), GFP_KERNEL);
++	if (!shc)
++		return ERR_PTR(-ENOMEM);
++	init_kthread_worker(&shc->irq_kworker);
++	shc->irq_kworker_task = kthread_run(kthread_worker_fn,
++					    &shc->irq_kworker,
++					    "shc_irq");
++	if (IS_ERR(shc->irq_kworker_task)) {
++		pr_err("failed to create irq tsk for shc\n");
++		return ERR_PTR(PTR_ERR(shc->irq_kworker_task));
++	}
++	init_kthread_work(&shc->do_irq, __do_irq);
++	shc->ops = ops;
++	shc->priv = priv;
++	shc->rx_circ_buf.head = shc->rx_circ_buf.tail = 0;
++	shc->rx_circ_buf.buf = shc->rx_buf;
++	shc->chip.name = "MCUIO-SHC";
++	shc->chip.irq_mask = mcuio_soft_hc_irq_mask;
++	shc->chip.irq_unmask = mcuio_soft_hc_irq_unmask;
++	shc->irqno = irq_alloc_desc(0);
++	irq_set_chip(shc->irqno, &shc->chip);
++	irq_set_handler(shc->irqno, &handle_simple_irq);
++	irq_modify_status(shc->irqno,
++			  IRQ_NOREQUEST | IRQ_NOAUTOEN,
++			  IRQ_NOPROBE);
++	return shc;
++}
++
++static struct mcuio_device_id default_soft_hc_id = {
++	.device = MCUIO_DEVICE_SOFT_HC,
++	.vendor = MCUIO_VENDOR_DOGHUNTER,
++	.class = MCUIO_CLASS_SOFT_HOST_CONTROLLER,
++};
++
++static void mcuio_soft_hc_release(struct device *device)
++{
++	struct mcuio_hc_platform_data *plat = dev_get_platdata(device);
++	struct mcuio_soft_hc *shc;
++	int i;
++	if (!plat) {
++		WARN_ON(1);
++		return;
++	}
++	shc = plat->data;
++	bus_unregister_notifier(&mcuio_bus_type, &device_nb);
++	/* Unregister all irq controllers */
++	for (i = 0; i < MCUIO_DEVS_PER_BUS; i++)
++		if (shc->irq_controllers[i])
++			mcuio_device_unregister(shc->irq_controllers[i]);
++	irq_set_handler(shc->irqno, NULL);
++	irq_set_chip(shc->irqno, NULL);
++	irq_free_desc(shc->irqno);
++	kfree(shc);
++	mcuio_hc_dev_default_release(device);
++}
++
++static void __device_added(struct device *dev)
++{
++	struct mcuio_device *mdev = to_mcuio_dev(dev);
++	struct mcuio_device *hc;
++	struct mcuio_soft_hc *shc;
++	struct mcuio_device *ic;
++	struct mcuio_hc_platform_data *plat;
++	int base_irq;
++
++	/* Ignore the hc */
++	if (!mdev->device)
++		return;
++	hc = to_mcuio_dev(dev->parent);
++	plat = dev_get_platdata(&hc->dev);
++	if (!plat) {
++		WARN_ON(1);
++		return;
++	}
++	shc = plat->data;
++	if (!shc) {
++		WARN_ON(1);
++		return;
++	}
++	/* FIXME: ADD LOCKING */
++	ic = shc->irq_controllers[mdev->device];
++	if (ic)
++		return;
++	base_irq = irq_alloc_descs(-1, 0, MCUIO_FUNCS_PER_DEV, 0);
++	/* New device, add soft local irq controller */
++	ic = mcuio_add_soft_local_irq_ctrl(hc, mdev->device, base_irq);
++	if (!ic) {
++		pr_err("mcuio soft hc: error adding irq ctrl for dev %d\n",
++		       mdev->device);
++		return;
++	}
++	shc->irq_controllers[mdev->device] = ic;
++	/*
++	  This is the first function of the new device. When the corresponding
++	  mcuio_device was instantiated, the hc had no irqs, fix the field
++	  up now
++	*/
++	mdev->irq = base_irq + mdev->fn;
++}
++
++static int mcuio_add_notifier(struct notifier_block *nb,
++			      unsigned long action, void *data)
++{
++	struct device *dev = data;
++
++	switch (action) {
++	case BUS_NOTIFY_ADD_DEVICE:
++		__device_added(dev);
++		break;
++	default:
++		return NOTIFY_DONE;
++	}
++	return NOTIFY_OK;
++}
++
++static struct notifier_block device_nb = {
++	.notifier_call = mcuio_add_notifier,
++};
++
++struct device *mcuio_add_soft_hc(struct mcuio_device_id *id,
++				 const struct mcuio_soft_hc_ops *ops,
++				 void *priv)
++{
++	struct mcuio_hc_platform_data *plat;
++	struct mcuio_soft_hc *shc = __setup_shc(ops, priv);
++	struct device *out;
++	int stat;
++	if (IS_ERR(shc))
++		return ERR_PTR(PTR_ERR(shc));
++	plat = kzalloc(sizeof(*plat), GFP_KERNEL);
++	if (!plat) {
++		kfree(shc);
++		return ERR_PTR(-ENOMEM);
++	}
++	plat->setup_regmap = mcuio_soft_hc_setup_regmap;
++	plat->data = shc;
++
++	stat = bus_register_notifier(&mcuio_bus_type, &device_nb);
++	if (stat < 0) {
++		kfree(shc);
++		return ERR_PTR(stat);
++	}
++
++	out = mcuio_add_hc_device(id ? id : &default_soft_hc_id, plat,
++				  mcuio_soft_hc_release);
++	if (IS_ERR(out)) {
++		kfree(shc);
++		bus_unregister_notifier(&mcuio_bus_type, &device_nb);
++		return out;
++	}
++	shc->hc = to_mcuio_dev(out);
++	return out;
++}
++EXPORT_SYMBOL(mcuio_add_soft_hc);
++
++MODULE_AUTHOR("Davide Ciminaghi");
++MODULE_DESCRIPTION("MCUIO soft host controller code");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mcuio/mcuio-soft-local-irq-ctrl-msg-dev.c b/drivers/mcuio/mcuio-soft-local-irq-ctrl-msg-dev.c
+new file mode 100644
+index 0000000..4b986c7
+--- /dev/null
++++ b/drivers/mcuio/mcuio-soft-local-irq-ctrl-msg-dev.c
+@@ -0,0 +1,278 @@
++/*
++ * Copyright 2011 Dog Hunter SA
++ * Author: Davide Ciminaghi <ciminaghi@gnudd.com>
++ *
++ * GNU GPLv2 or later
++ */
++/* #define DEBUG */
++
++/* MCUIO local msg irq controller device */
++/*
++ * This module implements a soft local irq controller device, which is
++ * instantiated by the soft hc controller.
++ * Actual interrupts are triggered by remote device write accesses to
++ * this device.
++ *
++ *  +---------------------+          +----------------------+
++ *  |MPU                  |          | MCU                  |
++ *  |                     |          |                      |
++ *  |          +------------------------+                   |
++ *  |          V wr@0xXXX |          |  |                   |
++ *  |+----------------+   |          |+--------------+      |
++ *  || local irq ctrl |   |          ||irq ctrl msg  |      |
++ *  |+----------------+   |          |+--------------+      |
++ *  +---------------------+          +----------------------+
++ */
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/device.h>
++#include <linux/slab.h>
++#include <linux/types.h>
++#include <linux/regmap.h>
++#include <linux/interrupt.h>
++#include <linux/irq.h>
++#include <linux/workqueue.h>
++#include <linux/kthread.h>
++#include <linux/mutex.h>
++#include <linux/gpio.h>
++#include <linux/delay.h>
++
++#include <linux/mcuio.h>
++#include <linux/mcuio-hc.h>
++#include <linux/mcuio_ids.h>
++#include <linux/mcuio-proto.h>
++
++#include "mcuio-internal.h"
++
++/* Interrupt messages */
++#define MCUIO_IRQ_TRIGGER 0xf80
++
++/*
++ * Data concerning irq of a single function
++ *
++ * @irq_kwork: kthread_worker for irq generation
++ * @irq_kworker_task: irq generation task
++ * @do_irq: kthread_work for irq generation
++ */
++struct fn_irqdata {
++	struct kthread_worker irq_kworker;
++	struct task_struct *irq_kworker_task;
++	struct kthread_work do_irq;
++	int irq;
++};
++
++/*
++ * private data for message based soft local irq controller
++ */
++struct soft_local_irq_ctrl_msg {
++	struct mcuio_device mdev;
++	struct mcuio_request write_req;
++	struct irq_chip chip;
++	int base_irq;
++	struct fn_irqdata irqdata[MCUIO_FUNCS_PER_DEV];
++	atomic_t removing;
++};
++
++static const struct attribute_group *soft_local_irq_ctrl_dev_attr_groups[] = {
++	&mcuio_default_dev_attr_group,
++	NULL,
++};
++
++void mcuio_soft_local_irq_ctrl_release(struct device *dev)
++{
++	struct mcuio_device *mdev = to_mcuio_dev(dev);
++	struct soft_local_irq_ctrl_msg *slicm =
++		container_of(mdev, struct soft_local_irq_ctrl_msg, mdev);
++	int i;
++
++	pr_debug("%s entered\n", __func__);
++	atomic_set(&slicm->removing, 1);
++	pr_debug("canceling write req cb\n");
++	mcuio_cancel_cb(&slicm->write_req);
++	for (i = 0; i < MCUIO_FUNCS_PER_DEV; i++) {
++		struct fn_irqdata *idata = &slicm->irqdata[i];
++
++		pr_debug("stopping thread for device %d\n", i);
++		flush_kthread_worker(&idata->irq_kworker);
++		kthread_stop(idata->irq_kworker_task);
++	}
++	pr_debug("freeing irq descriptors\n");
++	irq_free_descs(slicm->base_irq, MCUIO_FUNCS_PER_DEV);
++	kfree(slicm);
++}
++
++
++static struct device_type mcuio_soft_local_irq_ctrl_device_type = {
++	.name = "mcuio-soft-local-irq-ctrl",
++	.groups = soft_local_irq_ctrl_dev_attr_groups,
++	.release = mcuio_soft_local_irq_ctrl_release,
++};
++
++static void mcuio_soft_local_irq_controller_msg_wcb(struct mcuio_request *r)
++{
++	struct soft_local_irq_ctrl_msg *slicm = r->cb_data;
++	struct fn_irqdata *idata;
++	int fn;
++
++	pr_debug("%s %d, offset = 0x%04x, data[0] = 0x%08x\n",
++		 __func__, __LINE__, r->offset, r->data[0]);
++
++	if (atomic_read(&slicm->removing))
++		return;
++
++	fn = (r->offset - MCUIO_IRQ_TRIGGER) / sizeof(u32);
++
++	if ((fn < 0) || (fn >= MCUIO_FUNCS_PER_DEV)) {
++		dev_err(&slicm->mdev.dev, "UNHANDLED WRITE REQ TO 0x%04x\n",
++			r->offset);
++		return;
++	}
++
++	idata = &slicm->irqdata[fn];
++
++	queue_kthread_work(&idata->irq_kworker, &idata->do_irq);
++}
++
++static void mcuio_soft_local_irq_mask(struct irq_data *d)
++{
++}
++
++static void mcuio_soft_local_irq_unmask(struct irq_data *d)
++{
++}
++
++static void __do_irq(struct kthread_work *work)
++{
++	struct fn_irqdata *idata =
++		container_of(work, struct fn_irqdata, do_irq);
++
++	handle_nested_irq(idata->irq);
++}
++
++struct mcuio_device *
++mcuio_add_soft_local_irq_ctrl(struct mcuio_device *hc, int fn, int base_irq)
++{
++	struct soft_local_irq_ctrl_msg *slicm = kzalloc(sizeof(*slicm),
++							GFP_KERNEL);
++	struct mcuio_device *out, *mdev;
++	int i, ret, dev_irqs[MCUIO_FUNCS_PER_DEV];
++
++	pr_debug("%s entered\n", __func__);
++	if (!slicm) {
++		dev_err(&hc->dev, "error allocating soft local irq struct\n");
++		return ERR_PTR(-ENOMEM);
++	}
++
++	mdev = &slicm->mdev;
++	slicm->chip.name = "MCUIO-SOFT-LOCAL-IRQ-CTRL";
++	slicm->chip.irq_mask = mcuio_soft_local_irq_mask;
++	slicm->chip.irq_unmask = mcuio_soft_local_irq_unmask;
++	slicm->base_irq = base_irq;
++
++	for (i = 0; i < MCUIO_FUNCS_PER_DEV; i++) {
++		int irq = slicm->base_irq + i;
++		struct fn_irqdata *idata = &slicm->irqdata[i];
++
++		irq_set_chip_data(irq, slicm);
++		irq_set_handler_data(irq, idata);
++		irq_set_chip(irq, &slicm->chip);
++		irq_set_handler(irq, &handle_simple_irq);
++		irq_modify_status(irq,
++				  IRQ_NOREQUEST | IRQ_NOAUTOEN, IRQ_NOPROBE);
++		dev_irqs[i] = irq;
++
++		idata->irq = irq;
++		init_kthread_worker(&idata->irq_kworker);
++		idata->irq_kworker_task = kthread_run(kthread_worker_fn,
++						      &idata->irq_kworker,
++						      "mcuio_irq_%d_%d",
++						      fn, i);
++		if (IS_ERR(idata->irq_kworker_task)) {
++			int j;
++
++			pr_err("failed to create irq tsk for %d, fn %d\n",
++			       hc->device, i);
++			mdev = ERR_PTR(PTR_ERR(idata->irq_kworker_task));
++			for (j = 0; j < i; j++) {
++				idata = &slicm->irqdata[j];
++				kthread_stop(idata->irq_kworker_task);
++			}
++			break;
++		}
++		init_kthread_work(&idata->do_irq, __do_irq);
++	}
++	if (IS_ERR(mdev)) {
++		out = mdev;
++		goto err0;
++	}
++	mdev->id.device = MCUIO_DEVICE_LOCAL_IRQC_MSG;
++	mdev->id.vendor = MCUIO_VENDOR_DOGHUNTER;
++	mdev->id.class = MCUIO_CLASS_SOFT_LOCAL_IRQ_CONTROLLER_PROTO;
++	mdev->id.class_mask = 0xffffffff;
++	mdev->bus = hc->bus;
++	/* Local device */
++	mdev->device = 0;
++	mdev->fn = fn;
++	pr_debug("%s %d, device = 0x%04x, vendor = 0x%04x, "
++		 "class = 0x%04x\n", __func__, __LINE__, mdev->id.device,
++		 mdev->id.vendor, mdev->id.class);
++
++	/*
++	 * Register a callback for write requests to this device
++	 * over the mcuio bus
++	 */
++	slicm->write_req.cb = mcuio_soft_local_irq_controller_msg_wcb;
++	slicm->write_req.cb_data = slicm;
++
++	mcuio_init_request(&slicm->write_req, hc, mdev->device, mdev->fn,
++			   mcuio_type_wrdw, 0, 0, 0);
++
++	ret = mcuio_setup_cb(&slicm->write_req);
++	if (ret < 0) {
++		dev_err(&hc->dev, "error setting up write callback\n");
++		out = ERR_PTR(ret);
++		goto err0;
++	}
++
++	/*
++	 * The hc is not our parent
++	 */
++	ret = mcuio_device_register(mdev,
++				    &mcuio_soft_local_irq_ctrl_device_type,
++				    NULL);
++	if (ret < 0) {
++		dev_err(&hc->dev,
++			"error registering device %u:%u.%u\n", hc->bus, 0, fn);
++		out = ERR_PTR(ret);
++		goto err1;
++	}
++
++	ret = mcuio_hc_set_irqs(hc, fn, dev_irqs);
++	if (ret < 0) {
++		dev_err(&hc->dev, "error setting irqs\n");
++		mcuio_device_unregister(mdev);
++		out = ERR_PTR(ret);
++		goto err1;
++	}
++
++	out = mdev;
++
++	pr_debug("%s successful, created device %s\n",
++		 __func__, dev_name(&out->dev));
++
++	return out;
++
++
++err1:
++	mcuio_cancel_cb(&slicm->write_req);
++err0:
++	irq_free_descs(slicm->base_irq, MCUIO_FUNCS_PER_DEV);
++	kfree(mdev);
++	return out;
++}
++EXPORT_SYMBOL(mcuio_add_soft_local_irq_ctrl);
++
++MODULE_AUTHOR("Davide Ciminaghi");
++MODULE_DESCRIPTION("MCUIO irq controller driver");
++MODULE_LICENSE("GPL v2");
+diff --git a/drivers/mcuio/sysfs.c b/drivers/mcuio/sysfs.c
+new file mode 100644
+index 0000000..e074b85
+--- /dev/null
++++ b/drivers/mcuio/sysfs.c
+@@ -0,0 +1,83 @@
++/*
++ * Copyright 2011 Dog Hunter SA
++ * Author: Davide Ciminaghi <ciminaghi@gnudd.com>
++ *
++ * GNU GPLv2 or later
++ */
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <linux/init.h>
++#include <linux/device.h>
++#include <linux/slab.h>
++#include <linux/types.h>
++#include <linux/sysfs.h>
++
++#include <linux/mcuio.h>
++#include <linux/mcuio_ids.h>
++#include "mcuio-internal.h"
++
++
++static ssize_t show_device(struct device *dev, struct device_attribute *attr,
++			   char *buf)
++{
++	struct mcuio_device *mdev = to_mcuio_dev(dev);
++	return sprintf(buf, "0x%04x", mdev->id.device);
++}
++
++static ssize_t show_vendor(struct device *dev, struct device_attribute *attr,
++			   char *buf)
++{
++	struct mcuio_device *mdev = to_mcuio_dev(dev);
++	return sprintf(buf, "0x%04x", mdev->id.vendor);
++}
++
++static ssize_t show_class(struct device *dev, struct device_attribute *attr,
++			  char *buf)
++{
++	struct mcuio_device *mdev = to_mcuio_dev(dev);
++	return sprintf(buf, "0x%08x", mdev->id.class);
++}
++
++static ssize_t show_bus(struct device *dev, struct device_attribute *attr,
++			char *buf)
++{
++	struct mcuio_device *mdev = to_mcuio_dev(dev);
++	return sprintf(buf, "%u", mdev->bus);
++}
++
++static ssize_t show_dev(struct device *dev, struct device_attribute *attr,
++			char *buf)
++{
++	struct mcuio_device *mdev = to_mcuio_dev(dev);
++	return sprintf(buf, "%u", mdev->device);
++}
++
++static ssize_t show_func(struct device *dev, struct device_attribute *attr,
++			char *buf)
++{
++	struct mcuio_device *mdev = to_mcuio_dev(dev);
++	return sprintf(buf, "%u", mdev->fn);
++}
++
++static DEVICE_ATTR(device, 0444, show_device, NULL);
++static DEVICE_ATTR(vendor, 0444, show_vendor, NULL);
++static DEVICE_ATTR(class, 0444, show_class, NULL);
++static DEVICE_ATTR(bus, 0444, show_bus, NULL);
++static DEVICE_ATTR(dev, 0444, show_dev, NULL);
++static DEVICE_ATTR(func, 0444, show_func, NULL);
++
++static struct attribute *dev_attrs[] = {
++	&dev_attr_device.attr,
++	&dev_attr_vendor.attr,
++	&dev_attr_class.attr,
++	&dev_attr_bus.attr,
++	&dev_attr_dev.attr,
++	&dev_attr_func.attr,
++	NULL,
++};
++
++struct attribute_group mcuio_default_dev_attr_group = {
++	.attrs = dev_attrs,
++};
++EXPORT_SYMBOL(mcuio_default_dev_attr_group);
+diff --git a/include/linux/mcuio-hc.h b/include/linux/mcuio-hc.h
+new file mode 100644
+index 0000000..ee114dd
+--- /dev/null
++++ b/include/linux/mcuio-hc.h
+@@ -0,0 +1,76 @@
++/*
++ * Copyright 2011 Dog Hunter SA
++ * Author: Davide Ciminaghi <ciminaghi@gnudd.com>
++ *
++ * Header file for mcuio host controller
++ *
++ * GNU GPLv2 or later
++ */
++#ifndef __HOST_CONTROLLER_H__
++#define __HOST_CONTROLLER_H__
++
++#define MCUIO_HC_OUTBUF 0x8
++#define MCUIO_HC_INBUF 0x108
++/* How many 32bits words are in rx buffer */
++#define MCUIO_RX_CNT   0x208
++/* Irq register */
++#define MCUIO_IRQ      0x20c
++/* Irq status */
++#define MCUIO_IRQ_STAT  0x210
++#define RX_RDY         0x1
++/* Clear register */
++#define MCUIO_IRQ_CLR  0x214
++
++#define MCUIO_HC_MAX_REGISTER 0x214
++
++struct regmap;
++
++typedef struct regmap *(*setup_regmap)(struct device *, void *data);
++
++/*
++ * Platform data for host controller
++ *
++ * @setup_regmap: pointer to function setting up a regmap for controller
++ * @data: data to be passed on to setup_regmap.
++ */
++struct mcuio_hc_platform_data {
++	setup_regmap setup_regmap;
++	void *data;
++};
++
++/*
++ * mcuio_add_hc_device() : add host controller device
++ *
++ * @id: pointer to mcuio device's id
++ * @plat: pointer to platform data structure
++ * @release: pointer to custom release function
++ */
++struct device *mcuio_add_hc_device(struct mcuio_device_id *id,
++				   struct mcuio_hc_platform_data *plat,
++				   void (*release)(struct device *));
++
++/*
++ * mcuio_del_hc_device(): remove host controller device
++ *
++ * @dev: pointer to relevant struct device
++ */
++void mcuio_del_hc_device(struct device *);
++
++/*
++ * mcuio_hc_dev_default_release(): default release for hc devices
++ *
++ * @dev: pointer to corresponding device to be deleted
++ *
++ * If an hc is created with custom release function, such function can
++ * invoke mcuio_hc_dev_default_release() to perform some common release
++ * operations (freeing memory and releasing the mcuio bus number)
++ */
++void mcuio_hc_dev_default_release(struct device *dev);
++
++
++/*
++ * Set irq numbers for a given bus device (MCUIO_FUNCS_PER_DEV functions)
++ */
++int mcuio_hc_set_irqs(struct mcuio_device *hc, unsigned dev, int irqs[]);
++
++#endif /* __HOST_CONTROLLER_H__ */
+diff --git a/include/linux/mcuio-proto.h b/include/linux/mcuio-proto.h
+new file mode 100644
+index 0000000..c8675c2
+--- /dev/null
++++ b/include/linux/mcuio-proto.h
+@@ -0,0 +1,246 @@
++#ifndef __MCUIO_PROTO_H__
++#define __MCUIO_PROTO_H__
++
++#ifdef __KERNEL__
++#include <linux/types.h>
++
++#define mcuio_ntohq(a) le64_to_cpu(a)
++#define mcuio_htonq(a) cpu_to_le64(a)
++#define mcuio_ntohl(a) le32_to_cpu(a)
++#define mcuio_htonl(a) cpu_to_le32(a)
++#define mcuio_ntohs(a) le16_to_cpu(a)
++#define mcuio_htons(a) cpu_to_le16(a)
++
++#endif /* __KERNEL__ */
++
++
++#define mcuio_type_rdb			0
++#define mcuio_type_wrb			1
++#define mcuio_type_rdw			2
++#define mcuio_type_wrw			3
++#define mcuio_type_rddw			4
++#define mcuio_type_wrdw			5
++#define mcuio_type_rdq			6
++#define mcuio_type_wrq			7
++
++#define mcuio_error_bit			BIT(5)
++#define mcuio_reply_bit			BIT(6)
++#define mcuio_fill_data_bit		BIT(7)
++#define mcuio_actual_type_mask		0x07
++
++#define mask(b)				(BIT(b) - 1)
++
++#define mcuio_addr_offset_bits		12
++#define mcuio_addr_offset_shift		0
++#define mcuio_addr_offset_mask		mask(mcuio_addr_offset_bits)
++
++#define mcuio_addr_func_bits		5
++#define mcuio_addr_func_shift		mcuio_addr_offset_bits
++#define mcuio_addr_func_mask		mask(mcuio_addr_func_bits)
++#define MCUIO_FUNCS_PER_DEV		BIT(mcuio_addr_func_bits)
++
++#define mcuio_addr_dev_bits		4
++#define mcuio_addr_dev_shift		(mcuio_addr_func_bits + \
++					 mcuio_addr_offset_bits)
++#define mcuio_addr_dev_mask		mask(mcuio_addr_dev_bits)
++#define MCUIO_DEVS_PER_BUS		BIT(mcuio_addr_dev_bits)
++
++#define mcuio_addr_bus_bits		3
++#define mcuio_addr_bus_shift		(mcuio_addr_func_bits + \
++					 mcuio_addr_offset_bits + \
++					 mcuio_addr_dev_bits)
++#define mcuio_addr_bus_mask		mask(mcuio_addr_bus_bits)
++
++#define mcuio_addr_type_bits		8
++#define mcuio_addr_type_shift		(mcuio_addr_func_bits + \
++					 mcuio_addr_offset_bits + \
++					 mcuio_addr_dev_bits + \
++					 mcuio_addr_bus_bits)
++#define mcuio_addr_type_mask		mask(mcuio_addr_type_bits)
++
++struct mcuio_packet {
++	uint32_t addr;
++	uint32_t data[2];
++	uint16_t crc;
++	uint16_t dummy;
++} __attribute__((packed));
++
++static inline unsigned mcuio_packet_type(struct mcuio_packet *p)
++{
++	return mcuio_ntohl(p->addr) >> mcuio_addr_type_shift;
++}
++
++static inline void mcuio_set_packet_type(struct mcuio_packet *p, uint32_t t)
++{
++	p->addr &= (mcuio_addr_type_mask << mcuio_addr_type_shift);
++	p->addr |= mcuio_htonl(t) << mcuio_addr_type_shift;
++}
++
++static inline unsigned mcuio_data_size(unsigned t)
++{
++	if (t & mcuio_fill_data_bit)
++		return sizeof(uint64_t);
++	return (1 << ((t & ~1) >> 1));
++}
++
++static inline unsigned mcuio_packet_data_size(struct mcuio_packet *p)
++{
++	return mcuio_data_size(mcuio_packet_type(p));
++}
++
++static inline int mcuio_type_is_read(unsigned t)
++{
++	return !(t & 0x1);
++}
++
++static inline int mcuio_packet_is_read(struct mcuio_packet *p)
++{
++	return mcuio_type_is_read(mcuio_packet_type(p));
++}
++
++static inline int mcuio_packet_is_write(struct mcuio_packet *p)
++{
++	return !mcuio_type_is_read(mcuio_packet_type(p));
++}
++
++static inline int mcuio_packet_is_reply(struct mcuio_packet *p)
++{
++	return (mcuio_packet_type(p) & mcuio_reply_bit);
++}
++
++static inline int mcuio_packet_is_fill_data(struct mcuio_packet *p)
++{
++	return (mcuio_packet_type(p) & mcuio_fill_data_bit);
++}
++
++static inline unsigned mcuio_packet_offset(struct mcuio_packet *p)
++{
++	return (mcuio_ntohl(p->addr) >> mcuio_addr_offset_shift) &
++		mcuio_addr_offset_mask;
++}
++
++static inline unsigned mcuio_packet_func(struct mcuio_packet *p)
++{
++	return (mcuio_ntohl(p->addr) >> mcuio_addr_func_shift) &
++		mcuio_addr_func_mask;
++}
++
++static inline unsigned mcuio_packet_dev(struct mcuio_packet *p)
++{
++	return (mcuio_ntohl(p->addr) >> mcuio_addr_dev_shift) &
++		mcuio_addr_dev_mask;
++}
++
++static inline unsigned mcuio_packet_bus(struct mcuio_packet *p)
++{
++	return (mcuio_ntohl(p->addr) >> mcuio_addr_bus_shift) &
++		mcuio_addr_bus_mask;
++}
++
++static inline void mcuio_packet_set_addr(struct mcuio_packet *p,
++					 unsigned bus, unsigned dev,
++					 unsigned func, unsigned offset,
++					 unsigned type, int fill)
++{
++	p->addr = mcuio_htonl(((offset & mcuio_addr_offset_mask) <<
++			       mcuio_addr_offset_shift) |
++			      ((func & mcuio_addr_func_mask) <<
++			       mcuio_addr_func_shift) |
++			      ((dev & mcuio_addr_dev_mask) <<
++			       mcuio_addr_dev_shift) |
++			      ((bus & mcuio_addr_bus_mask) <<
++			       mcuio_addr_bus_shift) |
++			      (((type & mcuio_addr_type_mask) |
++				(fill ? mcuio_fill_data_bit : 0)) <<
++			       mcuio_addr_type_shift));
++}
++
++static inline int mcuio_packet_is_reply_to(struct mcuio_packet *p,
++					   struct mcuio_packet *request)
++{
++	unsigned t = mcuio_packet_type(p);
++	unsigned rt = mcuio_packet_type(request);
++	unsigned o = mcuio_packet_offset(p);
++	unsigned ro = mcuio_packet_offset(request);
++	unsigned f = mcuio_packet_func(p);
++	unsigned rf = mcuio_packet_func(request);
++	unsigned d = mcuio_packet_dev(p);
++	unsigned rd = mcuio_packet_dev(request);
++	unsigned b = mcuio_packet_bus(p);
++	unsigned rb = mcuio_packet_bus(request);
++
++	pr_debug("type = 0x%02x, request type = 0x%02x\n", t, rt);
++	return (t & mcuio_actual_type_mask) == rt && o == ro && f == rf &&
++		d == rd && b == rb;
++}
++
++
++static inline void mcuio_packet_set_reply(struct mcuio_packet *p)
++{
++	mcuio_set_packet_type(p, mcuio_packet_type(p) | mcuio_reply_bit);
++}
++
++static inline int mcuio_packet_is_error(struct mcuio_packet *p)
++{
++	return mcuio_packet_type(p) & mcuio_error_bit;
++}
++
++static inline void mcuio_packet_set_error(struct mcuio_packet *p)
++{
++	mcuio_set_packet_type(p, mcuio_packet_type(p) | mcuio_error_bit);
++}
++
++static inline void mcuio_packet_set_fill_data(struct mcuio_packet *p)
++{
++	mcuio_set_packet_type(p, mcuio_packet_type(p) | mcuio_fill_data_bit);
++}
++
++static inline const char *mcuio_packet_type_to_str(int t)
++{
++	switch(t & mcuio_actual_type_mask) {
++	case mcuio_type_rdb:
++		return "rdb";
++	case mcuio_type_wrb:
++		return "wrb";
++	case mcuio_type_rdw:
++		return "rdw";
++	case mcuio_type_wrw:
++		return "wrw";
++	case mcuio_type_rddw:
++		return "rddw";
++	case mcuio_type_wrdw:
++		return "wrdw";
++	case mcuio_type_rdq:
++		return "rdq";
++	case mcuio_type_wrq:
++		return "wrq";
++	}
++	return "unknown";
++}
++
++struct mcuio_func_descriptor {
++	uint32_t device_vendor;
++	uint32_t rev_class;
++} __attribute__((packed));
++
++static inline uint16_t mcuio_get_vendor(struct mcuio_func_descriptor *d)
++{
++	return mcuio_ntohs(mcuio_ntohl(d->device_vendor) & 0xffff);
++}
++
++static inline uint16_t mcuio_get_device(struct mcuio_func_descriptor *d)
++{
++	return mcuio_ntohs(mcuio_ntohl(d->device_vendor) >> 16);
++}
++
++static inline uint32_t mcuio_get_class(struct mcuio_func_descriptor *d)
++{
++	return mcuio_ntohl(d->rev_class) >> 8;
++}
++
++static inline uint32_t mcuio_get_rev(struct mcuio_func_descriptor *d)
++{
++	return mcuio_ntohl(d->rev_class) & ((1 << 8) - 1);
++}
++
++#endif /* __MCUIO_PROTO_H__ */
+diff --git a/include/linux/mcuio-soft-hc.h b/include/linux/mcuio-soft-hc.h
+new file mode 100644
+index 0000000..875c38d
+--- /dev/null
++++ b/include/linux/mcuio-soft-hc.h
+@@ -0,0 +1,85 @@
++/*
++ * Copyright 2011 Dog Hunter SA
++ * Author: Davide Ciminaghi <ciminaghi@gnudd.com>
++ *
++ * GNU GPLv2 or later
++ */
++
++/* mcuio generic soft host controller functions and data structs, header file */
++
++#ifndef __MCUIO_SOFT_HOST_CONTROLLER_H__
++#define __MCUIO_SOFT_HOST_CONTROLLER_H__
++
++#include <linux/circ_buf.h>
++#include <linux/workqueue.h>
++#include <linux/kthread.h>
++#include <linux/irq.h>
++#include <linux/mcuio-proto.h>
++
++struct mcuio_soft_hc;
++
++struct mcuio_soft_hc_ops {
++	int (*write)(struct mcuio_soft_hc *, const u8 *ptr, unsigned int len);
++};
++
++/*
++ * A soft mcuio host controller
++ *
++ * @id: pointer to corresponding mcuio device's id.
++ * @irqstat: current irq status register
++ * @irqno: number of [virtual] irq
++ * @irq_enabled: irq enabled when !0
++ * @rx_circ_buf: circular buffer structure for rx data management
++ * @rx_buf: actual rx data buffer
++ * @ops: pointer to hc operations
++ * @chip: related irqchip
++ * @irq_kworker:
++ * @irq_kworker_task:
++ * @do_irq:
++ * @hc: pointer to host controller (mcuio device)
++ * @irq_controllers: array of pointers to soft irq controllers
++ * @priv: client driver private data
++ */
++struct mcuio_soft_hc {
++	struct mcuio_device_id *id;
++	u32 irqstat;
++	int irqno;
++	int irq_enabled;
++	struct circ_buf rx_circ_buf;
++	char rx_buf[256];
++	const struct mcuio_soft_hc_ops *ops;
++	struct irq_chip chip;
++	struct kthread_worker irq_kworker;
++	struct task_struct *irq_kworker_task;
++	struct kthread_work do_irq;
++	struct mcuio_device *hc;
++	struct mcuio_device *irq_controllers[MCUIO_DEVS_PER_BUS];
++	void *priv;
++};
++
++/* Instantiate a soft host controller */
++/*
++ * mcuio_add_soft_hc
++ *
++ * @id: pointer to corresponding mcuio device's id.
++ * @ops: pointer to operations structure
++ * @priv: pointer to private data
++ *
++ * Returns pointer to corresponding device
++ */
++struct device *mcuio_add_soft_hc(struct mcuio_device_id *id,
++				 const struct mcuio_soft_hc_ops *ops,
++				 void *priv);
++
++/* Push chars from soft host controller client driver */
++/*
++ * mcuio_soft_hc_push_chars()
++ *
++ * @shc: pointer to soft host controller data structure
++ * @buf: pointer to input buffer
++ * @len: length of buffer
++ */
++int mcuio_soft_hc_push_chars(struct mcuio_soft_hc *shc, const u8 *buf, int len);
++
++
++#endif /* __MCUIO_SOFT_HOST_CONTROLLER_H__ */
+diff --git a/include/linux/mcuio.h b/include/linux/mcuio.h
+new file mode 100644
+index 0000000..c5477fb
+--- /dev/null
++++ b/include/linux/mcuio.h
+@@ -0,0 +1,195 @@
++#ifndef __MCUIO_H__
++#define __MCUIO_H__
++
++#ifdef __KERNEL__
++
++#include <linux/device.h>
++#include <linux/module.h>
++
++struct mcuio_packet;
++
++/*
++ * Id of an mcuio device.
++ */
++struct mcuio_device_id {
++	unsigned int device;
++	unsigned int vendor;
++	unsigned int class;
++	unsigned int class_mask;
++};
++
++/*
++ * An mcuio device.
++ * @id: device id, as defined above
++ * @bus: bus number
++ * @device: device number (0 for host controllers)
++ * @fn: function number (0 for host controllers)
++ * @dev: the relevant device
++ * @irq: irq number for device
++ */
++struct mcuio_device {
++	struct mcuio_device_id id;
++	unsigned bus, device, fn;
++	struct device dev;
++	int irq;
++};
++
++#define to_mcuio_dev(_dev) container_of(_dev, struct mcuio_device, dev)
++
++/*
++ * mcuio_driver -- an mcuio driver struc
++ */
++struct mcuio_driver {
++	const struct mcuio_device_id	*id_table;
++	int (*probe)(struct mcuio_device *dev);
++	int (*remove)(struct mcuio_device *dev);
++	int (*input_ready)(struct mcuio_device *dev);
++	struct device_driver		driver;
++};
++
++#define to_mcuio_drv(_drv) container_of(_drv, struct mcuio_driver, driver)
++
++/*
++ * The parent of all mcuio controllers on this machine
++ */
++extern struct device mcuio_bus;
++
++int mcuio_driver_register(struct mcuio_driver *drv, struct module *owner);
++void mcuio_driver_unregister(struct mcuio_driver *drv);
++int mcuio_device_register(struct mcuio_device *dev,
++			  struct device_type *type,
++			  struct device *parents);
++void mcuio_device_unregister(struct mcuio_device *dev);
++
++struct mcuio_request;
++
++typedef void (*request_cb)(struct mcuio_request *);
++
++/*
++ * mcuio request flags
++ */
++/*
++ * fill: if this is !0 the resulting request packet shall have its fill data
++ *       flag set
++ */
++#define MCUIO_REQUEST_FILL BIT(0)
++/*
++ * incoming: if this is !0 the request is incoming (outgoing otherwise)
++ */
++#define MCUIO_REQUEST_INCOMING BIT(1)
++
++/*
++ * This represents an mcuio request
++ * @hc: pointer to host controller mcuio device
++ * @dev: destination device
++ * @func: destination function
++ * @offset: offset within function address space
++ * @offset_mask: this mask is applied to incoming packets' offsets when
++ *		 looking for matching pending requests
++ * @type: request type
++ * @cb: pointer to callback function
++ * @cb_data: callback data.
++ * @status: status of request (0 completed OK, -EXXXX errors)
++ * @data: request data
++ * @list: used for enqueueing requests
++ * @to_work: delayed_work struct for request timeout management
++ * @priv: private data. FIX THIS
++ * @flags: request flags (MCUIO_REQUEST_XXX)
++ * @release: pointer to memory release function
++ */
++struct mcuio_request {
++	struct mcuio_device *hc;
++	unsigned dev;
++	unsigned func;
++	unsigned offset;
++	unsigned offset_mask;
++	unsigned type;
++	request_cb cb;
++	void *cb_data;
++	int status;
++	uint32_t data[2];
++	struct list_head list;
++	struct delayed_work to_work;
++	void *priv;
++	unsigned int flags;
++	void (*release)(struct mcuio_request *);
++};
++
++static inline int mcuio_request_is_fill(struct mcuio_request *r)
++{
++	return r->flags & MCUIO_REQUEST_FILL;
++}
++
++static inline void mcuio_request_set_fill(struct mcuio_request *r, int f)
++{
++	r->flags &= ~MCUIO_REQUEST_FILL;
++	if (f)
++		r->flags |= MCUIO_REQUEST_FILL;
++}
++
++static inline int mcuio_request_is_incoming(struct mcuio_request *r)
++{
++	return r->flags & MCUIO_REQUEST_INCOMING;
++}
++
++static inline void mcuio_request_set_incoming(struct mcuio_request *r, int f)
++{
++	r->flags &= ~MCUIO_REQUEST_INCOMING;
++	if (f)
++		r->flags |= MCUIO_REQUEST_INCOMING;
++}
++
++/*
++ * Submit a request, block until request done
++ *
++ * @r: pointer to request
++ */
++int mcuio_submit_request(struct mcuio_request *r);
++
++/*
++ * Setup a callback for an incoming request
++ *
++ * @r: pointer to corresponding request
++ */
++int mcuio_setup_cb(struct mcuio_request *r);
++
++/*
++ * Cancel a callback for an incoming request
++ *
++ * @r: pointer to corresponding request
++ */
++int mcuio_cancel_cb(struct mcuio_request *r);
++
++/*
++ * Fill a non-dynamically allocated mcuio request
++ */
++void mcuio_init_request(struct mcuio_request *r,
++			struct mcuio_device *mdev,
++			unsigned dev, unsigned func,
++			unsigned type,
++			int fill,
++			unsigned offset,
++			unsigned offset_mask);
++
++/*
++ * Dynamically allocate an mcuio request and initialize it
++ */
++struct mcuio_request *mcuio_make_request(struct mcuio_device *mdev,
++					 unsigned dev, unsigned func,
++					 unsigned type,
++					 int fill,
++					 unsigned offset,
++					 unsigned offset_mask);
++
++/*
++ * Free an mcuio request
++ */
++static inline void mcuio_free_request(struct mcuio_request *r)
++{
++	if (r->release)
++		r->release(r);
++}
++
++#endif /* __KERNEL__ */
++
++#endif /* __MCUIO_H__ */
+diff --git a/include/linux/mcuio_ids.h b/include/linux/mcuio_ids.h
+new file mode 100644
+index 0000000..fd5dbb6
+--- /dev/null
++++ b/include/linux/mcuio_ids.h
+@@ -0,0 +1,46 @@
++#ifndef __MCUIO_IDS_H__
++#define __MCUIO_IDS_H__
++
++/* Various class definitions */
++
++#define MCUIO_CLASS_UNDEFINED	    0x0000
++/* Hardware implementation of host controller */
++#define MCUIO_CLASS_HOST_CONTROLLER 0x0001
++/* Software implementation of host controller (line discipline) */
++#define MCUIO_CLASS_SOFT_HOST_CONTROLLER 0x0011
++#define MCUIO_CLASS_GPIO	    0x0002
++#define MCUIO_CLASS_ADC		    0x0003
++#define MCUIO_CLASS_DAC		    0x0004
++#define MCUIO_CLASS_PWM		    0x0005
++#define MCUIO_CLASS_GRAPHIC_DISPLAY 0x0006
++#define MCUIO_CLASS_TEXT_DISPLAY    0x0007
++#define MCUIO_CLASS_I2C_CONTROLLER  0x0008
++#define MCUIO_CLASS_SPI_CONTROLLER  0x0009
++/* Send irqs from MCU via communication protocol */
++#define MCUIO_CLASS_IRQ_CONTROLLER_PROTO  0x000a
++/* Send irqs from MCU via gpio */
++#define MCUIO_CLASS_IRQ_CONTROLLER_WIRE   0x000b
++/* Add-on shield */
++#define MCUIO_CLASS_SHIELD	    0x000c
++/* Local message based irq controller */
++#define MCUIO_CLASS_SOFT_LOCAL_IRQ_CONTROLLER_PROTO 0x000d
++
++
++/* Invalid device id (used for id table termination */
++#define MCUIO_NO_DEVICE		    0x0000
++
++
++/* Vendors */
++#define MCUIO_VENDOR_DOGHUNTER	    0x0001
++
++
++/* Specific devices */
++#define MCUIO_DEVICE_JOYSTICK_SHIELD 0x0001
++#define MCUIO_DEVICE_LUCKY_SHIELD    0x0002
++#define MCUIO_DEVICE_DIGITALIO_SHIELD 0x0003
++#define MCUIO_DEVICE_SOFT_HC	     0x0004
++#define MCUIO_DEVICE_GENERIC_HC	     0x0005
++#define MCUIO_DEVICE_DOGOLED_SHIELD	0x0006
++#define MCUIO_DEVICE_LOCAL_IRQC_MSG  0x0007
++
++#endif /* __MCUIO_IDS_H__ */
+-- 
+2.10.1
+

@@ -1,0 +1,59 @@
+From 0cb58becb1f9845bdaf5fc9dc23b8ad6e473c237 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Sun, 22 Nov 2015 10:10:33 +0100
+Subject: [PATCH 56/83] MCUIO shields drivers: set MCUIO_CLASS_UNDEFINED
+
+This patch makes the shields driver match only on vendor/device.
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/mcuio-dio-shield.c     | 3 +--
+ drivers/mcuio/mcuio-dogoled-shield.c | 3 +--
+ drivers/mcuio/mcuio-lucky-shield.c   | 3 +--
+ 3 files changed, 3 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/mcuio/mcuio-dio-shield.c b/drivers/mcuio/mcuio-dio-shield.c
+index b3fa6ca..877bc87 100644
+--- a/drivers/mcuio/mcuio-dio-shield.c
++++ b/drivers/mcuio/mcuio-dio-shield.c
+@@ -120,8 +120,7 @@ static const struct mcuio_device_id dio_drv_ids[] = {
+ 	{
+ 		.vendor = MCUIO_VENDOR_DOGHUNTER,
+ 		.device = MCUIO_DEVICE_DIGITALIO_SHIELD,
+-		.class = MCUIO_CLASS_SHIELD,
+-		.class_mask = 0xffff,
++		.class = MCUIO_CLASS_UNDEFINED,
+ 	},
+ 	/* Terminator */
+ 	{
+diff --git a/drivers/mcuio/mcuio-dogoled-shield.c b/drivers/mcuio/mcuio-dogoled-shield.c
+index 34136e6..1daa310 100644
+--- a/drivers/mcuio/mcuio-dogoled-shield.c
++++ b/drivers/mcuio/mcuio-dogoled-shield.c
+@@ -99,8 +99,7 @@ static const struct mcuio_device_id dogoled_drv_ids[] = {
+ 	{
+ 		.vendor = MCUIO_VENDOR_DOGHUNTER,
+ 		.device = MCUIO_DEVICE_DOGOLED_SHIELD,
+-		.class = MCUIO_CLASS_SHIELD,
+-		.class_mask = 0xffff,
++		.class = MCUIO_CLASS_UNDEFINED,
+ 	},
+ 	/* Terminator */
+ 	{
+diff --git a/drivers/mcuio/mcuio-lucky-shield.c b/drivers/mcuio/mcuio-lucky-shield.c
+index d5c8530..7202876 100644
+--- a/drivers/mcuio/mcuio-lucky-shield.c
++++ b/drivers/mcuio/mcuio-lucky-shield.c
+@@ -147,8 +147,7 @@ static const struct mcuio_device_id lucky_drv_ids[] = {
+ 	{
+ 		.vendor = MCUIO_VENDOR_DOGHUNTER,
+ 		.device = MCUIO_DEVICE_LUCKY_SHIELD,
+-		.class = MCUIO_CLASS_SHIELD,
+-		.class_mask = 0xffff,
++		.class = MCUIO_CLASS_UNDEFINED,
+ 	},
+ 	/* Terminator */
+ 	{
+-- 
+2.10.1
+

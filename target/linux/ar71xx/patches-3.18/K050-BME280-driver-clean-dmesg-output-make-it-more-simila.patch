@@ -1,0 +1,189 @@
+From 82b26bbbf292be2dda6a6cf735d038b1c69e6c3b Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Tue, 17 Nov 2015 12:00:01 +0100
+Subject: [PATCH 50/83] BME280 driver: clean dmesg output, make it more similar
+ to all linux drivers
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/input/misc/bme280/bme280_core.c | 28 ++++++++++++++--------------
+ drivers/input/misc/bme280/bs_log.h      | 24 ++++++++++++------------
+ 2 files changed, 26 insertions(+), 26 deletions(-)
+
+diff --git a/drivers/input/misc/bme280/bme280_core.c b/drivers/input/misc/bme280/bme280_core.c
+index fae88da..329fe58 100644
+--- a/drivers/input/misc/bme280/bme280_core.c
++++ b/drivers/input/misc/bme280/bme280_core.c
+@@ -228,13 +228,13 @@ static int bme_check_chip_id(struct bme_data_bus *data_bus)
+ 		BME_REG_NAME(CHIPID_REG), &chip_id, 1);
+ 	if (err < 0) {
+ 		err = -EIO;
+-		PERR("bus read failed\n");
++		PERR("bus read failed");
+ 		return err;
+ 	}
+ 
+ 	if (BME_SENSOR_CHIP_ID != (chip_id&0xFF)) {
+ 		err = -ENODEV;
+-		PERR("read %s chip id failed, read value = %d\n", \
++		PERR("read %s chip id failed, read value = %d", \
+ 				BME_NAME, chip_id);
+ 		return err;
+ 	}
+@@ -707,16 +707,16 @@ static int bme280_verify_i2c_disable_switch(struct bme_client_data *data)
+ 		(BME280_I2C_DISABLE_SWITCH, &reg_val, 1);
+ 	if (err < 0) {
+ 		err = -EIO;
+-		PERR("bus read failed\n");
++		PERR("bus read failed");
+ 		return err;
+ 	}
+ 
+ 	if ((reg_val & 0x10) == 0x00) {
+-		PINFO("bme280 i2c interface is available\n");
++		PINFO("bme280 i2c interface is available");
+ 		return 0;
+ 	}
+ 
+-	PERR("verification of i2c interface is failure\n");
++	PERR("verification of i2c interface is failure");
+ 	return -1;
+ }
+ 
+@@ -743,7 +743,7 @@ static int bme280_verify_calib_param(struct bme_client_data *data)
+ 		&& cali->dig_H1 == 0 && cali->dig_H2 == 0
+ 		&& cali->dig_H3 == 0 && cali->dig_H4 == 0
+ 		&& cali->dig_H5 == 0 && cali->dig_H6 == 0) {
+-		PERR("all calibration parameters are zero\n");
++		PERR("all calibration parameters are zero");
+ 		return -1;
+ 	}
+ 
+@@ -786,7 +786,7 @@ static int bme280_verify_calib_param(struct bme_client_data *data)
+ 	else if (cali->dig_H6 < -50)
+ 		return -1;
+ #endif
+-	PINFO("calibration parameters are OK\n");
++	PINFO("calibration parameters are OK");
+ 	return 0;
+ }
+ 
+@@ -815,7 +815,7 @@ static int bme280_verify_pth(struct bme_client_data *data)
+ 	bme_get_temperature(data, &temperature);
+ 	if (temperature <= SELFTEST_LOW_TEMPERATURE ||
+ 			temperature >= SELFTEST_HIGH_TEMPERATURE) {
+-		PERR("temperature value is out of range:%d*0.01degree\n",
++		PERR("temperature value is out of range:%d*0.01degree",
+ 			temperature);
+ 		return -1;
+ 	}
+@@ -823,17 +823,17 @@ static int bme280_verify_pth(struct bme_client_data *data)
+ 	bme_get_pressure(data, &pressure);
+ 	if (pressure <= SELFTEST_LOW_PRESSURE ||
+ 			pressure >= SELFTEST_HIGH_PRESSURE) {
+-		PERR("pressure value is out of range:%d Pa\n", pressure);
++		PERR("pressure value is out of range:%d Pa", pressure);
+ 		return -1;
+ 	}
+ 
+ 	bme_get_humidity(data, &humidity);
+ 	if (humidity <= SELFTEST_LOW_HUMIDITY ||
+ 			humidity >= SELFTEST_HIGH_HUMIDITY) {
+-		PERR("humidity value is out of range:%d %%\n", humidity);
++		PERR("humidity value is out of range:%d %%", humidity);
+ 		return -1;
+ 	}
+-	PINFO("bme280 temperature & pressure & humidity values are OK\n");
++	PINFO("bme280 temperature & pressure & humidity values are OK");
+ 	return 0;
+ }
+ /*!
+@@ -1882,10 +1882,10 @@ int bme_probe(struct device *dev, struct bme_data_bus *data_bus)
+ 	/* check chip id */
+ 	err = bme_check_chip_id(data_bus);
+ 	if (err) {
+-		PERR("Bosch Sensortec Device not found, chip id mismatch!\n");
++		PERR("Bosch Sensortec Device not found, chip id mismatch!");
+ 		goto exit;
+ 	} else {
+-		PNOTICE("Bosch Sensortec Device %s detected.\n", BME_NAME);
++		PNOTICE("Bosch Sensortec Device %s detected.", BME_NAME);
+ 	}
+ 
+ 	data = kzalloc(sizeof(struct bme_client_data), GFP_KERNEL);
+@@ -1923,7 +1923,7 @@ int bme_probe(struct device *dev, struct bme_data_bus *data_bus)
+ 	register_early_suspend(&data->early_suspend);
+ #endif
+ 
+-	PINFO("Succesfully probe sensor %s\n", BME_NAME);
++	PINFO("Succesfully probe sensor %s", BME_NAME);
+ 	return 0;
+ 
+ error_sysfs:
+diff --git a/drivers/input/misc/bme280/bs_log.h b/drivers/input/misc/bme280/bs_log.h
+index 788f7a6..f7f1abc 100644
+--- a/drivers/input/misc/bme280/bs_log.h
++++ b/drivers/input/misc/bme280/bs_log.h
+@@ -32,20 +32,19 @@
+ #define LOG_LEVEL_D 7
+ 
+ #ifndef LOG_LEVEL
+-/*! LOG LEVEL DEFINATION */
+-#define LOG_LEVEL LOG_LEVEL_I
++/*! LOG LEVEL DEFINITION */
++#define LOG_LEVEL LOG_LEVEL_N
+ #endif
+ 
+ #ifndef MODULE_TAG
+-/*! MODULE TAG DEFINATION */
+-#define MODULE_TAG "<BME280>"
++/*! MODULE TAG DEFINITION */
++#define MODULE_TAG "bme280: "
+ #endif
+ 
+ #if (LOG_LEVEL >= LOG_LEVEL_E)
+ /*! print error message */
+ #define PERR(fmt, args...) \
+-	printk(KERN_INFO "\n" "[E]" KERN_ERR MODULE_TAG \
+-	"<%s><%d>" fmt "\n", __func__, __LINE__, ##args)
++	printk(MODULE_TAG "[E] " fmt "\n", ##args)
+ #else
+ /*! invalid message */
+ #define PERR(fmt, args...)
+@@ -54,8 +53,8 @@
+ #if (LOG_LEVEL >= LOG_LEVEL_N)
+ /*! print notice message */
+ #define PNOTICE(fmt, args...) \
+-	printk(KERN_INFO "\n" "[N]" KERN_NOTICE MODULE_TAG \
+-	"<%s><%d>" fmt "\n", __func__, __LINE__, ##args)
++	printk(MODULE_TAG "[N] " fmt "\n", ##args)
++
+ #else
+ /*! invalid message */
+ #define PNOTICE(fmt, args...)
+@@ -63,8 +62,8 @@
+ 
+ #if (LOG_LEVEL >= LOG_LEVEL_I)
+ /*! print information message */
+-#define PINFO(fmt, args...) printk(KERN_INFO "\n" "[I]" KERN_INFO MODULE_TAG \
+-	"<%s><%d>" fmt "\n", __func__, __LINE__, ##args)
++#define PINFO(fmt, args...) \
++	printk(MODULE_TAG "[I] " fmt "\n", ##args)
+ #else
+ /*! invalid message */
+ #define PINFO(fmt, args...)
+@@ -72,8 +71,9 @@
+ 
+ #if (LOG_LEVEL >= LOG_LEVEL_D)
+ /*! print debug message */
+-#define PDEBUG(fmt, args...) printk(KERN_INFO "\n" "[D]" KERN_DEBUG MODULE_TAG \
+-	"<%s><%d>" fmt "\n", __func__, __LINE__, ##args)
++#define PDEBUG(fmt, args...) \
++	printk(MODULE_TAG "[D] " "<%s><%d> " fmt "\n", \
++		__func__, __LINE__, ##args)
+ #else
+ /*! invalid message */
+ #define PDEBUG(fmt, args...)
+-- 
+2.10.1
+

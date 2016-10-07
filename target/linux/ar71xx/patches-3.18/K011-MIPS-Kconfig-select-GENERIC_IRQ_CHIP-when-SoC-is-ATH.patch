@@ -1,0 +1,25 @@
+From fcd587c2ae85834cdb40ed7bc2106acafca6bb7b Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Thu, 23 Apr 2015 17:19:18 +0200
+Subject: [PATCH 11/83] MIPS Kconfig: select GENERIC_IRQ_CHIP when SoC is ATH79
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ arch/mips/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/mips/Kconfig b/arch/mips/Kconfig
+index c27e143..d6a67d2 100644
+--- a/arch/mips/Kconfig
++++ b/arch/mips/Kconfig
+@@ -112,6 +112,7 @@ config ATH79
+ 	select SYS_SUPPORTS_32BIT_KERNEL
+ 	select SYS_SUPPORTS_BIG_ENDIAN
+ 	select SYS_SUPPORTS_MIPS16
++	select GENERIC_IRQ_CHIP
+ 	help
+ 	  Support for the Atheros AR71XX/AR724X/AR913X SoCs.
+ 
+-- 
+2.10.1
+

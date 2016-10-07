@@ -1,0 +1,44 @@
+From ee0df7f5153777ae77f612218c6a2e0d2cd28bea Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Thu, 18 Feb 2016 15:59:18 +0100
+Subject: [PATCH 71/83] fixing board info name for Lei, Chiwawa and Tian
+
+---
+ arch/mips/ath79/mach-linino-chiwawa.c | 2 +-
+ arch/mips/ath79/mach-linino-lei.c     | 2 +-
+ arch/mips/ath79/mach-linino-tian.c    | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/arch/mips/ath79/mach-linino-chiwawa.c b/arch/mips/ath79/mach-linino-chiwawa.c
+index 3c73cd0..ee07a28 100644
+--- a/arch/mips/ath79/mach-linino-chiwawa.c
++++ b/arch/mips/ath79/mach-linino-chiwawa.c
+@@ -8,4 +8,4 @@
+ 
+ #include "mach-linino.c"
+ 
+-MIPS_MACHINE(ATH79_MACH_LININO_CHIWAWA, "linino-chiwawa", "Linino Chiwawa", ds_setup);
++MIPS_MACHINE(ATH79_MACH_LININO_CHIWAWA, "linino-chiwawa", "Arduino Chiwawa", ds_setup);
+diff --git a/arch/mips/ath79/mach-linino-lei.c b/arch/mips/ath79/mach-linino-lei.c
+index 37768b2..a1c5b46 100644
+--- a/arch/mips/ath79/mach-linino-lei.c
++++ b/arch/mips/ath79/mach-linino-lei.c
+@@ -304,4 +304,4 @@ static void __init lei_setup(void)
+ 	ds_register_spi();
+ }
+ 
+-MIPS_MACHINE(ATH79_MACH_LININO_LEI, "linino-lei", "Linino Lei", lei_setup);
++MIPS_MACHINE(ATH79_MACH_LININO_LEI, "linino-lei", "Arduino Lei", lei_setup);
+diff --git a/arch/mips/ath79/mach-linino-tian.c b/arch/mips/ath79/mach-linino-tian.c
+index a5c174b..99be4f5 100644
+--- a/arch/mips/ath79/mach-linino-tian.c
++++ b/arch/mips/ath79/mach-linino-tian.c
+@@ -316,4 +316,4 @@ static void __init tian_setup(void)
+ 	ds_register_spi();
+ }
+ 
+-MIPS_MACHINE(ATH79_MACH_LININO_TIAN, "linino-tian", "Linino Tian", tian_setup);
++MIPS_MACHINE(ATH79_MACH_LININO_TIAN, "linino-tian", "Arduino Tian", tian_setup);
+-- 
+2.10.1
+
