@@ -1,0 +1,133 @@
+From 5087956c6612cd255d70f289280c5f0034d4ae0b Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Wed, 20 Apr 2016 18:51:45 +0200
+Subject: [PATCH 80/83] Adding NFC Type2 tag support
+
+---
+ drivers/nfc/nfcst/core.c | 30 +++++++++++++++++-------------
+ 1 file changed, 17 insertions(+), 13 deletions(-)
+
+diff --git a/drivers/nfc/nfcst/core.c b/drivers/nfc/nfcst/core.c
+index 226f399..8652b8e 100644
+--- a/drivers/nfc/nfcst/core.c
++++ b/drivers/nfc/nfcst/core.c
+@@ -30,7 +30,8 @@
+ /* supported protocols */
+ #define DEVICE_SUPPORTED_PROT		(NFC_PROTO_ISO14443_MASK | \
+ 					NFC_PROTO_ISO14443_B_MASK | \
+-					NFC_PROTO_ISO15693_MASK)
++					NFC_PROTO_ISO15693_MASK | \
++					NFC_PROTO_MIFARE_MASK)
+ /* driver capabilities */
+ #define DEVICE_CAPABILITIES		NFC_DIGITAL_DRV_CAPS_IN_CRC
+ 
+@@ -116,10 +117,10 @@ struct param_list {
+  */
+ enum nfcst_cmd_list {
+ 	CMD_ECHO,
+-	CMD_ISO14443A_CONFIG,
+-	CMD_ISO14443A_DEMOGAIN,
++	CMD_NFCA_CONFIG,
++	CMD_NFCA_DEMOGAIN,
+ 	CMD_ISO14443B_DEMOGAIN,
+-	CMD_ISO14443A_PROTOCOL_SELECT,
++	CMD_NFCA_PROTOCOL_SELECT,
+ 	CMD_ISO14443B_PROTOCOL_SELECT,
+ 	CMD_WTX_RESPONSE,
+ 	CMD_FIELD_OFF,
+@@ -133,14 +134,14 @@ static const struct cmd cmd_array[] = {
+ 		.no_cmd_params = 0,
+ 		.req = SYNC,
+ 	},
+-	[CMD_ISO14443A_CONFIG] = {
++	[CMD_NFCA_CONFIG] = {
+ 		.cmd_len = 0x6,
+ 		.cmd_id = WRITE_REGISTER_CMD,
+ 		.no_cmd_params = 0x4,
+ 		.cmd_params = {0x3A, 0x00, 0x5A, 0x04},
+ 		.req = SYNC,
+ 	},
+-	[CMD_ISO14443A_DEMOGAIN] = {
++	[CMD_NFCA_DEMOGAIN] = {
+ 		.cmd_len = 0x6,
+ 		.cmd_id = WRITE_REGISTER_CMD,
+ 		.no_cmd_params = 0x4,
+@@ -154,7 +155,7 @@ static const struct cmd cmd_array[] = {
+ 		.cmd_params = {0x68, 0x01, 0x01, 0x51},
+ 		.req = SYNC,
+ 	},
+-	[CMD_ISO14443A_PROTOCOL_SELECT] = {
++	[CMD_NFCA_PROTOCOL_SELECT] = {
+ 		.cmd_len = 0x6,
+ 		.cmd_id = PROTOCOL_SELECT_CMD,
+ 		.no_cmd_params = 0x4,
+@@ -335,7 +336,7 @@ static int secondary_configuration_type4a(struct nfcst_context *context)
+ 
+ 	/* 14443A config setting after select protocol */
+ 	result = nfcst_send_recv_cmd(context,
+-				     CMD_ISO14443A_CONFIG,
++				     CMD_NFCA_CONFIG,
+ 				     0,
+ 				     NULL);
+ 	if (result) {
+@@ -345,7 +346,7 @@ static int secondary_configuration_type4a(struct nfcst_context *context)
+ 
+ 	/* 14443A demo gain setting */
+ 	result = nfcst_send_recv_cmd(context,
+-				     CMD_ISO14443A_DEMOGAIN,
++				     CMD_NFCA_DEMOGAIN,
+ 				     0,
+ 				     NULL);
+ 	if (result)
+@@ -380,7 +381,7 @@ static int nfcst_select_protocol(struct nfcst_context *context, int type)
+ 	case NFC_DIGITAL_RF_TECH_106A:
+ 		context->current_rf_tech = NFC_DIGITAL_RF_TECH_106A;
+ 		result = nfcst_send_recv_cmd(context,
+-					     CMD_ISO14443A_PROTOCOL_SELECT,
++					     CMD_NFCA_PROTOCOL_SELECT,
+ 					     0,
+ 					     NULL);
+ 		if (result) {
+@@ -467,10 +468,12 @@ static int iso14443_config_fdt(struct nfcst_context *context, int wtxm)
+ 
+ 	printk("curr_protocol is %d\n", nfcddev->curr_protocol);
+ 
++	printk("curr_protocol is %d\n", nfcddev->curr_protocol);
++
+ 	switch (nfcddev->curr_protocol) {
+ 	case NFC_PROTO_ISO14443:
+ 		result = nfcst_send_recv_cmd(context,
+-					     CMD_ISO14443A_PROTOCOL_SELECT,
++					     CMD_NFCA_PROTOCOL_SELECT,
+ 					     2,
+ 					     new_params);
+ 		if (result) {
+@@ -546,7 +549,7 @@ static int nfcst_handle_config_fdt(struct nfcst_context *context,
+ 
+ 	/* if no new wtx, cofigure with default values */
+ 	if (nfcddev->curr_protocol == NFC_PROTO_ISO14443)
+-		val_mm = cmd_array[CMD_ISO14443A_PROTOCOL_SELECT].cmd_params[3];
++		val_mm = cmd_array[CMD_NFCA_PROTOCOL_SELECT].cmd_params[3];
+ 	else if (nfcddev->curr_protocol == NFC_PROTO_ISO14443_B)
+ 		val_mm = cmd_array[CMD_ISO14443B_PROTOCOL_SELECT].cmd_params[3];
+ 	result = iso14443_config_fdt(context, val_mm);
+@@ -734,6 +737,7 @@ static int nfcst_in_configure_hw(struct nfc_digital_dev *ddev, int type,
+ 			context->sendrcv_trflag = TRFLAG_NFCA_STD_FRAME;
+ 			break;
+ 		case NFC_DIGITAL_FRAMING_NFCA_T4T:
++		case NFC_DIGITAL_FRAMING_NFCA_T2T:
+ 		case NFC_DIGITAL_FRAMING_NFCA_NFC_DEP:
+ 		case NFC_DIGITAL_FRAMING_NFCA_STANDARD_WITH_CRC_A:
+ 			context->sendrcv_trflag = TRFLAG_NFCA_STD_FRAME_CRC;
+@@ -938,7 +942,7 @@ void *nfcst_register_phy(enum nfcst_phy phy,
+ 
+ 	memcpy(&ctx->cfg, pdata, sizeof(*pdata));
+ 
+-	ctx->fwi = cmd_array[CMD_ISO14443A_PROTOCOL_SELECT].cmd_params[2];
++	ctx->fwi = cmd_array[CMD_NFCA_PROTOCOL_SELECT].cmd_params[2];
+ 
+ 	init_completion(&ctx->done);
+ 
+-- 
+2.10.1
+
