@@ -1,0 +1,37 @@
+From 9e78c20d18173aefed3fc271acbe92165bbf9369 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Tue, 17 Nov 2015 11:36:35 +0100
+Subject: [PATCH 49/83] SSD1307FB driver: if gpio_cansleep, use proper
+ gpio_*_cansleep functions
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/video/fbdev/ssd1307fb.c | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/video/fbdev/ssd1307fb.c b/drivers/video/fbdev/ssd1307fb.c
+index af6caab..e438ba8 100644
+--- a/drivers/video/fbdev/ssd1307fb.c
++++ b/drivers/video/fbdev/ssd1307fb.c
+@@ -547,9 +547,16 @@ static int ssd1307fb_probe(struct i2c_client *client, const struct i2c_device_id
+ 	i2c_set_clientdata(client, info);
+ 
+ 	/* Reset the screen */
+-	gpio_set_value(par->reset, 0);
++	if (gpio_cansleep(par->reset))
++		gpio_set_value_cansleep(par->reset, 0);
++	else
++		gpio_set_value(par->reset, 0);
+ 	udelay(4);
+-	gpio_set_value(par->reset, 1);
++
++	if (gpio_cansleep(par->reset))
++		gpio_set_value_cansleep(par->reset, 1);
++	else
++		gpio_set_value(par->reset, 1);
+ 	udelay(4);
+ 
+ 	if (par->ops->init) {
+-- 
+2.10.1
+

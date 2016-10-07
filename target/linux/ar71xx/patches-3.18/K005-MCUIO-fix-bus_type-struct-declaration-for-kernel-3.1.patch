@@ -1,0 +1,41 @@
+From 926868278f95973e4a42ca7f9337baf1b5029f5d Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Wed, 22 Apr 2015 12:44:53 +0200
+Subject: [PATCH 05/83] MCUIO: fix bus_type struct declaration for kernel 3.18
+ compatibility
+
+In file drivers/mcuio/bus.c bus_attrs assignment is removed
+from mcuio_bus_type variable declaration, since it has changed and is anyway
+not used (was an empty list).
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/bus.c | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/drivers/mcuio/bus.c b/drivers/mcuio/bus.c
+index 4cd30bc..ad6b9ce 100644
+--- a/drivers/mcuio/bus.c
++++ b/drivers/mcuio/bus.c
+@@ -23,10 +23,6 @@ static inline int mcuio_device_is_host_controller(struct mcuio_device *mdev)
+ 	    mdev->id.class == MCUIO_CLASS_SOFT_HOST_CONTROLLER;
+ }
+ 
+-static struct bus_attribute def_bus_attrs[] = {
+-	__ATTR_NULL,
+-};
+-
+ static void mcuio_dev_default_release(struct device *dev)
+ {
+ 	struct mcuio_device *mdev = to_mcuio_dev(dev);
+@@ -62,7 +58,6 @@ static int mcuio_match_device(struct device *dev, struct device_driver *drv)
+ 
+ struct bus_type mcuio_bus_type = {
+ 	.name = "mcuio",
+-	.bus_attrs = def_bus_attrs,
+ 	.match = mcuio_match_device,
+ };
+ 
+-- 
+2.10.1
+
