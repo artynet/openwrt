@@ -1,0 +1,35 @@
+From 4c9eb982e64ca6df495039af305220cd10e8aff1 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Sat, 21 Nov 2015 12:24:44 +0100
+Subject: [PATCH 53/83] MCUIO call regmap_exit when removing host controller
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/mcuio-hc-drv.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/mcuio/mcuio-hc-drv.c b/drivers/mcuio/mcuio-hc-drv.c
+index 32d9227..9bbdade 100644
+--- a/drivers/mcuio/mcuio-hc-drv.c
++++ b/drivers/mcuio/mcuio-hc-drv.c
+@@ -720,6 +720,7 @@ static void __cleanup_outstanding_requests(struct mcuio_hc_data *data)
+ static int mcuio_host_controller_remove(struct mcuio_device *mdev)
+ {
+ 	struct mcuio_hc_data *data = dev_get_drvdata(&mdev->dev);
++	struct regmap *map;
+ 	atomic_set(&data->removing, 1);
+ 	barrier();
+ 	kthread_stop(data->enum_kworker_task);
+@@ -727,6 +728,9 @@ static int mcuio_host_controller_remove(struct mcuio_device *mdev)
+ 	flush_kthread_worker(&data->tx_kworker);
+ 	kthread_stop(data->tx_kworker_task);
+ 	__cleanup_outstanding_requests(data);
++	map = dev_get_regmap(&mdev->dev, NULL);
++	if (map)
++		regmap_exit(map);
+ 	devm_kfree(&mdev->dev, data);
+ 	return 0;
+ }
+-- 
+2.10.1
+

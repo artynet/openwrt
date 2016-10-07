@@ -1,0 +1,43 @@
+From cf4b0a9aa3b2d5b849f19f0e1da6090883337fd2 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Sat, 21 Nov 2015 10:10:43 +0100
+Subject: [PATCH 52/83] MCUIO: on unregister, avoid confusing message
+ "UNHANDLED WRITE REQ TO 0x0000"
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/mcuio-hc-drv.c                      | 1 +
+ drivers/mcuio/mcuio-soft-local-irq-ctrl-msg-dev.c | 5 +++--
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/mcuio/mcuio-hc-drv.c b/drivers/mcuio/mcuio-hc-drv.c
+index 70ab10a..32d9227 100644
+--- a/drivers/mcuio/mcuio-hc-drv.c
++++ b/drivers/mcuio/mcuio-hc-drv.c
+@@ -710,6 +710,7 @@ static void __cleanup_outstanding_requests(struct mcuio_hc_data *data)
+ 		pr_debug("%s %d: freeing request %p\n", __func__,
+ 			 __LINE__, r);
+ 		cancel_delayed_work_sync(&r->to_work);
++		r->status = -ECANCELED;
+ 		if (r->cb)
+ 			r->cb(r);
+ 		__dequeue_request(r);
+diff --git a/drivers/mcuio/mcuio-soft-local-irq-ctrl-msg-dev.c b/drivers/mcuio/mcuio-soft-local-irq-ctrl-msg-dev.c
+index 4b986c7..5526492 100644
+--- a/drivers/mcuio/mcuio-soft-local-irq-ctrl-msg-dev.c
++++ b/drivers/mcuio/mcuio-soft-local-irq-ctrl-msg-dev.c
+@@ -124,8 +124,9 @@ static void mcuio_soft_local_irq_controller_msg_wcb(struct mcuio_request *r)
+ 	fn = (r->offset - MCUIO_IRQ_TRIGGER) / sizeof(u32);
+ 
+ 	if ((fn < 0) || (fn >= MCUIO_FUNCS_PER_DEV)) {
+-		dev_err(&slicm->mdev.dev, "UNHANDLED WRITE REQ TO 0x%04x\n",
+-			r->offset);
++		if (r->status != -ECANCELED)
++			dev_err(&slicm->mdev.dev, "UNHANDLED WRITE REQ TO 0x%04x\n",
++				r->offset);
+ 		return;
+ 	}
+ 
+-- 
+2.10.1
+

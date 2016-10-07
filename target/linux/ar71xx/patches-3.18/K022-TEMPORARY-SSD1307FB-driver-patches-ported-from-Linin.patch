@@ -1,0 +1,199 @@
+From c29ee27fb3d82b1ae1fd22cf37f65da3bc824d7e Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Thu, 7 May 2015 16:07:42 +0200
+Subject: [PATCH 22/83] TEMPORARY: SSD1307FB driver patches ported from Linino
+ linux kernel 3.3.8
+
+This commit must be splitted into more patches, as it contains some changes
+needed to make ssd1307 work on Yun board and without Device Tree support,
+as we don't use it yet.
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/video/fbdev/Kconfig           |  1 -
+ drivers/video/fbdev/ssd1307fb.c       | 68 ++++++++++++++++++++++++++---------
+ include/linux/platform_data/ssd1307.h | 28 +++++++++++++++
+ 3 files changed, 80 insertions(+), 17 deletions(-)
+ create mode 100644 include/linux/platform_data/ssd1307.h
+
+diff --git a/drivers/video/fbdev/Kconfig b/drivers/video/fbdev/Kconfig
+index c7bf606..41763f4 100644
+--- a/drivers/video/fbdev/Kconfig
++++ b/drivers/video/fbdev/Kconfig
+@@ -2490,7 +2490,6 @@ config FB_SH_MOBILE_MERAM
+ config FB_SSD1307
+ 	tristate "Solomon SSD1307 framebuffer support"
+ 	depends on FB && I2C
+-	depends on OF
+ 	depends on GPIOLIB
+ 	select FB_SYS_FOPS
+ 	select FB_SYS_FILLRECT
+diff --git a/drivers/video/fbdev/ssd1307fb.c b/drivers/video/fbdev/ssd1307fb.c
+index f4daa59..af6caab 100644
+--- a/drivers/video/fbdev/ssd1307fb.c
++++ b/drivers/video/fbdev/ssd1307fb.c
+@@ -15,6 +15,7 @@
+ #include <linux/of_gpio.h>
+ #include <linux/pwm.h>
+ #include <linux/delay.h>
++#include <linux/platform_data/ssd1307.h>
+ 
+ #define SSD1307FB_DATA			0x40
+ #define SSD1307FB_COMMAND		0x80
+@@ -55,6 +56,8 @@ struct ssd1307fb_par {
+ 	u32 pwm_period;
+ 	int reset;
+ 	u32 width;
++	u32 display_offset;
++	u8 pins_config;
+ };
+ 
+ struct ssd1307fb_array {
+@@ -342,7 +345,7 @@ static int ssd1307fb_ssd1306_init(struct ssd1307fb_par *par)
+ 
+ 	/* set display offset value */
+ 	ret = ssd1307fb_write_cmd(par->client, SSD1307FB_SET_DISPLAY_OFFSET);
+-	ret = ssd1307fb_write_cmd(par->client, 0x20);
++	ret = ssd1307fb_write_cmd(par->client, par->display_offset);
+ 	if (ret < 0)
+ 		return ret;
+ 
+@@ -360,7 +363,7 @@ static int ssd1307fb_ssd1306_init(struct ssd1307fb_par *par)
+ 
+ 	/* Set COM pins configuration */
+ 	ret = ssd1307fb_write_cmd(par->client, SSD1307FB_SET_COM_PINS_CONFIG);
+-	ret = ret & ssd1307fb_write_cmd(par->client, 0x22);
++	ret = ret & ssd1307fb_write_cmd(par->client, par->pins_config);
+ 	if (ret < 0)
+ 		return ret;
+ 
+@@ -421,19 +424,36 @@ static const struct of_device_id ssd1307fb_of_match[] = {
+ };
+ MODULE_DEVICE_TABLE(of, ssd1307fb_of_match);
+ 
+-static int ssd1307fb_probe(struct i2c_client *client,
+-			   const struct i2c_device_id *id)
++static struct ssd1307fb_ops *
++__get_display_ops(struct ssd1307_platform_data *plat)
++{
++	switch (plat->type) {
++	case SSD1307_TYPE_1306:
++		return &ssd1307fb_ssd1306_ops;
++	case SSD1307_TYPE_1307:
++		return &ssd1307fb_ssd1307_ops;
++	default:
++		return NULL;
++	}
++	return NULL;
++}
++
++static int ssd1307fb_probe(struct i2c_client *client, const struct i2c_device_id *id)
+ {
+ 	struct fb_info *info;
+ 	struct device_node *node = client->dev.of_node;
+ 	u32 vmem_size;
+ 	struct ssd1307fb_par *par;
++	struct ssd1307_platform_data *plat = NULL;
+ 	u8 *vmem;
+ 	int ret;
+ 
+ 	if (!node) {
+-		dev_err(&client->dev, "No device tree data found!\n");
+-		return -EINVAL;
++		plat = dev_get_platdata(&client->dev);
++		if (!plat) {
++			dev_err(&client->dev, "No platform data/dt node found!\n");
++			return -EINVAL;
++		}
+ 	}
+ 
+ 	info = framebuffer_alloc(sizeof(struct ssd1307fb_par), &client->dev);
+@@ -445,25 +465,41 @@ static int ssd1307fb_probe(struct i2c_client *client,
+ 	par = info->par;
+ 	par->info = info;
+ 	par->client = client;
++	par->ops = plat ? __get_display_ops(plat) :
++		(struct ssd1307fb_ops *)of_match_device(ssd1307fb_of_match,
++							&client->dev)->data;
++	if (!par->ops) {
++		dev_err(&client->dev, "Could not get display ops\n");
++		return -EINVAL;
++	}
++
++	par->reset = plat ? plat->reset_gpio :
++		of_get_named_gpio(client->dev.of_node,
++				  "reset-gpios", 0);
+ 
+-	par->ops = (struct ssd1307fb_ops *)of_match_device(ssd1307fb_of_match,
+-							   &client->dev)->data;
++	par->pins_config = plat ? plat->pins_config : 0x22;
++	par->display_offset = plat ? plat->display_offset : 0x20;
+ 
+-	par->reset = of_get_named_gpio(client->dev.of_node,
+-					 "reset-gpios", 0);
+ 	if (!gpio_is_valid(par->reset)) {
+ 		ret = -EINVAL;
+ 		goto fb_alloc_error;
+ 	}
+ 
+-	if (of_property_read_u32(node, "solomon,width", &par->width))
+-		par->width = 96;
++	if (plat) {
++		par->width = plat->width;
++		par->height = plat->height;
++		par->page_offset = plat->page_offset;
++	} else {
++		if (of_property_read_u32(node, "solomon,width", &par->width))
++			par->width = 96;
+ 
+-	if (of_property_read_u32(node, "solomon,height", &par->height))
+-		par->width = 16;
++		if (of_property_read_u32(node, "solomon,height", &par->height))
++			par->width = 16;
+ 
+-	if (of_property_read_u32(node, "solomon,page-offset", &par->page_offset))
+-		par->page_offset = 1;
++		if (of_property_read_u32(node, "solomon,page-offset",
++					 &par->page_offset))
++			par->page_offset = 1;
++	}
+ 
+ 	vmem_size = par->width * par->height / 8;
+ 
+diff --git a/include/linux/platform_data/ssd1307.h b/include/linux/platform_data/ssd1307.h
+new file mode 100644
+index 0000000..e515e8b
+--- /dev/null
++++ b/include/linux/platform_data/ssd1307.h
+@@ -0,0 +1,28 @@
++/*
++ * Platform data definition for the ssd1306/1307 oled display
++ *
++ * Copyright (C) Doghunter
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 as published
++ * by the Free Software Foundation.
++ */
++
++#ifndef _SSD1307_H
++#define _SSD1307_H
++
++#define SSD1307_TYPE_1306 1
++#define SSD1307_TYPE_1307 2
++
++struct ssd1307_platform_data {
++	/* SSD1307_TYPE_xxxx */
++	int type;
++	int reset_gpio;
++	u32 width;
++	u32 height;
++	u32 page_offset;
++	u32 display_offset;
++	u8 pins_config;
++};
++
++#endif /* _SSD1307_H */
+-- 
+2.10.1
+

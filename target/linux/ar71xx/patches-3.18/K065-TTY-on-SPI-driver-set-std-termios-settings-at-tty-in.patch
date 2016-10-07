@@ -1,0 +1,25 @@
+From 9335a8f09daf785e55e4a7e3698c171d6f23fd18 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Tue, 1 Dec 2015 12:11:28 +0100
+Subject: [PATCH 65/83] TTY on SPI driver: set std termios settings at tty init
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/spi/spi-tty-plain.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/spi/spi-tty-plain.c b/drivers/spi/spi-tty-plain.c
+index d82f61c..bd1d4fa 100644
+--- a/drivers/spi/spi-tty-plain.c
++++ b/drivers/spi/spi-tty-plain.c
+@@ -389,6 +389,7 @@ static int spi_tty_init(void)
+ 	spi_serial_tty_driver->type = TTY_DRIVER_TYPE_SERIAL;
+ 	spi_serial_tty_driver->subtype = SERIAL_TYPE_NORMAL;
+ 	spi_serial_tty_driver->flags = TTY_DRIVER_DYNAMIC_DEV;
++	spi_serial_tty_driver->init_termios = tty_std_termios;
+ 
+ 	tty_set_operations(spi_serial_tty_driver, &spi_serial_ops);
+ 	err = tty_register_driver(spi_serial_tty_driver);
+-- 
+2.10.1
+
