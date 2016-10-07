@@ -1,0 +1,34 @@
+From bab6b9367cbf7c97fc3dcd96560eb31f4f8557c0 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Wed, 14 Oct 2015 16:46:40 +0200
+Subject: [PATCH 45/83] setting GPIO15 always to LOW for TIAN
+
+---
+ arch/mips/ath79/mach-linino-chowchow.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/arch/mips/ath79/mach-linino-chowchow.c b/arch/mips/ath79/mach-linino-chowchow.c
+index 2e347a9..7a4a3ef 100644
+--- a/arch/mips/ath79/mach-linino-chowchow.c
++++ b/arch/mips/ath79/mach-linino-chowchow.c
+@@ -163,10 +163,16 @@ static void ds_register_spi(void) {
+ 	pr_info("mach-linino: enabling GPIO SPI Controller");
+ 
+ 	/* Enable level shifter on SPI signals */
+-	gpio_set_value(CHOWCHOW_GPIO_OE2, 1);
++	/* gpio_set_value(CHOWCHOW_GPIO_OE2, 1); */
++
+ #ifndef LININO_TIAN
+ 	/* Register SPI devices */
+ 	spi_register_board_info(linino_spi_info, ARRAY_SIZE(linino_spi_info));
++	/* Enable level shifter on SPI signals */
++	gpio_set_value(CHOWCHOW_GPIO_OE2, 0);
++#else
++	/* Enable level shifter on SPI signals */
++	gpio_set_value(CHOWCHOW_GPIO_OE2, 1);
+ #endif
+ 	/* Register GPIO SPI controller */
+ 	platform_device_register(&linino_spi1_device);
+-- 
+2.10.1
+

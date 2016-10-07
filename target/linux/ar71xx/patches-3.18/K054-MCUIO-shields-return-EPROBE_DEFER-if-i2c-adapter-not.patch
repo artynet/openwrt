@@ -1,0 +1,67 @@
+From 2f27634b68ed4b9e2a6e4beabb26f41d99e143bc Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Sat, 21 Nov 2015 15:07:16 +0100
+Subject: [PATCH 54/83] MCUIO shields: return -EPROBE_DEFER if i2c adapter not
+ ready yet
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/mcuio-dio-shield.c     | 6 ++----
+ drivers/mcuio/mcuio-dogoled-shield.c | 6 ++----
+ drivers/mcuio/mcuio-lucky-shield.c   | 6 ++----
+ 3 files changed, 6 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/mcuio/mcuio-dio-shield.c b/drivers/mcuio/mcuio-dio-shield.c
+index c84096a..b3fa6ca 100644
+--- a/drivers/mcuio/mcuio-dio-shield.c
++++ b/drivers/mcuio/mcuio-dio-shield.c
+@@ -62,10 +62,8 @@ static int mcuio_dio_probe(struct mcuio_device *mdev)
+ 
+ 	data->i2c_adap = mcuio_get_i2c_adapter(mdev);
+ 
+-	if (!data->i2c_adap) {
+-		dev_err(&mdev->dev, "error setting up i2c adapter\n");
+-		return -ENODEV;
+-	}
++	if (!data->i2c_adap)
++		return -EPROBE_DEFER;
+ 
+ 	data->i2c_info = i2c_lst;
+ 	data->i2c_cnt = ARRAY_SIZE(i2c_lst);
+diff --git a/drivers/mcuio/mcuio-dogoled-shield.c b/drivers/mcuio/mcuio-dogoled-shield.c
+index b22f37f..34136e6 100644
+--- a/drivers/mcuio/mcuio-dogoled-shield.c
++++ b/drivers/mcuio/mcuio-dogoled-shield.c
+@@ -68,10 +68,8 @@ static int mcuio_dogoled_probe(struct mcuio_device *mdev)
+ 
+ 	data->i2c_adap = mcuio_get_i2c_adapter(mdev);
+ 
+-	if (!data->i2c_adap) {
+-		dev_err(&mdev->dev, "error setting up i2c adapter\n");
+-		return -ENODEV;
+-	}
++	if (!data->i2c_adap)
++		return -EPROBE_DEFER;
+ 
+ 	data->i2c_info = i2c_lst;
+ 	data->i2c_cnt = ARRAY_SIZE(i2c_lst);
+diff --git a/drivers/mcuio/mcuio-lucky-shield.c b/drivers/mcuio/mcuio-lucky-shield.c
+index dd8d690..d5c8530 100644
+--- a/drivers/mcuio/mcuio-lucky-shield.c
++++ b/drivers/mcuio/mcuio-lucky-shield.c
+@@ -96,10 +96,8 @@ static int mcuio_lucky_probe(struct mcuio_device *mdev)
+ 
+ 	data->i2c_adap = mcuio_get_i2c_adapter(mdev);
+ 
+-	if (!data->i2c_adap) {
+-		dev_err(&mdev->dev, "error setting up i2c adapter\n");
+-		return -ENODEV;
+-	}
++	if (!data->i2c_adap)
++		return -EPROBE_DEFER;
+ 
+ 	data->i2c_info = i2c_lst;
+ 	data->i2c_cnt = ARRAY_SIZE(i2c_lst);
+-- 
+2.10.1
+
