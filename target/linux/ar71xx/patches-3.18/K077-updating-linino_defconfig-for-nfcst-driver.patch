@@ -1,0 +1,48 @@
+From 97998844ac0788861cc4942b141ce412aa449e6f Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Mon, 4 Apr 2016 19:56:13 +0200
+Subject: [PATCH 77/83] updating linino_defconfig for nfcst driver
+
+---
+ arch/mips/configs/linino_defconfig | 25 ++++++++++++++++++++++++-
+ 1 file changed, 24 insertions(+), 1 deletion(-)
+
+diff --git a/arch/mips/configs/linino_defconfig b/arch/mips/configs/linino_defconfig
+index e774908..b9e6105 100644
+--- a/arch/mips/configs/linino_defconfig
++++ b/arch/mips/configs/linino_defconfig
+@@ -1082,7 +1082,30 @@ CONFIG_WEXT_PRIV=y
+ # CONFIG_NET_9P is not set
+ # CONFIG_CAIF is not set
+ # CONFIG_CEPH_LIB is not set
+-# CONFIG_NFC is not set
++CONFIG_NFC=m
++CONFIG_NFC_DIGITAL=m
++CONFIG_NFC_DIGITAL_UART=m
++CONFIG_NFC_NCI=m
++CONFIG_NFC_NCI_SPI=y
++CONFIG_NFC_HCI=m
++CONFIG_NFC_SHDLC=y
++
++#
++# Near Field Communication (NFC) devices
++#
++# CONFIG_NFC_PN533 is not set
++# CONFIG_NFC_TRF7970A is not set
++# CONFIG_NFC_SIM is not set
++# CONFIG_NFC_PORT100 is not set
++# CONFIG_NFC_PN544 is not set
++# CONFIG_NFC_MICROREAD is not set
++# CONFIG_NFC_MRVL is not set
++CONFIG_NFC_ST21NFCA=m
++CONFIG_NFC_ST21NFCA_I2C=m
++CONFIG_NFC_ST21NFCB=m
++CONFIG_NFC_ST21NFCB_I2C=m
++CONFIG_NFC_ST=m
++CONFIG_NFC_ST_UART=m
+ CONFIG_HAVE_BPF_JIT=y
+ 
+ #
+-- 
+2.10.1
+
