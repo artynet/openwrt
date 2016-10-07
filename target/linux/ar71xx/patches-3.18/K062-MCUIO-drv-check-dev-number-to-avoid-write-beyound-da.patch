@@ -1,0 +1,29 @@
+From cf722d9984392214c9e6ae04929f1fd11f0f6dd5 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Sat, 28 Nov 2015 11:18:54 +0100
+Subject: [PATCH 62/83] MCUIO: drv, check dev number to avoid write beyound
+ data->irqs size
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/mcuio-hc-drv.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/mcuio/mcuio-hc-drv.c b/drivers/mcuio/mcuio-hc-drv.c
+index e62f554..d7b1598 100644
+--- a/drivers/mcuio/mcuio-hc-drv.c
++++ b/drivers/mcuio/mcuio-hc-drv.c
+@@ -497,6 +497,10 @@ int mcuio_hc_set_irqs(struct mcuio_device *hc, unsigned dev, int __irqs[])
+ 		WARN_ON(1);
+ 		return -ENODEV;
+ 	}
++	if (dev > MCUIO_DEVS_PER_BUS) {
++		dev_warn(&hc->dev, "Invalid dev number %u\n", dev);
++		return -EINVAL;
++	}
+ 	irqs = devm_kzalloc(&hc->dev, size, GFP_KERNEL);
+ 	if (!irqs) {
+ 		dev_err(&hc->dev, "No memory for irqs for %u:%u\n", hc->bus,
+-- 
+2.10.1
+
