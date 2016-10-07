@@ -1,10 +1,10 @@
 #
 # lininoio.sh : A simple LininoIO enabler/disabler script
 #
-# Copyright (C) 2016 Arduino Srl
+# Copyright (C) 2014 Dog Hunter AG
 #
 # Author : Arturo Rinaldi
-# E-mail : arturo@arduino.org
+# E-mail : arturo@doghunter.org
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# v01 : rewriting the script just for Arduino tian
+# v5.25 : 'linino chowchow' is now 'linino lei'
 #
+# v5.24 : commenting out initial sed of io args
+#
+# v5.23 : mcuio enable/disable is now redirected to /dev/null
+#
+# v5.22 : introducing detect-console script in boot options
+#
+# v5.21 : fixing uboot environment arguments
+#
+# v5.19 : adding support for Yun Mini board
+#
+# v5.18 : serial console
+#
+# v5.17 : Reverting ChowChow serial console to /dev/ttyATH0
+#
+# v5.15 : bugfixing, support for ChowChow
+#
+# v5.3 : added support for chowchow board
 
 #!/bin/sh
 
@@ -55,6 +72,64 @@ sshcheck () {
 				exit 0
 				;;
 		esac
+	fi
+
+}
+
+# Old U-Boot
+
+bootargs_stop_complete () {
+
+	fw_setenv bootargs 'console=ttyATH0,250000 board=linino-'$boardname' mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env),14656k(rootfs),1280k(kernel),64k(nvram),64k(art),15936k@0x50000(firmware) mem=64M rootfstype=squashfs,jffs2 noinitrd'
+
+}
+
+bootargs_start_complete () {
+
+	fw_setenv bootargs 'console=spicons board=linino-'$boardname' mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env),14656k(rootfs),1280k(kernel),64k(nvram),64k(art),15936k@0x50000(firmware) mem=64M rootfstype=squashfs,jffs2 noinitrd'
+
+}
+
+# New U-boot
+
+bootargs_stop_simple () {
+
+	fw_setenv console 'ttyATH0,250000'
+
+}
+
+bootargs_start_simple () {
+
+	fw_setenv console 'spicons'
+
+}
+
+# start io_settings
+
+iosettings_start () {
+
+	fw_printenv console &>/dev/null
+
+	if [ $? -ne 0 ]
+	then
+	 	bootargs_start_complete
+	else
+		bootargs_start_simple
+	fi
+
+}
+
+# stop io_settings
+
+iosettings_stop () {
+
+	fw_printenv console &>/dev/null
+
+	if [ $? -ne 0 ]
+	then
+	 	bootargs_stop_complete
+	else
+		bootargs_stop_simple
 	fi
 
 }
@@ -211,10 +286,20 @@ if [ $boardname ]
 then
 
 	case $boardname in
-			'tian')
-					FILE="mips-on-off.hex"
-					PROGRAMMER="/usr/bin/flash-samd21"
-					BATHOS=bathos-$boardname.bin
+			'yun')
+					FILE="YunSerialTerminal.hex"
+				;;
+			'yun-mini')
+					FILE="YunMiniSerialTerminal.hex"
+				;;
+			'one')
+					FILE="LininoOneSerialTerminal.hex"
+				;;
+			'lei')
+					FILE="LeiSerialTerminal.hex"
+				;;
+			'chiwawa')
+					FILE="ChiwawaSerialTerminal.hex"
 				;;
 
 			*)
@@ -277,7 +362,7 @@ then
 
 fi
 
-if [ -e /etc/linino/$BATHOS ]
+if [ -e /etc/linino/bathos-$boardname.hex ]
 then
 
 	case $1 in
@@ -306,9 +391,15 @@ then
 
 					case $yn in
 						[Yy]*)
-							$PROGRAMMER /etc/linino/$BATHOS
+
+							iosettings_start
+
+							# sed -i "s/ttyATH0\:\:askfirst/ttySPI0\:\:respawn/g" /etc/inittab
+							run-avrdude /etc/linino/bathos-$boardname.hex
 							/etc/init.d/mcuio enable &>/dev/null
-							# setting the enable variable to yes
+							# Check if spi-tty module is enabled
+							/usr/bin/detect-console
+							# changing env variable value
 							sed -i -e s/no/yes/g /etc/config/mcuiocfg
 
 							# echo "Rebooting..."
@@ -369,9 +460,14 @@ then
 					case $yn in
 						[Yy]*)
 
+							iosettings_stop
+
+							# sed -i "s/ttySPI0\:\:respawn/ttyATH0\:\:askfirst/g" /etc/inittab
 							/etc/init.d/mcuio disable &>/dev/null
-							$PROGRAMMER /etc/linino/$FILE
-							# setting the enable variable to yes
+							run-avrdude /etc/linino/$FILE
+							# Check if spi-tty module is enabled
+							/usr/bin/detect-console
+							# changing env variable value
 							sed -i -e s/yes/no/g /etc/config/mcuiocfg
 
 							# echo "Rebooting..."
