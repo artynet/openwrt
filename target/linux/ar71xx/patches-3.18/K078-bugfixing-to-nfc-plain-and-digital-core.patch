@@ -1,0 +1,42 @@
+From 8cf018ecfa4fc78301e56e3b38cbfcb052329043 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Wed, 13 Apr 2016 11:00:21 +0200
+Subject: [PATCH 78/83] bugfixing to nfc plain and digital core
+
+---
+ drivers/nfc/nfcst/core.c | 2 ++
+ net/nfc/digital_core.c   | 3 +++
+ 2 files changed, 5 insertions(+)
+
+diff --git a/drivers/nfc/nfcst/core.c b/drivers/nfc/nfcst/core.c
+index 613077e..226f399 100644
+--- a/drivers/nfc/nfcst/core.c
++++ b/drivers/nfc/nfcst/core.c
+@@ -465,6 +465,8 @@ static int iso14443_config_fdt(struct nfcst_context *context, int wtxm)
+ 	new_params[1].param_offset = 3;
+ 	new_params[1].new_param_val = wtxm;
+ 
++	printk("curr_protocol is %d\n", nfcddev->curr_protocol);
++
+ 	switch (nfcddev->curr_protocol) {
+ 	case NFC_PROTO_ISO14443:
+ 		result = nfcst_send_recv_cmd(context,
+diff --git a/net/nfc/digital_core.c b/net/nfc/digital_core.c
+index 2434191..717b63d 100644
+--- a/net/nfc/digital_core.c
++++ b/net/nfc/digital_core.c
+@@ -625,8 +625,11 @@ static int digital_activate_target(struct nfc_dev *nfc_dev,
+ 		return -EBUSY;
+ 	}
+ 
++
+ 	ddev->curr_protocol = protocol;
+ 
++	printk("digital_activate_target called with protocol %d\n", ddev->curr_protocol);
++
+ 	return 0;
+ }
+ 
+-- 
+2.10.1
+
