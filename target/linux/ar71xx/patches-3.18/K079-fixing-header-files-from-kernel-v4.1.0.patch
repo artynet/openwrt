@@ -1,0 +1,170 @@
+From 492f545df67f6831e041dbc4403a51299640572f Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Mon, 18 Apr 2016 10:50:31 +0200
+Subject: [PATCH 79/83] fixing header files from kernel v4.1.0
+
+---
+ include/linux/fwnode.h   | 175 +++++++----------------------------------------
+ include/net/nfc/nfc.h    |  29 ++++++++
+ include/uapi/linux/nfc.h |  24 ++++---
+ net/nfc/nfc.h            |   2 +
+ 4 files changed, 69 insertions(+), 161 deletions(-)
+
+diff --git a/include/linux/fwnode.h b/include/linux/fwnode.h
+index a55fce9..0408545 100644
+--- /dev/null   2016-10-07 09:59:12.833700872 +0200
++++ include/linux/fwnode.h      2016-09-18 00:54:14.000000000 +0200
+@@ -0,0 +1,27 @@
++/*
++ * fwnode.h - Firmware device node object handle type definition.
++ *
++ * Copyright (C) 2015, Intel Corporation
++ * Author: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ */
++
++#ifndef _LINUX_FWNODE_H_
++#define _LINUX_FWNODE_H_
++
++enum fwnode_type {
++       FWNODE_INVALID = 0,
++       FWNODE_OF,
++       FWNODE_ACPI,
++       FWNODE_PDATA,
++};
++
++struct fwnode_handle {
++       enum fwnode_type type;
++       struct fwnode_handle *secondary;
++};
++
++#endif
+
+diff --git a/include/net/nfc/nfc.h b/include/net/nfc/nfc.h
+index 6c583e2..7ac029c 100644
+--- a/include/net/nfc/nfc.h
++++ b/include/net/nfc/nfc.h
+@@ -1,5 +1,6 @@
+ /*
+  * Copyright (C) 2011 Instituto Nokia de Tecnologia
++ * Copyright (C) 2014 Marvell International Ltd.
+  *
+  * Authors:
+  *    Lauro Ramos Venancio <lauro.venancio@openbossa.org>
+@@ -87,6 +88,7 @@ struct nfc_ops {
+ #define NFC_TARGET_IDX_ANY -1
+ #define NFC_MAX_GT_LEN 48
+ #define NFC_ATR_RES_GT_OFFSET 15
++#define NFC_ATR_REQ_GT_OFFSET 14
+ 
+ /**
+  * struct nfc_target - NFC target descriptiom
+@@ -133,6 +135,31 @@ struct nfc_se {
+ 	u16 state;
+ };
+ 
++/**
++ * nfc_evt_transaction - A struct for NFC secure element event transaction.
++ *
++ * @aid: The application identifier triggering the event
++ *
++ * @aid_len: The application identifier length [5:16]
++ *
++ * @params: The application parameters transmitted during the transaction
++ *
++ * @params_len: The applications parameters length [0:255]
++ *
++ */
++#define NFC_MIN_AID_LENGTH	5
++#define	NFC_MAX_AID_LENGTH	16
++#define NFC_MAX_PARAMS_LENGTH	255
++
++#define NFC_EVT_TRANSACTION_AID_TAG	0x81
++#define NFC_EVT_TRANSACTION_PARAMS_TAG	0x82
++struct nfc_evt_transaction {
++	u32 aid_len;
++	u8 aid[NFC_MAX_AID_LENGTH];
++	u8 params_len;
++	u8 params[0];
++} __packed;
++
+ struct nfc_genl_data {
+ 	u32 poll_req_portid;
+ 	struct mutex genl_data_mutex;
+@@ -260,6 +287,8 @@ int nfc_tm_data_received(struct nfc_dev *dev, struct sk_buff *skb);
+ 
+ void nfc_driver_failure(struct nfc_dev *dev, int err);
+ 
++int nfc_se_transaction(struct nfc_dev *dev, u8 se_idx,
++		       struct nfc_evt_transaction *evt_transaction);
+ int nfc_add_se(struct nfc_dev *dev, u32 se_idx, u16 type);
+ int nfc_remove_se(struct nfc_dev *dev, u32 se_idx);
+ struct nfc_se *nfc_find_se(struct nfc_dev *dev, u32 se_idx);
+diff --git a/include/uapi/linux/nfc.h b/include/uapi/linux/nfc.h
+index 9b19b44..c1e2e63 100644
+--- a/include/uapi/linux/nfc.h
++++ b/include/uapi/linux/nfc.h
+@@ -116,6 +116,7 @@ enum nfc_commands {
+ 	NFC_EVENT_SE_TRANSACTION,
+ 	NFC_CMD_GET_SE,
+ 	NFC_CMD_SE_IO,
++	NFC_CMD_ACTIVATE_TARGET,
+ /* private: internal use only */
+ 	__NFC_CMD_AFTER_LAST
+ };
+@@ -182,6 +183,7 @@ enum nfc_attrs {
+ 	NFC_ATTR_SE_APDU,
+ 	NFC_ATTR_TARGET_ISO15693_DSFID,
+ 	NFC_ATTR_TARGET_ISO15693_UID,
++	NFC_ATTR_SE_PARAMS,
+ /* private: internal use only */
+ 	__NFC_ATTR_AFTER_LAST
+ };
+@@ -196,15 +198,19 @@ enum nfc_sdp_attr {
+ };
+ #define NFC_SDP_ATTR_MAX (__NFC_SDP_ATTR_AFTER_LAST - 1)
+ 
+-#define NFC_DEVICE_NAME_MAXSIZE 8
+-#define NFC_NFCID1_MAXSIZE 10
+-#define NFC_NFCID2_MAXSIZE 8
+-#define NFC_NFCID3_MAXSIZE 10
+-#define NFC_SENSB_RES_MAXSIZE 12
+-#define NFC_SENSF_RES_MAXSIZE 18
+-#define NFC_GB_MAXSIZE        48
+-#define NFC_FIRMWARE_NAME_MAXSIZE 32
+-#define NFC_ISO15693_UID_MAXSIZE 8
++#define NFC_DEVICE_NAME_MAXSIZE		8
++#define NFC_NFCID1_MAXSIZE		10
++#define NFC_NFCID2_MAXSIZE		8
++#define NFC_NFCID3_MAXSIZE		10
++#define NFC_SENSB_RES_MAXSIZE		12
++#define NFC_SENSF_RES_MAXSIZE		18
++#define NFC_ATR_REQ_MAXSIZE		64
++#define NFC_ATR_RES_MAXSIZE		64
++#define NFC_ATR_REQ_GB_MAXSIZE		48
++#define NFC_ATR_RES_GB_MAXSIZE		47
++#define NFC_GB_MAXSIZE			48
++#define NFC_FIRMWARE_NAME_MAXSIZE	32
++#define NFC_ISO15693_UID_MAXSIZE	8
+ 
+ /* NFC protocols */
+ #define NFC_PROTO_JEWEL		1
+diff --git a/net/nfc/nfc.h b/net/nfc/nfc.h
+index 88d6006..a8ce80b 100644
+--- a/net/nfc/nfc.h
++++ b/net/nfc/nfc.h
+@@ -100,6 +100,8 @@ int nfc_genl_llc_send_sdres(struct nfc_dev *dev, struct hlist_head *sdres_list);
+ 
+ int nfc_genl_se_added(struct nfc_dev *dev, u32 se_idx, u16 type);
+ int nfc_genl_se_removed(struct nfc_dev *dev, u32 se_idx);
++int nfc_genl_se_transaction(struct nfc_dev *dev, u8 se_idx,
++			    struct nfc_evt_transaction *evt_transaction);
+ 
+ struct nfc_dev *nfc_get_device(unsigned int idx);
+ 
+-- 
+2.10.1
+
