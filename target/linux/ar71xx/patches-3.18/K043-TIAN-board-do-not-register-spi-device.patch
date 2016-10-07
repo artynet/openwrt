@@ -1,0 +1,47 @@
+From 9af90e6076d0375682d125106beb68ac7492d79d Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Thu, 30 Jul 2015 14:23:17 +0200
+Subject: [PATCH 43/83] TIAN board: do not register spi device
+
+SPI tty is not present on TIAN board, so do not register it, otherwise you
+may have random spurious interrupts.
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ arch/mips/ath79/mach-linino-chowchow.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/arch/mips/ath79/mach-linino-chowchow.c b/arch/mips/ath79/mach-linino-chowchow.c
+index 1f4d15f..18288ab 100644
+--- a/arch/mips/ath79/mach-linino-chowchow.c
++++ b/arch/mips/ath79/mach-linino-chowchow.c
+@@ -132,6 +132,7 @@ static struct platform_device linino_spi1_device = {
+ 	.dev.platform_data = &spi_bus1,
+ };
+ 
++#ifndef LININO_TIAN
+ /* SPI devices on Linino */
+ static struct spi_board_info linino_spi_info[] = {
+ 	/*{
+@@ -152,6 +153,7 @@ static struct spi_board_info linino_spi_info[] = {
+ 		.platform_data		= (void *) CHOWCHOW_GPIO_SPI_INTERRUPT,
+ 	},
+ };
++#endif
+ 
+ /**
+  * Enable the software SPI controller emulated by GPIO signals
+@@ -161,8 +163,10 @@ static void ds_register_spi(void) {
+ 
+ 	/* Enable level shifter on SPI signals */
+ 	gpio_set_value(CHOWCHOW_GPIO_OE2, 1);
++#ifndef LININO_TIAN
+ 	/* Register SPI devices */
+ 	spi_register_board_info(linino_spi_info, ARRAY_SIZE(linino_spi_info));
++#endif
+ 	/* Register GPIO SPI controller */
+ 	platform_device_register(&linino_spi1_device);
+ }
+-- 
+2.10.1
+

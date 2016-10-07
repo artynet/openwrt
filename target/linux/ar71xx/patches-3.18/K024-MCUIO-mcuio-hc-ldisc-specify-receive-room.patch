@@ -1,0 +1,26 @@
+From 98dab47ce6b3a344ae0417c0b223d064bf2f8923 Mon Sep 17 00:00:00 2001
+From: Davide Ciminaghi <ciminaghi@gnudd.com>
+Date: Thu, 19 Feb 2015 18:14:15 +0100
+Subject: [PATCH 24/83] MCUIO, mcuio-hc-ldisc: specify receive room
+
+Recent kernels don't call the receive callback if the line discipline
+driver does not advertise a receive room value greater than 0.
+---
+ drivers/mcuio/mcuio-hc-ldisc.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/mcuio/mcuio-hc-ldisc.c b/drivers/mcuio/mcuio-hc-ldisc.c
+index f2a0d3c..3e50de7 100644
+--- a/drivers/mcuio/mcuio-hc-ldisc.c
++++ b/drivers/mcuio/mcuio-hc-ldisc.c
+@@ -68,6 +68,7 @@ static int mcuio_ldisc_open(struct tty_struct *tty)
+ 		return -ENOMEM;
+ 	priv->dev = dev;
+ 	tty->disc_data = priv;
++	tty->receive_room = PSIZE;
+ 	return 0;
+ }
+ 
+-- 
+2.10.1
+

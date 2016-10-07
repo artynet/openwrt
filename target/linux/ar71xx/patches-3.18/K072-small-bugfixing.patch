@@ -1,0 +1,60 @@
+From cc736397f69a5b8551c864c5226475435b39c406 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Fri, 19 Feb 2016 16:50:08 +0100
+Subject: [PATCH 72/83] small bugfixing
+
+---
+ arch/mips/ath79/Kconfig | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/arch/mips/ath79/Kconfig b/arch/mips/ath79/Kconfig
+index dd6a883..b7dd04d 100644
+--- a/arch/mips/ath79/Kconfig
++++ b/arch/mips/ath79/Kconfig
+@@ -1414,7 +1414,7 @@ config ATH79_MACH_LININO_FREEDOG
+ 	 	Linino Freedog.
+ 
+ config ATH79_MACH_LININO_LEI
+-	bool "Linino Lei support"
++	bool "Arduino Lei support"
+ 	select SOC_AR934X
+ 	select ATH79_DEV_ETH
+ 	select ATH79_DEV_GPIO_BUTTONS
+@@ -1424,10 +1424,10 @@ config ATH79_MACH_LININO_LEI
+ 	select ATH79_DEV_WMAC
+ 	help
+ 		Say 'Y' here if you want your kernel to support
+-		Linino Lei.
++		Arduino Lei.
+ 
+ config ATH79_MACH_LININO_TIAN
+-	bool "Linino Tian support"
++	bool "Arduino Tian support"
+ 	select SOC_AR934X
+ 	select ATH79_DEV_ETH
+ 	select ATH79_DEV_GPIO_BUTTONS
+@@ -1437,10 +1437,10 @@ config ATH79_MACH_LININO_TIAN
+ 	select ATH79_DEV_WMAC
+ 	help
+ 		Say 'Y' here if you want your kernel to support
+-		Linino Tian.
++		Arduino Tian.
+ 
+ config ATH79_MACH_LININO_CHIWAWA
+-    bool "Linino Chiwawa support"
++    bool "Arduino Chiwawa support"
+     select SOC_AR933X
+     select ATH79_DEV_ETH
+     select ATH79_DEV_GPIO_BUTTONS
+@@ -1450,7 +1450,7 @@ config ATH79_MACH_LININO_CHIWAWA
+     select ATH79_DEV_WMAC
+     help
+ 		Say 'Y' here if you want your kernel to support
+-		Linino Chiwawa.
++		Arduino Chiwawa.
+ 
+ config ATH79_MACH_LININO_YUN_MINI
+     bool "Arduino YUN mini support"
+-- 
+2.10.1
+

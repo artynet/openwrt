@@ -1,0 +1,31 @@
+From 4b1959905e5bf73e35cf2da6c2f9127ccac37170 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Sun, 22 Nov 2015 10:16:22 +0100
+Subject: [PATCH 59/83] MCUIO shields: on manual unregister, check if host
+ controller is still present
+
+This prevents a kernel oops in case shield is unregistered after mcuio
+was stopped.
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/mcuio-shields-manprobe.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/mcuio/mcuio-shields-manprobe.c b/drivers/mcuio/mcuio-shields-manprobe.c
+index 6bc16a8..553104b 100644
+--- a/drivers/mcuio/mcuio-shields-manprobe.c
++++ b/drivers/mcuio/mcuio-shields-manprobe.c
+@@ -87,7 +87,8 @@ err0:
+ 
+ void shld_unregister(struct shld_probe_info *info)
+ {
+-	mcuio_device_unregister(info->mdev);
++	if (!IS_ERR(mcuio_bus_find_hc(0)))
++		mcuio_device_unregister(info->mdev);
+ 	info->mdev = NULL;
+ }
+ 
+-- 
+2.10.1
+
