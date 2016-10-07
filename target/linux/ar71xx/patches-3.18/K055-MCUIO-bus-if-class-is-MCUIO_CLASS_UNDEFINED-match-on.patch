@@ -1,0 +1,28 @@
+From dc469542570b82989c27713ec2a66ad07ee6d10d Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Sat, 21 Nov 2015 15:07:28 +0100
+Subject: [PATCH 55/83] MCUIO bus: if class is MCUIO_CLASS_UNDEFINED, match
+ only vendor and device
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/bus.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/mcuio/bus.c b/drivers/mcuio/bus.c
+index ad6b9ce..f74e0c8 100644
+--- a/drivers/mcuio/bus.c
++++ b/drivers/mcuio/bus.c
+@@ -50,7 +50,8 @@ static int mcuio_match_device(struct device *dev, struct device_driver *drv)
+ 		    mdev->id.vendor == id->vendor)
+ 			return 1;
+ 		/* Next try class match */
+-		if (mdev->id.class == (id->class & id->class_mask))
++		if (id->class != MCUIO_CLASS_UNDEFINED &&
++			mdev->id.class == (id->class & id->class_mask))
+ 			return 1;
+ 	}
+ 	return 0;
+-- 
+2.10.1
+

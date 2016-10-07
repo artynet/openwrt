@@ -1,0 +1,27 @@
+From 94f06da129729be0f93b55aee99172d3e1d01116 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Fri, 5 Jun 2015 08:59:24 +0200
+Subject: [PATCH 39/83] CONFIG: linino chowchow renamed to Lei/Tian
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ arch/mips/configs/linino_defconfig | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/arch/mips/configs/linino_defconfig b/arch/mips/configs/linino_defconfig
+index 094f1c2..5dba4a3 100644
+--- a/arch/mips/configs/linino_defconfig
++++ b/arch/mips/configs/linino_defconfig
+@@ -175,7 +175,8 @@ CONFIG_ATH79_MACH_QIHOO_C301=y
+ CONFIG_ATH79_MACH_LININO_YUN=y
+ CONFIG_ATH79_MACH_LININO_ONE=y
+ CONFIG_ATH79_MACH_LININO_FREEDOG=y
+-CONFIG_ATH79_MACH_LININO_CHOWCHOW=y
++CONFIG_ATH79_MACH_LININO_LEI=y
++CONFIG_ATH79_MACH_LININO_TIAN=y
+ CONFIG_ATH79_MACH_LININO_CHIWAWA=y
+ CONFIG_ATH79_MACH_LININO_YUN_MINI=y
+ CONFIG_SOC_AR71XX=y
+-- 
+2.10.1
+

@@ -1,7 +1,7 @@
-From 8b71a338d9927616d97b365a92f6d38260358827 Mon Sep 17 00:00:00 2001
+From 2385e2e87138c41fd26f342c873c30956b24f3f9 Mon Sep 17 00:00:00 2001
 From: Arturo Rinaldi <arty.net2@gmail.com>
 Date: Fri, 6 May 2016 14:26:49 +0200
-Subject: [PATCH] adding 6lowpan patch from Nordic G.R. Bakke
+Subject: [PATCH 82/83] adding 6lowpan patch from Nordic G.R. Bakke
 
 ---
  net/6lowpan/iphc.c      |  2 +-
@@ -9,7 +9,7 @@ Subject: [PATCH] adding 6lowpan patch from Nordic G.R. Bakke
  2 files changed, 6 insertions(+), 7 deletions(-)
 
 diff --git a/net/6lowpan/iphc.c b/net/6lowpan/iphc.c
-index 142eef55..6b4664f 100644
+index 142eef5..6b4664f 100644
 --- a/net/6lowpan/iphc.c
 +++ b/net/6lowpan/iphc.c
 @@ -385,7 +385,7 @@ int lowpan_process_data(struct sk_buff *skb, struct net_device *dev,
@@ -78,3 +78,6 @@ index cfbb39e..8f9e00a 100644
  				break;
  			}
  		}
+-- 
+2.10.1
+

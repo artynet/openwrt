@@ -1,0 +1,157 @@
+From 570449d66531207ee923009d330f78729e691ccd Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Tue, 5 Jan 2016 12:17:04 +0100
+Subject: [PATCH 68/83] CONFIGS: linino_defconfig compiling drivers for MMA8491
+ and SHT21
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ arch/mips/configs/linino_defconfig | 125 ++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 124 insertions(+), 1 deletion(-)
+
+diff --git a/arch/mips/configs/linino_defconfig b/arch/mips/configs/linino_defconfig
+index 5dba4a3..2230cb7 100644
+--- a/arch/mips/configs/linino_defconfig
++++ b/arch/mips/configs/linino_defconfig
+@@ -2154,7 +2154,129 @@ CONFIG_GPIO_NXP_74HC153=y
+ # CONFIG_W1 is not set
+ # CONFIG_POWER_SUPPLY is not set
+ # CONFIG_POWER_AVS is not set
+-# CONFIG_HWMON is not set
++CONFIG_HWMON=y
++# CONFIG_HWMON_VID is not set
++# CONFIG_HWMON_DEBUG_CHIP is not set
++
++#
++# Native drivers
++#
++# CONFIG_SENSORS_AD7314 is not set
++# CONFIG_SENSORS_AD7414 is not set
++# CONFIG_SENSORS_AD7418 is not set
++# CONFIG_SENSORS_ADM1021 is not set
++# CONFIG_SENSORS_ADM1025 is not set
++# CONFIG_SENSORS_ADM1026 is not set
++# CONFIG_SENSORS_ADM1029 is not set
++# CONFIG_SENSORS_ADM1031 is not set
++# CONFIG_SENSORS_ADM9240 is not set
++# CONFIG_SENSORS_ADT7310 is not set
++# CONFIG_SENSORS_ADT7410 is not set
++# CONFIG_SENSORS_ADT7411 is not set
++# CONFIG_SENSORS_ADT7462 is not set
++# CONFIG_SENSORS_ADT7470 is not set
++# CONFIG_SENSORS_ADT7475 is not set
++# CONFIG_SENSORS_ASC7621 is not set
++# CONFIG_SENSORS_ATXP1 is not set
++# CONFIG_SENSORS_DS620 is not set
++# CONFIG_SENSORS_DS1621 is not set
++# CONFIG_SENSORS_I5K_AMB is not set
++# CONFIG_SENSORS_F71805F is not set
++# CONFIG_SENSORS_F71882FG is not set
++# CONFIG_SENSORS_F75375S is not set
++# CONFIG_SENSORS_GL518SM is not set
++# CONFIG_SENSORS_GL520SM is not set
++# CONFIG_SENSORS_G760A is not set
++# CONFIG_SENSORS_G762 is not set
++# CONFIG_SENSORS_GSC is not set
++# CONFIG_SENSORS_GPIO_FAN is not set
++# CONFIG_SENSORS_HIH6130 is not set
++# CONFIG_SENSORS_IIO_HWMON is not set
++# CONFIG_SENSORS_IT87 is not set
++# CONFIG_SENSORS_JC42 is not set
++# CONFIG_SENSORS_POWR1220 is not set
++# CONFIG_SENSORS_LINEAGE is not set
++# CONFIG_SENSORS_LTC2945 is not set
++# CONFIG_SENSORS_LTC4151 is not set
++# CONFIG_SENSORS_LTC4215 is not set
++# CONFIG_SENSORS_LTC4222 is not set
++# CONFIG_SENSORS_LTC4245 is not set
++# CONFIG_SENSORS_LTC4260 is not set
++# CONFIG_SENSORS_LTC4261 is not set
++# CONFIG_SENSORS_MAX1111 is not set
++# CONFIG_SENSORS_MAX16065 is not set
++# CONFIG_SENSORS_MAX1619 is not set
++# CONFIG_SENSORS_MAX1668 is not set
++# CONFIG_SENSORS_MAX197 is not set
++# CONFIG_SENSORS_MAX6639 is not set
++# CONFIG_SENSORS_MAX6642 is not set
++# CONFIG_SENSORS_MAX6650 is not set
++# CONFIG_SENSORS_MAX6697 is not set
++# CONFIG_SENSORS_HTU21 is not set
++# CONFIG_SENSORS_MCP3021 is not set
++# CONFIG_SENSORS_ADCXX is not set
++# CONFIG_SENSORS_LM63 is not set
++# CONFIG_SENSORS_LM70 is not set
++# CONFIG_SENSORS_LM73 is not set
++# CONFIG_SENSORS_LM75 is not set
++# CONFIG_SENSORS_LM77 is not set
++# CONFIG_SENSORS_LM78 is not set
++# CONFIG_SENSORS_LM80 is not set
++# CONFIG_SENSORS_LM83 is not set
++# CONFIG_SENSORS_LM85 is not set
++# CONFIG_SENSORS_LM87 is not set
++# CONFIG_SENSORS_LM90 is not set
++# CONFIG_SENSORS_LM92 is not set
++# CONFIG_SENSORS_LM93 is not set
++# CONFIG_SENSORS_LM95234 is not set
++# CONFIG_SENSORS_LM95241 is not set
++# CONFIG_SENSORS_LM95245 is not set
++# CONFIG_SENSORS_PC87360 is not set
++# CONFIG_SENSORS_PC87427 is not set
++# CONFIG_SENSORS_NTC_THERMISTOR is not set
++# CONFIG_SENSORS_NCT6683 is not set
++# CONFIG_SENSORS_NCT6775 is not set
++# CONFIG_SENSORS_PCF8591 is not set
++# CONFIG_PMBUS is not set
++# CONFIG_SENSORS_SHT15 is not set
++CONFIG_SENSORS_SHT21=y
++# CONFIG_SENSORS_SHTC1 is not set
++# CONFIG_SENSORS_SIS5595 is not set
++# CONFIG_SENSORS_DME1737 is not set
++# CONFIG_SENSORS_EMC1403 is not set
++# CONFIG_SENSORS_EMC2103 is not set
++# CONFIG_SENSORS_EMC6W201 is not set
++# CONFIG_SENSORS_SMSC47M1 is not set
++# CONFIG_SENSORS_SMSC47M192 is not set
++# CONFIG_SENSORS_SMSC47B397 is not set
++# CONFIG_SENSORS_SCH56XX_COMMON is not set
++# CONFIG_SENSORS_SCH5627 is not set
++# CONFIG_SENSORS_SCH5636 is not set
++# CONFIG_SENSORS_SMM665 is not set
++# CONFIG_SENSORS_ADC128D818 is not set
++# CONFIG_SENSORS_ADS1015 is not set
++# CONFIG_SENSORS_ADS7828 is not set
++# CONFIG_SENSORS_ADS7871 is not set
++# CONFIG_SENSORS_AMC6821 is not set
++# CONFIG_SENSORS_INA209 is not set
++# CONFIG_SENSORS_INA2XX is not set
++# CONFIG_SENSORS_THMC50 is not set
++# CONFIG_SENSORS_TMP102 is not set
++# CONFIG_SENSORS_TMP103 is not set
++# CONFIG_SENSORS_TMP401 is not set
++# CONFIG_SENSORS_TMP421 is not set
++# CONFIG_SENSORS_VIA686A is not set
++# CONFIG_SENSORS_VT1211 is not set
++# CONFIG_SENSORS_VT8231 is not set
++# CONFIG_SENSORS_W83781D is not set
++# CONFIG_SENSORS_W83791D is not set
++# CONFIG_SENSORS_W83792D is not set
++# CONFIG_SENSORS_W83793 is not set
++# CONFIG_SENSORS_W83795 is not set
++# CONFIG_SENSORS_W83L785TS is not set
++# CONFIG_SENSORS_W83L786NG is not set
++# CONFIG_SENSORS_W83627HF is not set
++# CONFIG_SENSORS_W83627EHF is not set
+ # CONFIG_THERMAL is not set
+ CONFIG_WATCHDOG=y
+ CONFIG_WATCHDOG_CORE=y
+@@ -3311,6 +3433,7 @@ CONFIG_IIO_CONSUMERS_PER_TRIGGER=2
+ # CONFIG_KXSD9 is not set
+ # CONFIG_MMA8452 is not set
+ # CONFIG_KXCJK1013 is not set
++CONFIG_MMA8491=y
+ 
+ #
+ # Analog to digital converters
+-- 
+2.10.1
+

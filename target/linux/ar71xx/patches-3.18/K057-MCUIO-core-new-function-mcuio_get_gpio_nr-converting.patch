@@ -1,0 +1,88 @@
+From 15cb30abf8610b11695968a0e4276b04193c7999 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Sun, 22 Nov 2015 10:11:53 +0100
+Subject: [PATCH 57/83] MCUIO core: new function mcuio_get_gpio_nr, converting
+ label name to gpio number
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/core.c           | 42 ++++++++++++++++++++++++++++++++++++++++++
+ drivers/mcuio/mcuio-internal.h |  2 ++
+ 2 files changed, 44 insertions(+)
+
+diff --git a/drivers/mcuio/core.c b/drivers/mcuio/core.c
+index de9c614..ede1121 100644
+--- a/drivers/mcuio/core.c
++++ b/drivers/mcuio/core.c
+@@ -17,6 +17,7 @@
+ #include <linux/spinlock.h>
+ #include <linux/bitops.h>
+ #include <linux/i2c.h>
++#include <linux/gpio.h>
+ #include <linux/mcuio_ids.h>
+ #include "mcuio-internal.h"
+ 
+@@ -82,6 +83,47 @@ struct i2c_adapter *mcuio_get_i2c_adapter(struct mcuio_device *mdev)
+ }
+ EXPORT_SYMBOL(mcuio_get_i2c_adapter);
+ 
++struct mcuio_gpio_data {
++	const char *label;
++	int nr;
++};
++
++static int __match_gpiochip(struct gpio_chip *chip, void *__gpio_data)
++{
++	struct mcuio_gpio_data *data = __gpio_data;
++	const char *ptr;
++	int i;
++
++	if (!chip->names)
++		return 0;
++
++	for (i = 0; i < chip->ngpio; i++, ptr++) {
++		ptr = chip->names[i];
++		if (!ptr)
++			continue;
++		if (!strcmp(ptr, data->label)) {
++			data->nr = i + chip->base;
++			return 1;
++		}
++	}
++	return 0;
++}
++
++int mcuio_get_gpio_nr(const char *label)
++{
++	struct gpio_chip *chip;
++	struct mcuio_gpio_data data;
++	data.label = label;
++	chip = gpiochip_find(&data, __match_gpiochip);
++	if (!chip) {
++		pr_debug("%s: gpio %s not found\n", __func__, label);
++		return -EINVAL;
++	}
++	pr_debug("%s: gpio %s found: %d\n", __func__, label, data.nr);
++	return data.nr;
++}
++EXPORT_SYMBOL(mcuio_get_gpio_nr);
++
+ static int __init mcuio_init(void)
+ {
+ 	int ret;
+diff --git a/drivers/mcuio/mcuio-internal.h b/drivers/mcuio/mcuio-internal.h
+index 2f8c469..a292903 100644
+--- a/drivers/mcuio/mcuio-internal.h
++++ b/drivers/mcuio/mcuio-internal.h
+@@ -13,6 +13,8 @@ void mcuio_put_bus(unsigned bus);
+ 
+ struct i2c_adapter *mcuio_get_i2c_adapter(struct mcuio_device *mdev);
+ 
++int mcuio_get_gpio_nr(const char *label);
++
+ struct mcuio_device *mcuio_bus_find_hc(int bus);
+ 
+ struct mcuio_device *mcuio_add_soft_local_irq_ctrl(struct mcuio_device *hc,
+-- 
+2.10.1
+

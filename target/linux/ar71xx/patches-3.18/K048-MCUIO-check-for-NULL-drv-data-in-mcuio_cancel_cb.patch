@@ -1,0 +1,30 @@
+From 22d7478425e75f64acabc124eec9cc1aa521de61 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Thu, 12 Nov 2015 13:05:41 +0100
+Subject: [PATCH 48/83] MCUIO: check for NULL drv data in mcuio_cancel_cb
+
+This avoids a kernel oops when line discipline is killed in user space.
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/mcuio-hc-drv.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/drivers/mcuio/mcuio-hc-drv.c b/drivers/mcuio/mcuio-hc-drv.c
+index 5904703..70ab10a 100644
+--- a/drivers/mcuio/mcuio-hc-drv.c
++++ b/drivers/mcuio/mcuio-hc-drv.c
+@@ -473,6 +473,10 @@ int mcuio_cancel_cb(struct mcuio_request *r)
+ 	if (!r->hc)
+ 		return -EINVAL;
+ 	data = dev_get_drvdata(&r->hc->dev);
++
++	if (!data)
++		return -EINVAL;
++
+ 	list_for_each_entry_safe(ptr, tmp, &data->pending_requests, list) {
+ 		if (ptr == r) {
+ 			mutex_lock(&data->lock);
+-- 
+2.10.1
+
