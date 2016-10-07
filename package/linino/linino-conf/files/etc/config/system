@@ -16,4 +16,3 @@ config led 'led_wlan'
 	option dev 'wlan0'
 	option mode 'tx rx'
 	option default '0'
-

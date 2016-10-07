@@ -1,4 +1,4 @@
-# provisioning.sh v42 : A simple system update script
+# provisioning.sh v46-avr : A simple system update script
 # Copyright (C) 2014 Dog Hunter AG
 #
 # Author : Arturo Rinaldi
@@ -17,7 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# v45 : adding support for branch SAMD
+# v45-avr : adding support for branch AVR
+#
+# v44 : adding support for branch SAMD
 #
 # v40 : adding TIAN and LEI
 #
@@ -71,7 +73,7 @@ checkarguments () {
     then
 
         echo ""
-        echo "USAGE : provisioning.sh <revision> ( latest or YYYYMMDD.x where x=0,1,2...n ) <branch> ( optional : lininoIO or samd ) "
+        echo "USAGE : linup <revision> ( latest or YYYYMMDD.x where x=0,1,2...n ) <branch> ( optional : avr ) "
         echo ""
         exit 0
 
@@ -146,8 +148,12 @@ infos () {
 boardavailable2 () {
 
     case $1 in
-        "tian") ;;
-        *) echo "Your board is not belonging to the SAMD architecture ! Aborting..." && exit 0;;
+        "yun") ;;
+        "chiwawa") ;;
+        "one") ;;
+        "yun-mini") ;;
+        "lei") ;;
+        *) echo "Your board is not belonging to the AVR architecture ! Aborting..." && exit 0;;
     esac
 
 }
@@ -176,7 +182,7 @@ verifyupgrade () {
     m1=`convertmonth $(echo $1 | sed 's/-/ /g' | awk {'print $2'})`
     y1=`echo $1 | sed 's/-/ /g' | awk {'print $3'}`
 
-    d2=`echo $2 | sed 's/-/ /g' | awk {'print $1'} | xargs printf "%02d" `
+    d2=`echo $2 | sed 's/-/ /g' | awk {'print $1'} | xargs printf "%s" `
     m2=`convertmonth $(echo $2 | sed 's/-/ /g' | awk {'print $2'})`
     y2=`echo $2 | sed 's/-/ /g' | awk {'print $3'}`
 
