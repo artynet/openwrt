@@ -621,7 +621,7 @@ then
 					sleep 2
 
 					#Removes node.js
-					opkg update
+					opkg update && prereqs
 
 					sleep 3
 
