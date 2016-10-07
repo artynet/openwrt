@@ -1,0 +1,59 @@
+From 64f20c094097f7987b3a6e3881a1c6ff8767ad73 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Sat, 28 Nov 2015 11:21:42 +0100
+Subject: [PATCH 63/83] MCUIO: fix shields manual probe, use valid func numbers
+ and set mdev->fn
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/mcuio-shields-manprobe.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/drivers/mcuio/mcuio-shields-manprobe.c b/drivers/mcuio/mcuio-shields-manprobe.c
+index 553104b..d7211d4 100644
+--- a/drivers/mcuio/mcuio-shields-manprobe.c
++++ b/drivers/mcuio/mcuio-shields-manprobe.c
+@@ -22,15 +22,15 @@
+ 
+ struct shld_probe_info {
+ 	char *name;
+-	unsigned int dev_nr;
++	unsigned int func_nr;
+ 	struct mcuio_device *mdev;
+ 	struct mcuio_device_id mdev_id;
+ 	int probed;
+ };
+ 
+-#define DH_SHLD(n, did, dnr) { \
++#define DH_SHLD(n, did, fnr) { \
+ 	.name = n, \
+-	.dev_nr = dnr, \
++	.func_nr = fnr, \
+ 	.mdev_id = { \
+ 		.device = did, \
+ 		.vendor = MCUIO_VENDOR_DOGHUNTER, \
+@@ -40,9 +40,9 @@ struct shld_probe_info {
+ }
+ 
+ struct shld_probe_info shld_list[] = {
+-	DH_SHLD("lucky", MCUIO_DEVICE_LUCKY_SHIELD, 32),
+-	DH_SHLD("digitalio", MCUIO_DEVICE_DIGITALIO_SHIELD, 33),
+-	DH_SHLD("dogoled", MCUIO_DEVICE_DOGOLED_SHIELD, 34),
++	DH_SHLD("lucky", MCUIO_DEVICE_LUCKY_SHIELD, 31),
++	DH_SHLD("digitalio", MCUIO_DEVICE_DIGITALIO_SHIELD, 30),
++	DH_SHLD("dogoled", MCUIO_DEVICE_DOGOLED_SHIELD, 29),
+ 	{.name = NULL},
+ };
+ 
+@@ -63,7 +63,7 @@ int shld_register(struct shld_probe_info *info)
+ 		return -ENOMEM;
+ 
+ 	mdev->id = info->mdev_id;
+-	mdev->device = info->dev_nr;
++	mdev->fn = info->func_nr;
+ 
+ 	pr_debug("mcuio shield: device = 0x%04x, vendor = 0x%04x, "
+ 		 "class = 0x%04x\n", mdev->id.device,
+-- 
+2.10.1
+

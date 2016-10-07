@@ -1,0 +1,29 @@
+From f9f3f51650e2e5f5b1ba0c02acb938effb029edb Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Fri, 27 Nov 2015 13:42:11 +0100
+Subject: [PATCH 61/83] MCUIO: increase timeout for requests
+
+Timeout was 100ms, set to 200ms so that requests will not fail even if
+verbose log is enabled on MCU.
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/mcuio-hc-drv.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/mcuio/mcuio-hc-drv.c b/drivers/mcuio/mcuio-hc-drv.c
+index 9bbdade..e62f554 100644
+--- a/drivers/mcuio/mcuio-hc-drv.c
++++ b/drivers/mcuio/mcuio-hc-drv.c
+@@ -249,7 +249,7 @@ static int __do_request(struct mcuio_hc_data *data)
+ 	/* Schedule timeout */
+ 	INIT_DELAYED_WORK(&r->to_work, __request_timeout);
+ 	/* FIXME: WHAT IS THE CORRECT DELAY ? */
+-	schedule_delayed_work(&r->to_work, HZ/10);
++	schedule_delayed_work(&r->to_work, HZ/5);
+ 	if (__write_message(map, buf, 4) < 0) {
+ 		dev_err(&mdev->dev, "error writing to output fifo");
+ 		goto regmap_error;
+-- 
+2.10.1
+

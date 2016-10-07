@@ -1,0 +1,90 @@
+From 210e8b5dd37a886279b445083add4aa516317a84 Mon Sep 17 00:00:00 2001
+From: Quilt Import <unknown@linino.org>
+Date: Wed, 13 May 2015 11:10:34 +0200
+Subject: [PATCH 03/83] patches-3.18/925-MIPS-ath79-Linino-gpio-support
+
+---
+ arch/mips/ath79/common.h                       |  1 +
+ arch/mips/ath79/gpio.c                         | 29 ++++++++++++++++++++++++++
+ arch/mips/include/asm/mach-ath79/ar71xx_regs.h |  6 ++++++
+ 3 files changed, 36 insertions(+)
+
+diff --git a/arch/mips/ath79/common.h b/arch/mips/ath79/common.h
+index 447bd16..48312bc 100644
+--- a/arch/mips/ath79/common.h
++++ b/arch/mips/ath79/common.h
+@@ -27,6 +27,7 @@ void ath79_ddr_wb_flush(unsigned int reg);
+ void ath79_gpio_function_enable(u32 mask);
+ void ath79_gpio_function_disable(u32 mask);
+ void ath79_gpio_function_setup(u32 set, u32 clear);
++void ath79_gpio_function2_setup(u32 set, u32 clear);
+ void ath79_gpio_output_select(unsigned gpio, u8 val);
+ void ath79_gpio_init(void);
+ 
+diff --git a/arch/mips/ath79/gpio.c b/arch/mips/ath79/gpio.c
+index 08b816e..8f6fd196 100644
+--- a/arch/mips/ath79/gpio.c
++++ b/arch/mips/ath79/gpio.c
+@@ -158,6 +158,35 @@ static void __iomem *ath79_gpio_get_function_reg(void)
+ 	return ath79_gpio_base + reg;
+ }
+ 
++static void __iomem *ath79_gpio_get_function2_reg(void)
++{
++	u32 reg = 0;
++
++	if (soc_is_ar71xx() ||
++	    soc_is_ar724x() ||
++	    soc_is_ar913x() ||
++	    soc_is_ar933x())
++		reg = AR71XX_GPIO_REG_FUNC_2;
++	else
++		BUG();
++
++	return ath79_gpio_base + reg;
++}
++
++void ath79_gpio_function2_setup(u32 set, u32 clear)
++{
++	void __iomem *reg = ath79_gpio_get_function2_reg();
++	unsigned long flags;
++
++	spin_lock_irqsave(&ath79_gpio_lock, flags);
++
++	__raw_writel((__raw_readl(reg) & ~clear) | set, reg);
++	/* flush write */
++	__raw_readl(reg);
++
++	spin_unlock_irqrestore(&ath79_gpio_lock, flags);
++}
++
+ void ath79_gpio_function_setup(u32 set, u32 clear)
+ {
+ 	void __iomem *reg = ath79_gpio_get_function_reg();
+diff --git a/arch/mips/include/asm/mach-ath79/ar71xx_regs.h b/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
+index 76d650a..37c1916 100644
+--- a/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
++++ b/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
+@@ -840,6 +840,7 @@
+ #define AR71XX_GPIO_REG_INT_PENDING	0x20
+ #define AR71XX_GPIO_REG_INT_ENABLE	0x24
+ #define AR71XX_GPIO_REG_FUNC		0x28
++#define AR71XX_GPIO_REG_FUNC_2		0x30
+ 
+ #define AR934X_GPIO_REG_OUT_FUNC0	0x2c
+ #define AR934X_GPIO_REG_OUT_FUNC1	0x30
+@@ -995,6 +996,11 @@
+ #define AR933X_GPIO_FUNC_UART_EN		BIT(1)
+ #define AR933X_GPIO_FUNC_JTAG_DISABLE		BIT(0)
+ 
++#define AR933X_GPIO_FUNC2_JUMPSTART_DISABLE BIT(9)
++#define AR933X_GPIO_FUNC2_WPS_DISABLE		BIT(8)
++#define AR933X_GPIO_FUNC2_I2SD_ON_12		BIT(5)
++#define AR933X_GPIO_FUNC2_DIS_MIC			BIT(0)
++
+ #define AR934X_GPIO_FUNC_CLK_OBS7_EN		BIT(9)
+ #define AR934X_GPIO_FUNC_CLK_OBS6_EN		BIT(8)
+ #define AR934X_GPIO_FUNC_CLK_OBS5_EN		BIT(7)
+-- 
+2.10.1
+
