@@ -1,0 +1,111 @@
+From 0d8fde8218b07bf2641c3305c33c5fafb975af57 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Mon, 28 Jul 2014 17:30:21 +0200
+Subject: [PATCH 17/83] pwm: add optional update_period and update_duty
+ functions to framework
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/pwm/sysfs.c | 10 ++++++++--
+ include/linux/pwm.h | 30 ++++++++++++++++++++----------
+ 2 files changed, 28 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/pwm/sysfs.c b/drivers/pwm/sysfs.c
+index 4bd0c63..021f9a9 100644
+--- a/drivers/pwm/sysfs.c
++++ b/drivers/pwm/sysfs.c
+@@ -44,7 +44,10 @@ static ssize_t pwm_period_show(struct device *child,
+ 			       struct device_attribute *attr,
+ 			       char *buf)
+ {
+-	const struct pwm_device *pwm = child_to_pwm_device(child);
++	struct pwm_device *pwm = child_to_pwm_device(child);
++
++	if (pwm->chip->ops->update_period)
++		pwm->chip->ops->update_period(pwm->chip, pwm);
+ 
+ 	return sprintf(buf, "%u\n", pwm->period);
+ }
+@@ -70,7 +73,10 @@ static ssize_t pwm_duty_cycle_show(struct device *child,
+ 				   struct device_attribute *attr,
+ 				   char *buf)
+ {
+-	const struct pwm_device *pwm = child_to_pwm_device(child);
++	struct pwm_device *pwm = child_to_pwm_device(child);
++
++	if (pwm->chip->ops->update_duty)
++		pwm->chip->ops->update_duty(pwm->chip, pwm);
+ 
+ 	return sprintf(buf, "%u\n", pwm->duty_cycle);
+ }
+diff --git a/include/linux/pwm.h b/include/linux/pwm.h
+index e90628c..edabd51 100644
+--- a/include/linux/pwm.h
++++ b/include/linux/pwm.h
+@@ -98,22 +98,12 @@ static inline void pwm_set_period(struct pwm_device *pwm, unsigned int period)
+ 		pwm->period = period;
+ }
+ 
+-static inline unsigned int pwm_get_period(struct pwm_device *pwm)
+-{
+-	return pwm ? pwm->period : 0;
+-}
+-
+ static inline void pwm_set_duty_cycle(struct pwm_device *pwm, unsigned int duty)
+ {
+ 	if (pwm)
+ 		pwm->duty_cycle = duty;
+ }
+ 
+-static inline unsigned int pwm_get_duty_cycle(struct pwm_device *pwm)
+-{
+-	return pwm ? pwm->duty_cycle : 0;
+-}
+-
+ /*
+  * pwm_set_polarity - configure the polarity of a PWM signal
+  */
+@@ -127,6 +117,8 @@ int pwm_set_polarity(struct pwm_device *pwm, enum pwm_polarity polarity);
+  * @set_polarity: configure the polarity of this PWM
+  * @enable: enable PWM output toggling
+  * @disable: disable PWM output toggling
++ * @update_period (optional): refresh period reading from chip regs
++ * @update_duty (optional): refresh duty_cycle reading from chip regs
+  * @dbg_show: optional routine to show contents in debugfs
+  * @owner: helps prevent removal of modules exporting active PWMs
+  */
+@@ -145,6 +137,10 @@ struct pwm_ops {
+ 					  struct pwm_device *pwm);
+ 	void			(*disable)(struct pwm_chip *chip,
+ 					   struct pwm_device *pwm);
++	int			(*update_period)(struct pwm_chip *chip,
++					  struct pwm_device *pwm);
++	int			(*update_duty)(struct pwm_chip *chip,
++					  struct pwm_device *pwm);
+ #ifdef CONFIG_DEBUG_FS
+ 	void			(*dbg_show)(struct pwm_chip *chip,
+ 					    struct seq_file *s);
+@@ -178,6 +174,20 @@ struct pwm_chip {
+ 	bool			can_sleep;
+ };
+ 
++static inline unsigned int pwm_get_period(struct pwm_device *pwm)
++{
++	if (pwm && pwm->chip->ops->update_period)
++		pwm->chip->ops->update_period(pwm->chip, pwm);
++	return pwm ? pwm->period : 0;
++}
++
++static inline unsigned int pwm_get_duty_cycle(struct pwm_device *pwm)
++{
++	if (pwm && pwm->chip->ops->update_duty)
++		pwm->chip->ops->update_duty(pwm->chip, pwm);
++	return pwm ? pwm->duty_cycle : 0;
++}
++
+ #if IS_ENABLED(CONFIG_PWM)
+ int pwm_set_chip_data(struct pwm_device *pwm, void *data);
+ void *pwm_get_chip_data(struct pwm_device *pwm);
+-- 
+2.10.1
+

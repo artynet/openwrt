@@ -1,0 +1,107 @@
+From de3fd577f227473a9ee98e56189c88cb335b02f0 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Mon, 16 Feb 2015 14:01:59 +0100
+Subject: [PATCH 36/83] BME280 driver: handle new attribute offset_t, for
+ temperature offset
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/input/misc/bme280/bme280_core.c | 54 ++++++++++++++++++++++++++++++++-
+ 1 file changed, 53 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/input/misc/bme280/bme280_core.c b/drivers/input/misc/bme280/bme280_core.c
+index 22f56e8..fae88da 100644
+--- a/drivers/input/misc/bme280/bme280_core.c
++++ b/drivers/input/misc/bme280/bme280_core.c
+@@ -155,6 +155,8 @@ struct bme_client_data {
+ 	uint32_t delay;
+ 	/*!enable/disable sensor output */
+ 	uint32_t enable;
++	/*!manual offset for temperature tuning */
++	uint32_t offset_t;
+ 	/*! indicate selftest status
+ 	* -1: no action
+ 	*  0: failed
+@@ -1022,7 +1024,7 @@ static ssize_t show_temperature(struct device *dev,
+ 	status = bme_get_temperature(data, &temperature);
+ 	mutex_unlock(&data->lock);
+ 	if (status == 0)
+-		return sprintf(buf, "%d\n", temperature);
++		return sprintf(buf, "%d\n", temperature + data->offset_t);
+ 
+ 	return status;
+ }
+@@ -1472,6 +1474,52 @@ static ssize_t store_enable(struct device *dev,
+ }
+ 
+ /*!
++ * @brief get sensor temperature offset via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of temperature offset value buffer
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t show_offset_t(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	return sprintf(buf, "%d\n", data->offset_t);
++}
++
++/*!
++ * @brief set sensor temperature offset via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of temperature offset buffer
++ * @param count buffer size
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t store_offset_t(struct device *dev,
++			struct device_attribute *attr,
++			const char *buf, size_t count)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	long offset;
++	int status = kstrtol(buf, 10, &offset);
++	if (status == 0) {
++		mutex_lock(&data->lock);
++		data->offset_t = offset;
++		mutex_unlock(&data->lock);
++		return count;
++	}
++	return status;
++}
++
++/*!
+  * @brief get selftest status via sysfs node
+  *
+  * @param dev the pointer of device
+@@ -1615,6 +1663,8 @@ static DEVICE_ATTR(enable, S_IWUSR | S_IRUGO,
+ 			show_enable, store_enable);
+ static DEVICE_ATTR(selftest, S_IWUSR | S_IRUGO,
+ 			show_selftest, store_selftest);
++static DEVICE_ATTR(offset_t, S_IWUSR | S_IRUGO,
++			show_offset_t, store_offset_t);
+ 
+ #ifdef DEBUG_BME280
+ static DEVICE_ATTR(dump_reg, S_IRUGO,
+@@ -1651,6 +1701,8 @@ static struct attribute *bme_attributes[] = {
+ #endif
+ 	/**< enable/disable attribute */
+ 	&dev_attr_enable.attr,
++	/**< temperature offset attribute */
++	&dev_attr_offset_t.attr,
+ 	/**< selftest attribute */
+ 	&dev_attr_selftest.attr,
+ 	/**< dump registers attribute */
+-- 
+2.10.1
+

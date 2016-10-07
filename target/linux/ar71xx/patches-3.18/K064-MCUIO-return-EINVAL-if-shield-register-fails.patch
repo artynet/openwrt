@@ -1,0 +1,35 @@
+From f2cafeabefc26bd72f0817227127742ef07dba46 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Mon, 30 Nov 2015 09:58:47 +0100
+Subject: [PATCH 64/83] MCUIO: return -EINVAL if shield register fails
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/mcuio-shields-manprobe.c | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/mcuio/mcuio-shields-manprobe.c b/drivers/mcuio/mcuio-shields-manprobe.c
+index d7211d4..925b9ae 100644
+--- a/drivers/mcuio/mcuio-shields-manprobe.c
++++ b/drivers/mcuio/mcuio-shields-manprobe.c
+@@ -96,12 +96,13 @@ void shld_unregister(struct shld_probe_info *info)
+ static int shld_probe(const char *shld_name)
+ {
+ 	struct shld_probe_info *i;
+-	for (i = shld_list; i->name; i++)
+-		if (sysfs_streq(shld_name, i->name) && !i->probed) {
+-			if (!shld_register(i))
++	for (i = shld_list; i->name; i++) {
++		if (sysfs_streq(shld_name, i->name) && !i->probed &&
++			!shld_register(i)) {
+ 				i->probed = 1;
+-			return 0;
++				return 0;
+ 		}
++	}
+ 	return -EINVAL;
+ }
+ 
+-- 
+2.10.1
+
