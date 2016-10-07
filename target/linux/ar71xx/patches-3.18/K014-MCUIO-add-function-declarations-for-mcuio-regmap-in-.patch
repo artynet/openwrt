@@ -1,0 +1,44 @@
+From 2736c9a21b464c02b71a94018b3b6ecac439cb40 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Fri, 24 Apr 2015 17:49:10 +0200
+Subject: [PATCH 14/83] MCUIO add function declarations for mcuio regmap in
+ include/linux/regmap.h
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ include/linux/regmap.h | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/include/linux/regmap.h b/include/linux/regmap.h
+index 5d7afd4..5cd4bb5 100644
+--- a/include/linux/regmap.h
++++ b/include/linux/regmap.h
+@@ -24,6 +24,7 @@ struct i2c_client;
+ struct irq_domain;
+ struct spi_device;
+ struct spmi_device;
++struct mcuio_device;
+ struct regmap;
+ struct regmap_range_cfg;
+ struct regmap_field;
+@@ -337,6 +338,8 @@ struct regmap *regmap_init_spmi_base(struct spmi_device *dev,
+ 				     const struct regmap_config *config);
+ struct regmap *regmap_init_spmi_ext(struct spmi_device *dev,
+ 				    const struct regmap_config *config);
++struct regmap *regmap_init_mcuio(struct mcuio_device *mdev,
++				    const struct regmap_config *config);
+ struct regmap *regmap_init_mmio_clk(struct device *dev, const char *clk_id,
+ 				    void __iomem *regs,
+ 				    const struct regmap_config *config);
+@@ -353,6 +356,8 @@ struct regmap *devm_regmap_init_spmi_base(struct spmi_device *dev,
+ 					  const struct regmap_config *config);
+ struct regmap *devm_regmap_init_spmi_ext(struct spmi_device *dev,
+ 					 const struct regmap_config *config);
++struct regmap *devm_regmap_init_mcuio(struct mcuio_device *mdev,
++					 const struct regmap_config *config);
+ struct regmap *devm_regmap_init_mmio_clk(struct device *dev, const char *clk_id,
+ 					 void __iomem *regs,
+ 					 const struct regmap_config *config);
+-- 
+2.10.1
+
