@@ -1,0 +1,32 @@
+From b95b3d34c43b2552a261c4b63cbc36298ae1d707 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Tue, 24 Mar 2015 11:40:10 +0100
+Subject: [PATCH 09/83] MIPS, ATH79 core: enable interrupts on gpio on AR934X
+ SoC too
+
+Interrupts on GPIOs have been successfully tested on AR934X, so they can be
+enabled for this chip too.
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ arch/mips/ath79/gpio.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/mips/ath79/gpio.c b/arch/mips/ath79/gpio.c
+index 9b5e8e8..ce0ef44 100644
+--- a/arch/mips/ath79/gpio.c
++++ b/arch/mips/ath79/gpio.c
+@@ -434,8 +434,8 @@ void __init ath79_gpio_init(void)
+ 		panic("cannot add AR71xx GPIO chip, error=%d", err);
+ 		return;
+ 	}
+-	/* Irqs supported for ar933x only at the moment */
+-	if (!soc_is_ar933x())
++	/* Irqs supported for ar933x and ar934x only at the moment */
++	if (!soc_is_ar933x() && !soc_is_ar934x())
+ 		return;
+ 
+ 	ath79_setup_irqs();
+-- 
+2.10.1
+

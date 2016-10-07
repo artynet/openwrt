@@ -1,0 +1,57 @@
+From e0635b5fa4d29ef922e9d45ff177802a7f27782b Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Tue, 29 Jul 2014 08:15:33 +0200
+Subject: [PATCH 19/83] pwm: new field name added to pwm_device
+
+Since label is used dinamically, I added one more optional field,
+which statically defines the name of a pwm output. A symbolic link
+using it is created when pwm is exported.
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/pwm/sysfs.c | 7 +++++++
+ include/linux/pwm.h | 3 +++
+ 2 files changed, 10 insertions(+)
+
+diff --git a/drivers/pwm/sysfs.c b/drivers/pwm/sysfs.c
+index 7704d63..d2dcff2 100644
+--- a/drivers/pwm/sysfs.c
++++ b/drivers/pwm/sysfs.c
+@@ -235,6 +235,10 @@ static int pwm_export_child(struct device *parent, struct pwm_device *pwm)
+ 		return ret;
+ 	}
+ 
++	if (pwm->name)
++		sysfs_create_link(&parent->kobj, &export->child.kobj,
++			pwm->name);
++
+ 	return 0;
+ }
+ 
+@@ -254,6 +258,9 @@ static int pwm_unexport_child(struct device *parent, struct pwm_device *pwm)
+ 	if (!child)
+ 		return -ENODEV;
+ 
++	if (pwm->name)
++		sysfs_remove_link(&parent->kobj, pwm->name);
++
+ 	/* for device_find_child() */
+ 	put_device(child);
+ 	device_unregister(child);
+diff --git a/include/linux/pwm.h b/include/linux/pwm.h
+index f18d200..47b17c1 100644
+--- a/include/linux/pwm.h
++++ b/include/linux/pwm.h
+@@ -86,6 +86,9 @@ struct pwm_device {
+ 	unsigned int		pwm;
+ 	struct pwm_chip		*chip;
+ 	void			*chip_data;
++	const char		*name; /* optional static name for pwm
++					  device, is used to create a symlink
++					  to pwm%d */
+ 
+ 	unsigned int		period; 	/* in nanoseconds */
+ 	unsigned int		duty_cycle;	/* in nanoseconds */
+-- 
+2.10.1
+

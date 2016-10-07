@@ -1,0 +1,6936 @@
+From 231666106414bc0220db2fba015974c99311a734 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Sun, 25 Jan 2015 10:31:17 +0100
+Subject: [PATCH 35/83] bme280 bosch temp sensor driver added
+
+This code comes from Bosch with no changes by Linino.
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/input/misc/Kconfig              |    2 +
+ drivers/input/misc/Makefile             |    1 +
+ drivers/input/misc/bme280/Kconfig       |   36 +
+ drivers/input/misc/bme280/Makefile      |    7 +
+ drivers/input/misc/bme280/bme280.c      | 2369 +++++++++++++++++++++++++++++++
+ drivers/input/misc/bme280/bme280.h      | 1668 ++++++++++++++++++++++
+ drivers/input/misc/bme280/bme280_core.c | 1989 ++++++++++++++++++++++++++
+ drivers/input/misc/bme280/bme280_core.h |   65 +
+ drivers/input/misc/bme280/bme280_i2c.c  |  348 +++++
+ drivers/input/misc/bme280/bme280_spi.c  |  262 ++++
+ drivers/input/misc/bme280/bs_log.h      |   83 ++
+ 11 files changed, 6830 insertions(+)
+ create mode 100644 drivers/input/misc/bme280/Kconfig
+ create mode 100644 drivers/input/misc/bme280/Makefile
+ create mode 100644 drivers/input/misc/bme280/bme280.c
+ create mode 100644 drivers/input/misc/bme280/bme280.h
+ create mode 100644 drivers/input/misc/bme280/bme280_core.c
+ create mode 100644 drivers/input/misc/bme280/bme280_core.h
+ create mode 100644 drivers/input/misc/bme280/bme280_i2c.c
+ create mode 100644 drivers/input/misc/bme280/bme280_spi.c
+ create mode 100644 drivers/input/misc/bme280/bs_log.h
+
+diff --git a/drivers/input/misc/Kconfig b/drivers/input/misc/Kconfig
+index 23297ab..b8563c8 100644
+--- a/drivers/input/misc/Kconfig
++++ b/drivers/input/misc/Kconfig
+@@ -719,4 +719,6 @@ config INPUT_DRV2667_HAPTICS
+ 	  To compile this driver as a module, choose M here: the
+ 	  module will be called drv260x-haptics.
+ 
++source "drivers/input/misc/bme280/Kconfig"
++
+ endif
+diff --git a/drivers/input/misc/Makefile b/drivers/input/misc/Makefile
+index 19c7603..6f7b67c 100644
+--- a/drivers/input/misc/Makefile
++++ b/drivers/input/misc/Makefile
+@@ -68,3 +68,4 @@ obj-$(CONFIG_INPUT_WM831X_ON)		+= wm831x-on.o
+ obj-$(CONFIG_INPUT_XEN_KBDDEV_FRONTEND)	+= xen-kbdfront.o
+ obj-$(CONFIG_INPUT_YEALINK)		+= yealink.o
+ obj-$(CONFIG_INPUT_IDEAPAD_SLIDEBAR)	+= ideapad_slidebar.o
++obj-$(CONFIG_BME280)			+= bme280/
+\ No newline at end of file
+diff --git a/drivers/input/misc/bme280/Kconfig b/drivers/input/misc/bme280/Kconfig
+new file mode 100644
+index 0000000..7ac14fd
+--- /dev/null
++++ b/drivers/input/misc/bme280/Kconfig
+@@ -0,0 +1,36 @@
++#
++# Please let upper layer's Kconfig contains BME280 Kconfig.
++# For example, you can add the following statement to the end of
++# drivers/input/misc/Kconfig when you think BME280 as input misc device.
++#     source "drivers/input/misc/bme280/Kconfig"
++#
++
++config BME280
++	tristate "BME280 digital pressure sensor"
++	depends on (I2C || SPI_MASTER) && SYSFS
++	help
++	  If you say yes here you get support for Bosch Sensortec
++	  digital pressure sensors BME280.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called bme280-core.
++
++config BME280_I2C
++	tristate "support I2C bus communication"
++	depends on BME280 && I2C
++	help
++	  Say Y here if you want to support Bosch Sensortec digital pressure
++	  sensor hooked to an I2C bus.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called bme280-i2c.
++
++#config BME280_SPI
++#	tristate "support SPI bus communication"
++#	depends on BME280 && SPI_MASTER
++#	help
++#	  Say Y here if you want to support Bosch Sensortec digital pressure
++#	  sensor hooked to an SPI bus.
++#
++#	  To compile this driver as a module, choose M here: the
++#	  module will be called bme280-spi.
+diff --git a/drivers/input/misc/bme280/Makefile b/drivers/input/misc/bme280/Makefile
+new file mode 100644
+index 0000000..c2966bf
+--- /dev/null
++++ b/drivers/input/misc/bme280/Makefile
+@@ -0,0 +1,7 @@
++EXTRA_CFLAGS += -DBME_USE_BASIC_I2C_FUNC
++
++obj-$(CONFIG_BME280)     += bme280_core.o bme280.o
++obj-$(CONFIG_BME280_I2C) += bme280_i2c.o
++
++#obj-$(CONFIG_BMP280_SPI) += bmp280_spi.o
++
+diff --git a/drivers/input/misc/bme280/bme280.c b/drivers/input/misc/bme280/bme280.c
+new file mode 100644
+index 0000000..4fc3e75
+--- /dev/null
++++ b/drivers/input/misc/bme280/bme280.c
+@@ -0,0 +1,2369 @@
++/*!
++ * @section LICENSE
++ * (C) Copyright 2014 Bosch Sensortec GmbH All Rights Reserved
++ *
++ * This software program is licensed subject to the GNU General
++ * Public License (GPL).Version 2,June 1991,
++ * available at http://www.fsf.org/copyleft/gpl.html
++ *
++ * @filename bme280.c
++ * @date     2014/09/12
++ * @id       "301409e"
++ *
++ * @brief
++ * API for accessing the BME280 sensor
++ *
++ * Revision: 2.0.1(Pressure and Temperature compensation code revision is 1.1
++ * and Humidity compensation code revision is 1.0)
++ */
++/****************************************************************************/
++#include "bme280.h"
++static struct bme280_t *p_bme280;                      /**< pointer to BME280 */
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This function is used for initialize
++ *	the bus read and bus write functions
++ *  and assign the chip id and I2C address of the BME280 sensor
++ *	chip id is read in the register 0xD0 bit from 0 to 7
++ *
++ *	 \param p_bme280 *bme280 structure pointer.
++ *
++ *	While changing the parameter of the p_bme280
++ *	consider the following point:
++ *	Changing the reference value of the parameter
++ *	will changes the local copy or local reference
++ *	make sure your changes will not
++ *	affect the reference value of the parameter
++ *	(Better case don't change the reference value of the parameter)
++ *
++ *
++ *
++ *
++ * \return results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_init(struct bme280_t *bme280)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	p_bme280 = bme280;
++	/* assign BME280 ptr */
++	comres += p_bme280->BME280_BUS_READ_FUNC(p_bme280->dev_addr,
++	BME280_CHIPID_REG, &v_data_u8r, 1);
++	/* read Chip Id */
++	p_bme280->chip_id = v_data_u8r;
++
++	bme280_get_calib_param();
++	/* readout bme280 calibparam structure */
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to read uncompensated temperature
++ *	in the registers 0xFA, 0xFB and 0xFC
++ *	0xFA -> MSB -> bit from 0 to 7
++ *	0xFB -> LSB -> bit from 0 to 7
++ *	0xFC -> LSB -> bit from 4 to 7
++ *
++ * \param s32 utemperature : Pointer holding
++ *			the uncompensated temperature.
++ *
++ *
++ *
++ *  \return	results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_read_ut(s32 *utemperature)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 a_data_u8r[3] = {0, 0, 0};
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,
++			BME280_TEMPERATURE_MSB_REG, a_data_u8r, 3);
++			*utemperature = (s32)(((
++			(u32) (a_data_u8r[0]))
++			<< SHIFT_LEFT_12_POSITION) |
++			(((u32)(a_data_u8r[1]))
++			<< SHIFT_LEFT_4_POSITION)
++			| ((u32)a_data_u8r[2] >>
++			SHIFT_RIGHT_4_POSITION));
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ * Description: *//**\brief Reads actual temperature from uncompensated temperature
++ *                    and returns the value in 0.01 degree Centigrade
++ *                    Output value of "5123" equals 51.23 DegC.
++ *
++ *
++ *
++ *  \param s32 : value of uncompensated temperature
++ *
++ *
++ *  \return
++ *			s32 : actual temperature
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++s32 bme280_compensate_T_int32(s32 adc_t)
++{
++	s32 v_x1_u32r = BME280_Zero_U8X;
++	s32 v_x2_u32r = BME280_Zero_U8X;
++	s32 temperature = BME280_Zero_U8X;
++
++	v_x1_u32r  = ((((adc_t >> 3) - ((s32)
++	p_bme280->cal_param.dig_T1 << 1))) *
++	((s32)p_bme280->cal_param.dig_T2)) >> 11;
++	v_x2_u32r  = (((((adc_t >> 4) -
++	((s32)p_bme280->cal_param.dig_T1)) * ((adc_t >> 4) -
++	((s32)p_bme280->cal_param.dig_T1))) >> 12) *
++	((s32)p_bme280->cal_param.dig_T3)) >> 14;
++	p_bme280->cal_param.t_fine = v_x1_u32r + v_x2_u32r;
++	temperature  = (p_bme280->cal_param.t_fine * 5 + 128) >> 8;
++	return temperature;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ * Description: *//**\brief Reads actual temperature from uncompensated temperature
++ *		and returns the value with 500LSB/DegC centred around 24 DegC
++ *      output value of "5123" equals(5123/500)+24 = 34.246DegC
++ *
++ *
++ *  \param s32 : value of uncompensated temperature
++ *
++ *
++ *
++ *  \return
++ *			s16 : actual temperature
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++s16 bme280_compensate_T_int32_sixteen_bit_output(s32 adc_t)
++{
++	s16 temperature = BME280_Zero_U8X;
++	bme280_compensate_T_int32(adc_t);
++	temperature  = (s16)((((p_bme280->cal_param.t_fine - 122880)
++	* 25) + 128) >> 8);
++
++	return temperature;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to read uncompensated pressure.
++ *	in the registers 0xF7, 0xF8 and 0xF9
++ *	0xF7 -> MSB -> bit from 0 to 7
++ *	0xF8 -> LSB -> bit from 0 to 7
++ *	0xF9 -> LSB -> bit from 4 to 7
++ *
++ *
++ *
++ *	\param s32 upressure : Pointer holding the uncompensated pressure.
++ *
++ *
++ *
++ *	\return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_read_up(s32 *upressure)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 a_data_u8r[3] = {0, 0, 0};
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,
++			BME280_PRESSURE_MSB_REG, a_data_u8r, 3);
++			*upressure = (s32)((
++			((u32)(a_data_u8r[0]))
++			<< SHIFT_LEFT_12_POSITION) |
++			(((u32)(a_data_u8r[1]))
++			<< SHIFT_LEFT_4_POSITION) |
++			((u32)a_data_u8r[2] >>
++			SHIFT_RIGHT_4_POSITION));
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ * Description: *//**\brief Reads actual pressure from uncompensated pressure
++ *							and returns the value in Pascal(Pa)
++ *                          Output value of "96386" equals 96386 Pa =
++ *                          963.86 hPa = 963.86 millibar
++ *
++ *
++ *
++ *  \param s32 : value of uncompensated pressure
++ *
++ *
++ *
++ *  \return
++ *			u32 : actual pressure
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++u32 bme280_compensate_P_int32(s32 adc_p)
++{
++	s32 v_x1_u32r = BME280_Zero_U8X;
++	s32 v_x2_u32r = BME280_Zero_U8X;
++	u32 pressure = BME280_Zero_U8X;
++
++	v_x1_u32r = (((s32)p_bme280->cal_param.t_fine) >> 1) -
++	(s32)64000;
++	v_x2_u32r = (((v_x1_u32r >> 2) * (v_x1_u32r >> 2)) >> 11) *
++	((s32)p_bme280->cal_param.dig_P6);
++	v_x2_u32r = v_x2_u32r + ((v_x1_u32r *
++	((s32)p_bme280->cal_param.dig_P5)) << 1);
++	v_x2_u32r = (v_x2_u32r >> 2) +
++	(((s32)p_bme280->cal_param.dig_P4) << 16);
++	v_x1_u32r = (((p_bme280->cal_param.dig_P3 * (((v_x1_u32r >> 2) *
++	(v_x1_u32r >> 2)) >> 13)) >> 3) +
++	((((s32)p_bme280->cal_param.dig_P2) *
++	v_x1_u32r) >> 1)) >> 18;
++	v_x1_u32r = ((((32768+v_x1_u32r)) *
++	((s32)p_bme280->cal_param.dig_P1))	>> 15);
++	pressure = (((u32)(((s32)1048576) - adc_p) -
++	(v_x2_u32r >> 12))) * 3125;
++	if (pressure < 0x80000000)
++		/* Avoid exception caused by division by zero */
++		if (v_x1_u32r != BME280_Zero_U8X)
++			pressure = (pressure << 1) / ((u32)v_x1_u32r);
++		else
++			return BME280_Zero_U8X;
++	else
++		/* Avoid exception caused by division by zero */
++		if (v_x1_u32r != BME280_Zero_U8X)
++			pressure = (pressure / (u32)v_x1_u32r) * 2;
++		else
++			return BME280_Zero_U8X;
++
++		v_x1_u32r = (((s32)p_bme280->cal_param.dig_P9) *
++		((s32)(((pressure >> 3) * (pressure >> 3)) >> 13)))
++		>> 12;
++		v_x2_u32r = (((s32)(pressure >> 2)) *
++		((s32)p_bme280->cal_param.dig_P8)) >> 13;
++		pressure = (u32)((s32)pressure +
++		((v_x1_u32r + v_x2_u32r + p_bme280->cal_param.dig_P7) >> 4));
++
++	return pressure;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to read uncompensated humidity.
++ *	in the registers 0xF7, 0xF8 and 0xF9
++ *	0xFD -> MSB -> bit from 0 to 7
++ *	0xFE -> LSB -> bit from 0 to 7
++ *
++ *
++ *
++ *	\param s32 uhumidity : Pointer holding the uncompensated humidity.
++ *
++ *
++ *
++ *	\return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_read_uh(s32 *uhumidity)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 a_data_u8r[2] = {0, 0};
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,
++			BME280_HUMIDITY_MSB_REG, a_data_u8r, 2);
++			*uhumidity = (s32)(
++			(((u32)(a_data_u8r[0]))
++			<< SHIFT_LEFT_8_POSITION)|
++			((u32)(a_data_u8r[1])));
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ * Description: *//**\brief Reads actual humidity from
++ *        uncompensated humidity
++ *        and returns the value in %rH as unsigned 32bit integer
++ *        in Q22.10 format(22 integer 10 fractional bits).
++ *        An output value of 42313
++ *        represents 42313 / 1024 = 41.321 %rH
++ *
++ *
++ *
++ *  \param s32 : value of uncompensated humidity
++ *
++ *  \return
++ *			u32 : actual relative humidity
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++u32 bme280_compensate_H_int32(s32 adc_h)
++{
++	s32 v_x1_u32r;
++	v_x1_u32r = (p_bme280->cal_param.t_fine - ((s32)76800));
++	v_x1_u32r = (((((adc_h << 14) -
++	(((s32)p_bme280->cal_param.dig_H4) << 20) -
++	(((s32)p_bme280->cal_param.dig_H5) * v_x1_u32r)) +
++	((s32)16384)) >> 15) *
++	(((((((v_x1_u32r *
++	((s32)p_bme280->cal_param.dig_H6)) >> 10) *
++	(((v_x1_u32r * ((s32)p_bme280->cal_param.dig_H3)) >> 11) +
++	((s32)32768))) >> 10) +
++	((s32)2097152)) *
++	((s32)p_bme280->cal_param.dig_H2) + 8192) >> 14));
++	v_x1_u32r = (v_x1_u32r - (((((v_x1_u32r >> 15) *
++	(v_x1_u32r >> 15)) >> 7) *
++	((s32)p_bme280->cal_param.dig_H1)) >> 4));
++	v_x1_u32r = (v_x1_u32r < 0 ? 0 : v_x1_u32r);
++	v_x1_u32r = (v_x1_u32r > 419430400 ? 419430400 : v_x1_u32r);
++	return (u32)(v_x1_u32r>>12);
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ * Description: *//**\brief Reads actual humidity from
++ *        uncompensated humidity
++ *        and returns the value in %rH as unsigned 16bit integer
++ *        An output value of 42313
++ *        represents 42313/512 = 82.643 %rH
++ *
++ *
++ *
++ *  \param s32 : value of uncompensated humidity
++ *
++ *
++ *
++ *  \return
++ *			u16 : actual relative humidity
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++u16 bme280_compensate_H_int32_sixteen_bit_output(s32 adc_h)
++{
++	u32 v_x1_u32r;
++	u16 v_x2_u32r;
++	v_x1_u32r =  bme280_compensate_H_int32(adc_h);
++	v_x2_u32r = (u16)(v_x1_u32r>>1);
++	return v_x2_u32r;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ * Description: *//**\brief reads uncompensated pressure,temperature and humidity
++ *
++ *
++ *
++ *
++ *  \param s32 upressure: Pointer holding the uncompensated pressure.
++ *  \param s32 utemperature: Pointer holding
++ *                    the uncompensated temperature.
++ *  \param s32 uhumidity: Pointer holding the uncompensated humidity.
++ *
++ *
++ *
++ *  \return results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_read_uputuh(s32 *upressure,
++s32 *utemperature, s32 *uhumidity)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 a_data_u8r[8] = {0, 0, 0, 0, 0, 0, 0, 0};
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,
++			BME280_PRESSURE_MSB_REG, a_data_u8r, 8);
++			/*Pressure*/
++			*upressure = (s32)((
++			((u32)(a_data_u8r[0]))
++			<< SHIFT_LEFT_12_POSITION) |
++			(((u32)(a_data_u8r[1]))
++			<< SHIFT_LEFT_4_POSITION) |
++			((u32)a_data_u8r[2] >>
++			SHIFT_RIGHT_4_POSITION));
++
++			/* Temperature */
++			*utemperature = (s32)(((
++			(u32) (a_data_u8r[3]))
++			<< SHIFT_LEFT_12_POSITION) |
++			(((u32)(a_data_u8r[4]))
++			<< SHIFT_LEFT_4_POSITION)
++			| ((u32)a_data_u8r[5]
++			>> SHIFT_RIGHT_4_POSITION));
++
++			/*Humidity*/
++			*uhumidity = (s32)((
++			((u32)(a_data_u8r[6]))
++			<< SHIFT_LEFT_8_POSITION)|
++			((u32)(a_data_u8r[7])));
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ * Description: *//**\brief reads pressure, temperature and humidity.
++ *
++ *
++ *
++ *
++ *	\param u32 pressure : Pointer holding
++ *                          the compensated pressure.
++ *	\param s32 temperature : Pointer holding
++ *                      the compensated temperature.
++ *	\param u32 humidity : Pointer holding
++ *                         the compensated humidity.
++ *
++ *
++ *  \return results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_read_pth(u32 *pressure,
++s32 *temperature, u32 *humidity)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	s32 upressure = BME280_Zero_U8X;
++	s32 utemperature = BME280_Zero_U8X;
++	s32 uhumidity = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += bme280_read_uputuh(&upressure,
++			&utemperature, &uhumidity);
++			*temperature = bme280_compensate_T_int32(utemperature);
++			*pressure = bme280_compensate_P_int32(upressure);
++			*humidity = bme280_compensate_H_int32(uhumidity);
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to
++ *	calibration parameters used for calculation in the registers
++ *	parameter	Register address	bit
++ *	dig_T1			0x88/0x89		0 : 7 / 8: 15
++ *	dig_T2			0x8A/0x8B		0 : 7 / 8: 15
++ *	dig_T3			0x8C/0x8D		0 : 7 / 8: 15
++ *	dig_P1			0x8E/0x8F		0 : 7 / 8: 15
++ *	dig_P2			0x90/0x91		0 : 7 / 8: 15
++ *	dig_P3			0x92/0x93		0 : 7 / 8: 15
++ *	dig_P4			0x94/0x95		0 : 7 / 8: 15
++ *	dig_P5			0x96/0x97		0 : 7 / 8: 15
++ *	dig_P6			0x98/0x99		0 : 7 / 8: 15
++ *	dig_P7			0x9A/0x9B		0 : 7 / 8: 15
++ *	dig_P8			0x9C/0x9D		0 : 7 / 8: 15
++ *	dig_P9			0x9E/0x9F		0 : 7 / 8: 15
++ *	dig_H1				0xA1			0 : 7
++ *	dig_H2			0xE1/0xE2		0 : 7 / 8: 15
++ *	dig_H3				0xE3			0 : 7
++ *
++ *	\param:  None
++ *
++ *
++ *
++ *	\return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_calib_param()
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 a_data_u8r[26] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
++	0, 0, 0, 0, 0, 0, 0, 0 , 0, 0, 0, 0, 0, 0};
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,
++			BME280_DIG_T1_LSB_REG, a_data_u8r, 26);
++
++			p_bme280->cal_param.dig_T1 = (u16)(((
++			(u16)((u8)a_data_u8r[1])) <<
++			SHIFT_LEFT_8_POSITION) | a_data_u8r[0]);
++			p_bme280->cal_param.dig_T2 = (s16)(((
++			(s16)((s8)a_data_u8r[3])) <<
++			SHIFT_LEFT_8_POSITION) | a_data_u8r[2]);
++			p_bme280->cal_param.dig_T3 = (s16)(((
++			(s16)((s8)a_data_u8r[5])) <<
++			SHIFT_LEFT_8_POSITION) | a_data_u8r[4]);
++			p_bme280->cal_param.dig_P1 = (u16)(((
++			(u16)((u8)a_data_u8r[7])) <<
++			SHIFT_LEFT_8_POSITION) | a_data_u8r[6]);
++			p_bme280->cal_param.dig_P2 = (s16)(((
++			(s16)((s8)a_data_u8r[9])) <<
++			SHIFT_LEFT_8_POSITION) | a_data_u8r[8]);
++			p_bme280->cal_param.dig_P3 = (s16)(((
++			(s16)((s8)a_data_u8r[11])) <<
++			SHIFT_LEFT_8_POSITION) | a_data_u8r[10]);
++			p_bme280->cal_param.dig_P4 = (s16)(((
++			(s16)((s8)a_data_u8r[13])) <<
++			SHIFT_LEFT_8_POSITION) | a_data_u8r[12]);
++			p_bme280->cal_param.dig_P5 = (s16)(((
++			(s16)((s8)a_data_u8r[15])) <<
++			SHIFT_LEFT_8_POSITION) | a_data_u8r[14]);
++			p_bme280->cal_param.dig_P6 = (s16)(((
++			(s16)((s8)a_data_u8r[17])) <<
++			SHIFT_LEFT_8_POSITION) | a_data_u8r[16]);
++			p_bme280->cal_param.dig_P7 = (s16)(((
++			(s16)((s8)a_data_u8r[19])) <<
++			SHIFT_LEFT_8_POSITION) | a_data_u8r[18]);
++			p_bme280->cal_param.dig_P8 = (s16)(((
++			(s16)((s8)a_data_u8r[21])) <<
++			SHIFT_LEFT_8_POSITION) | a_data_u8r[20]);
++			p_bme280->cal_param.dig_P9 = (s16)(((
++			(s16)((s8)a_data_u8r[23])) <<
++			SHIFT_LEFT_8_POSITION) | a_data_u8r[22]);
++			p_bme280->cal_param.dig_H1 = a_data_u8r[25];
++			comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,
++			BME280_DIG_H2_LSB_REG, a_data_u8r, 7);
++			p_bme280->cal_param.dig_H2 = (s16)(((
++			(s16)((s8)a_data_u8r[1])) <<
++			SHIFT_LEFT_8_POSITION) | a_data_u8r[0]);
++			p_bme280->cal_param.dig_H3 = a_data_u8r[2];
++			p_bme280->cal_param.dig_H4 = (s16)(((
++			(s16)((s8)a_data_u8r[3])) <<
++			SHIFT_LEFT_4_POSITION) | (((u8)0x0F)
++			& a_data_u8r[4]));
++			p_bme280->cal_param.dig_H5 = (s16)(((
++			(s16)((s8)a_data_u8r[5])) <<
++			SHIFT_LEFT_4_POSITION) | (a_data_u8r[4] >>
++			SHIFT_RIGHT_4_POSITION));
++			p_bme280->cal_param.dig_H6 = (s8)a_data_u8r[6];
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to get
++ *	the temperature oversampling setting in the register 0xF4
++ *	bits from 5 to 7
++ *
++ *	bit					temperature oversampling
++ *	0x00						Skipped
++ *	0x01						BME280_OVERSAMPLING_1X
++ *	0x02						BME280_OVERSAMPLING_2X
++ *	0x03						BME280_OVERSAMPLING_4X
++ *	0x04						BME280_OVERSAMPLING_8X
++ *	0x05,0x06 and 0x07			BME280_OVERSAMPLING_16X
++ *
++ *
++ *  \param u8 value : Pointer holding the osrs_t value
++ *
++ *
++ *
++ *  \return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_osrs_t(
++u8 *value)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,
++			BME280_CTRLMEAS_REG_OSRST__REG,
++			&v_data_u8r, 1);
++			*value = BME280_GET_BITSLICE(v_data_u8r,
++			BME280_CTRLMEAS_REG_OSRST);
++
++			p_bme280->osrs_t = *value;
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to set
++ *	the temperature oversampling in the register 0xF4
++ *	bits from 5 to 7
++ *
++ *	bit					temperature oversampling
++ *	0x00						Skipped
++ *	0x01						BME280_OVERSAMPLING_1X
++ *	0x02						BME280_OVERSAMPLING_2X
++ *	0x03						BME280_OVERSAMPLING_4X
++ *	0x04						BME280_OVERSAMPLING_8X
++ *	0x05,0x06 and 0x07			BME280_OVERSAMPLING_16X
++ *
++ *
++ *  \param u8 value : the osrs_t value
++ *
++ *
++ *
++ *  \return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_osrs_t(
++u8 value)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = SUCCESS;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	u8 prev_pow_mode = BME280_Zero_U8X;
++	u8 pre_ctrl_hum_value = BME280_Zero_U8X;
++	u8 pre_config_value = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			v_data_u8r = p_bme280->ctrl_meas_reg;
++			v_data_u8r =
++			BME280_SET_BITSLICE(v_data_u8r,
++			BME280_CTRLMEAS_REG_OSRST, value);
++			comres += bme280_get_mode(&prev_pow_mode);
++			if (prev_pow_mode != BME280_SLEEP_MODE) {
++				comres += bme280_set_softreset();
++				p_bme280->delay_msec(BME280_3MS_DELAY);
++				/* write previous value
++				of configuration register*/
++				pre_config_value = p_bme280->config_reg;
++				comres += bme280_write_register(
++					BME280_CONFIG_REG,
++				&pre_config_value, 1);
++				/* write previous value
++				of humidity oversampling*/
++				pre_ctrl_hum_value = p_bme280->ctrl_hum_reg;
++				comres += bme280_write_register(
++					BME280_CTRLHUM_REG,
++				&pre_ctrl_hum_value, 1);
++				/* write previous and updated value
++				of configuration register*/
++				comres += bme280_write_register(
++					BME280_CTRLMEAS_REG,
++				&v_data_u8r, 1);
++			} else {
++				p_bme280->BME280_BUS_WRITE_FUNC(
++				p_bme280->dev_addr,
++				BME280_CTRLMEAS_REG_OSRST__REG,
++				&v_data_u8r, 1);
++			}
++				p_bme280->osrs_t = value;
++				/* read the control measurement register value*/
++				comres += bme280_read_register(
++					BME280_CTRLMEAS_REG,
++				&v_data_u8r, 1);
++				p_bme280->ctrl_meas_reg = v_data_u8r;
++				/* read the control humidity register value*/
++				comres += bme280_read_register(
++					BME280_CTRLHUM_REG,
++				&v_data_u8r, 1);
++				p_bme280->ctrl_hum_reg = v_data_u8r;
++				/* read the control
++				configuration register value*/
++				comres += bme280_read_register(
++					BME280_CONFIG_REG,
++				&v_data_u8r, 1);
++				p_bme280->config_reg = v_data_u8r;
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to get
++ *	the pressure oversampling setting in the register 0xF4
++ *	bits from 2 to 4
++ *
++ *	bit					pressure oversampling
++ *	0x00						Skipped
++ *	0x01						BME280_OVERSAMPLING_1X
++ *	0x02						BME280_OVERSAMPLING_2X
++ *	0x03						BME280_OVERSAMPLING_4X
++ *	0x04						BME280_OVERSAMPLING_8X
++ *	0x05,0x06 and 0x07			BME280_OVERSAMPLING_16X
++ *
++ *
++ *  \param u8 value : Pointer holding the osrs_p value
++ *
++ *
++ *
++ *  \return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_osrs_p(
++u8 *value)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,
++			BME280_CTRLMEAS_REG_OSRSP__REG, &v_data_u8r, 1);
++			*value = BME280_GET_BITSLICE(
++			v_data_u8r,
++			BME280_CTRLMEAS_REG_OSRSP);
++
++			p_bme280->osrs_p = *value;
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to set
++ *	the pressure oversampling in the register 0xF4
++ *	bits from 2 to 4
++ *
++ *	bit					pressure oversampling
++ *	0x00						Skipped
++ *	0x01						BME280_OVERSAMPLING_1X
++ *	0x02						BME280_OVERSAMPLING_2X
++ *	0x03						BME280_OVERSAMPLING_4X
++ *	0x04						BME280_OVERSAMPLING_8X
++ *	0x05,0x06 and 0x07			BME280_OVERSAMPLING_16X
++ *
++ *
++ *  \param u8 value : the osrs_p value
++ *
++ *
++ *
++ *  \return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_osrs_p(
++u8 value)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = SUCCESS;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	u8 prev_pow_mode = BME280_Zero_U8X;
++	u8 pre_ctrl_hum_value = BME280_Zero_U8X;
++	u8 pre_config_value = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			v_data_u8r = p_bme280->ctrl_meas_reg;
++			v_data_u8r =
++			BME280_SET_BITSLICE(v_data_u8r,
++			BME280_CTRLMEAS_REG_OSRSP, value);
++			comres += bme280_get_mode(&prev_pow_mode);
++			if (prev_pow_mode != BME280_SLEEP_MODE) {
++				comres += bme280_set_softreset();
++				p_bme280->delay_msec(BME280_3MS_DELAY);
++				/* write previous value of
++				configuration register*/
++				pre_config_value = p_bme280->config_reg;
++				comres += bme280_write_register(
++					BME280_CONFIG_REG,
++				&pre_config_value, 1);
++				/* write previous value of
++				humidity oversampling*/
++				pre_ctrl_hum_value = p_bme280->ctrl_hum_reg;
++				comres += bme280_write_register(
++					BME280_CTRLHUM_REG,
++				&pre_ctrl_hum_value, 1);
++				/* write previous and updated value of
++				control measurement register*/
++				bme280_write_register(
++					BME280_CTRLMEAS_REG,
++				&v_data_u8r, 1);
++			} else {
++				comres += p_bme280->BME280_BUS_WRITE_FUNC(
++				p_bme280->dev_addr,
++				BME280_CTRLMEAS_REG_OSRSP__REG,
++				&v_data_u8r, 1);
++			}
++				p_bme280->osrs_p = value;
++				/* read the control measurement register value*/
++				comres += bme280_read_register(
++					BME280_CTRLMEAS_REG,
++				&v_data_u8r, 1);
++				p_bme280->ctrl_meas_reg = v_data_u8r;
++				/* read the control humidity register value*/
++				comres += bme280_read_register(
++					BME280_CTRLHUM_REG,
++				&v_data_u8r, 1);
++				p_bme280->ctrl_hum_reg = v_data_u8r;
++				/* read the control
++				configuration register value*/
++				comres += bme280_read_register(
++					BME280_CONFIG_REG,
++				&v_data_u8r, 1);
++				p_bme280->config_reg = v_data_u8r;
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to get
++ *	the humidity oversampling setting in the register 0xF2
++ *	bits from 0 to 2
++ *
++ *	bit					pressure oversampling
++ *	0x00						Skipped
++ *	0x01						BME280_OVERSAMPLING_1X
++ *	0x02						BME280_OVERSAMPLING_2X
++ *	0x03						BME280_OVERSAMPLING_4X
++ *	0x04						BME280_OVERSAMPLING_8X
++ *	0x05,0x06 and 0x07			BME280_OVERSAMPLING_16X
++ *
++ *
++ *  \param u8 value : Pointer holding the osrs_h value
++ *
++ *
++ *
++ *  \return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_osrs_h(
++u8 *value)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,
++			BME280_CTRLHUM_REG_OSRSH__REG,
++			&v_data_u8r, 1);
++			*value = BME280_GET_BITSLICE(
++			v_data_u8r,
++			BME280_CTRLHUM_REG_OSRSH);
++
++			p_bme280->osrs_h = *value;
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to set
++ *	the humidity oversampling setting in the register 0xF2
++ *	bits from 0 to 2
++ *
++ *	bit					pressure oversampling
++ *	0x00						Skipped
++ *	0x01						BME280_OVERSAMPLING_1X
++ *	0x02						BME280_OVERSAMPLING_2X
++ *	0x03						BME280_OVERSAMPLING_4X
++ *	0x04						BME280_OVERSAMPLING_8X
++ *	0x05,0x06 and 0x07			BME280_OVERSAMPLING_16X
++ *
++ *
++ *
++ * The "BME280_CTRLHUM_REG_OSRSH" register sets the humidity
++ * data acquisition options of the device.
++ * changes to this registers only become effective after a write operation to
++ * "BME280_CTRLMEAS_REG" register.
++ * In the code automated reading and writing of "BME280_CTRLHUM_REG_OSRSH"
++ * register first set the "BME280_CTRLHUM_REG_OSRSH" and then read and write
++ * the "BME280_CTRLMEAS_REG" register in the function.
++ *
++ *
++ *
++ *  \param u8 value : Value of the humidity oversampling setting
++ *
++ *  \return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_osrs_h(
++u8 value)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = SUCCESS;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	u8 pre_ctrl_meas_value = BME280_Zero_U8X;
++	u8 pre_config_value = BME280_Zero_U8X;
++	u8 prev_pow_mode = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			v_data_u8r = p_bme280->ctrl_hum_reg;
++			v_data_u8r =
++			BME280_SET_BITSLICE(v_data_u8r,
++			BME280_CTRLHUM_REG_OSRSH, value);
++			comres += bme280_get_mode(&prev_pow_mode);
++			if (prev_pow_mode != BME280_SLEEP_MODE) {
++				comres += bme280_set_softreset();
++				p_bme280->delay_msec(BME280_3MS_DELAY);
++				/* write previous value of
++				configuration register*/
++				pre_config_value = p_bme280->config_reg;
++				comres += bme280_write_register(
++					BME280_CONFIG_REG,
++				&pre_config_value, 1);
++				/* write the value of control humidity*/
++				comres += bme280_write_register(
++					BME280_CTRLHUM_REG,
++				&v_data_u8r, 1);
++				/* write previous value of
++				control measurement register*/
++				pre_ctrl_meas_value =
++				p_bme280->ctrl_meas_reg;
++				comres += bme280_write_register(
++					BME280_CTRLMEAS_REG,
++				&pre_ctrl_meas_value, 1);
++			} else {
++				comres +=
++				p_bme280->BME280_BUS_WRITE_FUNC(
++				p_bme280->dev_addr,
++				BME280_CTRLHUM_REG_OSRSH__REG,
++				&v_data_u8r, 1);
++				/* Control humidity write will effective only
++				after the control measurement register*/
++				pre_ctrl_meas_value =
++				p_bme280->ctrl_meas_reg;
++				comres += bme280_write_register(
++					BME280_CTRLMEAS_REG,
++				&pre_ctrl_meas_value, 1);
++			}
++			p_bme280->osrs_h = value;
++			/* read the control measurement register value*/
++			comres += bme280_read_register(BME280_CTRLMEAS_REG,
++			&v_data_u8r, 1);
++			p_bme280->ctrl_meas_reg = v_data_u8r;
++			/* read the control humidity register value*/
++			comres += bme280_read_register(BME280_CTRLHUM_REG,
++			&v_data_u8r, 1);
++			p_bme280->ctrl_hum_reg = v_data_u8r;
++			/* read the control configuration register value*/
++			comres += bme280_read_register(BME280_CONFIG_REG,
++			&v_data_u8r, 1);
++			p_bme280->config_reg = v_data_u8r;
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API used to get the
++ *	Operational Mode from the sensor in the register 0xF4 bit 0 and 1
++ *
++ *
++ *
++ *	\param u8 *mode : Pointer holding the mode value.
++ *	0x00			->	BME280_SLEEP_MODE
++ *	0x01 and 0x02	->	BME280_FORCED_MODE
++ *	0x03			->	BME280_NORMAL_MODE
++ *
++ *  \return : results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_mode(u8 *mode)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 v_mode_u8r = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,
++			BME280_CTRLMEAS_REG_MODE__REG,
++			&v_mode_u8r, 1);
++			*mode = BME280_GET_BITSLICE(v_mode_u8r,
++			BME280_CTRLMEAS_REG_MODE);
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API used to set the
++ *	Operational Mode from the sensor in the register 0xF4 bit 0 and 1
++ *
++ *
++ *
++ *	\param u8 *mode : Pointer holding the mode value.
++ *	0x00			->	BME280_SLEEP_MODE
++ *	0x01 and 0x02	->	BME280_FORCED_MODE
++ *	0x03			->	BME280_NORMAL_MODE
++ *
++ *
++ *  \return : results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_mode(u8 mode)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 v_mode_u8r = BME280_Zero_U8X;
++	u8 prev_pow_mode = BME280_Zero_U8X;
++	u8 pre_ctrl_hum_value = BME280_Zero_U8X;
++	u8 pre_config_value = BME280_Zero_U8X;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			if (mode < BME280_Four_U8X) {
++				v_mode_u8r = p_bme280->ctrl_meas_reg;
++				v_mode_u8r =
++				BME280_SET_BITSLICE(v_mode_u8r,
++				BME280_CTRLMEAS_REG_MODE, mode);
++				comres += bme280_get_mode(&prev_pow_mode);
++				if (prev_pow_mode != BME280_SLEEP_MODE) {
++					comres += bme280_set_softreset();
++					p_bme280->delay_msec(BME280_3MS_DELAY);
++					/* write previous value of
++					configuration register*/
++					pre_config_value = p_bme280->config_reg;
++					comres += bme280_write_register(
++						BME280_CONFIG_REG,
++					&pre_config_value, 1);
++					/* write previous value of
++					humidity oversampling*/
++					pre_ctrl_hum_value =
++					p_bme280->ctrl_hum_reg;
++					comres += bme280_write_register(
++					BME280_CTRLHUM_REG,
++					&pre_ctrl_hum_value, 1);
++					/* write previous and updated value of
++					control measurement register*/
++					comres += bme280_write_register(
++					BME280_CTRLMEAS_REG,
++					&v_mode_u8r, 1);
++				} else {
++					comres +=
++					p_bme280->BME280_BUS_WRITE_FUNC(
++					p_bme280->dev_addr,
++					BME280_CTRLMEAS_REG_MODE__REG,
++					&v_mode_u8r, 1);
++				}
++				/* read the control measurement register value*/
++				comres += bme280_read_register(
++					BME280_CTRLMEAS_REG,
++				&v_data_u8r, 1);
++				p_bme280->ctrl_meas_reg = v_data_u8r;
++				/* read the control humidity register value*/
++				comres += bme280_read_register(
++					BME280_CTRLHUM_REG,
++				&v_data_u8r, 1);
++				p_bme280->ctrl_hum_reg = v_data_u8r;
++				/* read the config register value*/
++				comres += bme280_read_register(
++					BME280_CONFIG_REG,
++				&v_data_u8r, 1);
++				p_bme280->config_reg = v_data_u8r;
++			} else {
++			comres = E_BME280_OUT_OF_RANGE;
++			}
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ * Description: *//**\brief Used to reset the sensor
++ * The value 0xB6 is written to the 0xE0 register the device is reset using the
++ * complete power-on-reset procedure.
++ * Softreset can be easily set using bme280_set_softreset().
++ * Usage Hint : bme280_set_softreset()
++ *
++ *
++ *  \param:	None
++ *
++ *
++ *
++ *  \return: result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_softreset()
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 v_data_u8r = BME280_SOFT_RESET_CODE;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_WRITE_FUNC(
++			p_bme280->dev_addr,
++			BME280_RESET_REG, &v_data_u8r, 1);
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API used to set the sensor
++ *	SPI mode(communication type) in the register 0xF5 bit 0
++ *
++ *
++ *
++ *	\param  u8 *enable_disable : Pointer holding the
++ *	spi3 enable or disable state.
++ *
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_spi3(u8 *enable_disable)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,
++			BME280_CONFIG_REG_SPI3WEN__REG,
++			&v_data_u8r, 1);
++			*enable_disable = BME280_GET_BITSLICE(
++			v_data_u8r,
++			BME280_CONFIG_REG_SPI3WEN);
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API used to set the sensor
++ *	SPI mode(communication type) in the register 0xF5 bit 0
++ *
++ *
++ *
++ *	\param  u8 enable_disable : the spi3 enable or disable value.
++ *
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_spi3(u8 enable_disable)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = SUCCESS;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	u8 pre_ctrl_meas_value = BME280_Zero_U8X;
++	u8 prev_pow_mode = BME280_Zero_U8X;
++	u8 pre_ctrl_hum_value =  BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			v_data_u8r = p_bme280->config_reg;
++			v_data_u8r =
++			BME280_SET_BITSLICE(v_data_u8r,
++			BME280_CONFIG_REG_SPI3WEN, enable_disable);
++			comres += bme280_get_mode(&prev_pow_mode);
++			if (prev_pow_mode != BME280_SLEEP_MODE) {
++				comres += bme280_set_softreset();
++				p_bme280->delay_msec(BME280_3MS_DELAY);
++				/* write previous and updated value of
++				configuration register*/
++				comres += bme280_write_register(
++					BME280_CONFIG_REG,
++				&v_data_u8r, 1);
++				/* write previous value of
++				humidity oversampling*/
++				pre_ctrl_hum_value = p_bme280->ctrl_hum_reg;
++				comres +=  bme280_write_register(
++					BME280_CTRLHUM_REG,
++				&pre_ctrl_hum_value, 1);
++				/* write previous value of
++				control measurement register*/
++				pre_ctrl_meas_value =
++				p_bme280->ctrl_meas_reg;
++				comres += bme280_write_register(
++					BME280_CTRLMEAS_REG,
++				&pre_ctrl_meas_value, 1);
++			} else {
++				comres +=
++				p_bme280->BME280_BUS_WRITE_FUNC(
++				p_bme280->dev_addr,
++				BME280_CONFIG_REG_SPI3WEN__REG,
++				&v_data_u8r, 1);
++			}
++			/* read the control measurement register value*/
++			comres += bme280_read_register(
++				BME280_CTRLMEAS_REG,
++			&v_data_u8r, 1);
++			p_bme280->ctrl_meas_reg = v_data_u8r;
++			/* read the control humidity register value*/
++			comres += bme280_read_register(
++				BME280_CTRLHUM_REG,
++			&v_data_u8r, 1);
++			p_bme280->ctrl_hum_reg = v_data_u8r;
++			/* read the control configuration register value*/
++			comres += bme280_read_register(
++				BME280_CONFIG_REG,
++			&v_data_u8r, 1);
++			p_bme280->config_reg = v_data_u8r;
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to reads filter setting
++ *	in the register 0xF5 bit 3 and 4
++ *
++ *
++ *
++ *	\param u8 *value : Pointer holding the filter value.
++ *
++ *	value			Filter coefficient
++ *	0x00				Filter Off
++ *	0x01				2
++ *	0x02				4
++ *	0x03				8
++ *	0x04				16
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_filter(u8 *value)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,
++			BME280_CONFIG_REG_FILTER__REG,
++			&v_data_u8r, 1);
++			*value = BME280_GET_BITSLICE(v_data_u8r,
++			BME280_CONFIG_REG_FILTER);
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to set filter setting
++ *	in the register 0xF5 bit 3 and 4
++ *
++ *
++ *
++ *	\param u8 value : The filter coefficient value
++ *
++ *	value			Filter coefficient
++ *	0x00				Filter Off
++ *	0x01				2
++ *	0x02				4
++ *	0x03				8
++ *	0x04				16
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_filter(u8 value)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = SUCCESS;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	u8 pre_ctrl_meas_value = BME280_Zero_U8X;
++	u8 prev_pow_mode = BME280_Zero_U8X;
++	u8 pre_ctrl_hum_value =  BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			v_data_u8r = p_bme280->config_reg;
++			v_data_u8r =
++			BME280_SET_BITSLICE(v_data_u8r,
++			BME280_CONFIG_REG_FILTER, value);
++			comres += bme280_get_mode(&prev_pow_mode);
++			if (prev_pow_mode != BME280_SLEEP_MODE) {
++				comres += bme280_set_softreset();
++				p_bme280->delay_msec(BME280_3MS_DELAY);
++				/* write previous and updated value of
++				configuration register*/
++				comres += bme280_write_register(
++					BME280_CONFIG_REG,
++				&v_data_u8r, 1);
++				/* write previous value of
++				humidity oversampling*/
++				pre_ctrl_hum_value = p_bme280->ctrl_hum_reg;
++				comres += bme280_write_register(
++					BME280_CTRLHUM_REG,
++				&pre_ctrl_hum_value, 1);
++				/* write previous value of
++				control measurement register*/
++				pre_ctrl_meas_value =
++				p_bme280->ctrl_meas_reg;
++				comres += bme280_write_register(
++					BME280_CTRLMEAS_REG,
++				&pre_ctrl_meas_value, 1);
++			} else {
++				comres +=
++				p_bme280->BME280_BUS_WRITE_FUNC(
++				p_bme280->dev_addr,
++				BME280_CONFIG_REG_FILTER__REG,
++				&v_data_u8r, 1);
++			}
++			/* read the control measurement register value*/
++			comres += bme280_read_register(BME280_CTRLMEAS_REG,
++			&v_data_u8r, 1);
++			p_bme280->ctrl_meas_reg = v_data_u8r;
++			/* read the control humidity register value*/
++			comres += bme280_read_register(BME280_CTRLHUM_REG,
++			&v_data_u8r, 1);
++			p_bme280->ctrl_hum_reg = v_data_u8r;
++			/* read the configuration register value*/
++			comres += bme280_read_register(BME280_CONFIG_REG,
++			&v_data_u8r, 1);
++			p_bme280->config_reg = v_data_u8r;
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API used to Read the
++ *	standby duration time from the sensor in the register 0xF5 bit 5 to 7
++ *
++ *	\param u8 *time : Pointer holding
++ *                        the standby duration time value.
++ *              0x00 - BME280_STANDBYTIME_1_MS
++ *              0x01 - BME280_STANDBYTIME_63_MS
++ *              0x02 - BME280_STANDBYTIME_125_MS
++ *              0x03 - BME280_STANDBYTIME_250_MS
++ *              0x04 - BME280_STANDBYTIME_500_MS
++ *              0x05 - BME280_STANDBYTIME_1000_MS
++ *              0x06 - BME280_STANDBYTIME_2000_MS
++ *              0x07 - BME280_STANDBYTIME_4000_MS
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_standbydur(u8 *time)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,
++			BME280_CONFIG_REG_TSB__REG,
++			&v_data_u8r, 1);
++			*time = BME280_GET_BITSLICE(
++			v_data_u8r, BME280_CONFIG_REG_TSB);
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ *	Description: *//**\brief This API used to write
++ *	standby duration time from the sensor in the register 0xF5 bit 5 to 7
++ *	Normal mode comprises an automated perpetual cycling between an (active)
++ *	Measurement period and an (inactive) standby period.
++ *	The standby time is determined by the contents of the register t_sb.
++ *	Standby time can be set using BME280_STANDBYTIME_125_MS.
++ *
++ *	Usage Hint : bme280_set_standbydur(BME280_STANDBYTIME_125_MS)
++ *
++ *	\param u8 time : Value of the standby duration
++ *              0x00 - BME280_STANDBYTIME_1_MS
++ *              0x01 - BME280_STANDBYTIME_63_MS
++ *              0x02 - BME280_STANDBYTIME_125_MS
++ *              0x03 - BME280_STANDBYTIME_250_MS
++ *              0x04 - BME280_STANDBYTIME_500_MS
++ *              0x05 - BME280_STANDBYTIME_1000_MS
++ *              0x06 - BME280_STANDBYTIME_2000_MS
++ *              0x07 - BME280_STANDBYTIME_4000_MS
++ *
++ *
++ *
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_standbydur(u8 time)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = SUCCESS;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	u8 pre_ctrl_meas_value = BME280_Zero_U8X;
++	u8 prev_pow_mode = BME280_Zero_U8X;
++	u8 pre_ctrl_hum_value =  BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			v_data_u8r = p_bme280->config_reg;
++			v_data_u8r =
++			BME280_SET_BITSLICE(v_data_u8r,
++			BME280_CONFIG_REG_TSB, time);
++			comres += bme280_get_mode(&prev_pow_mode);
++			if (prev_pow_mode != BME280_SLEEP_MODE) {
++				comres += bme280_set_softreset();
++				p_bme280->delay_msec(BME280_3MS_DELAY);
++				/* write previous and updated value of
++				configuration register*/
++				comres += bme280_write_register(
++					BME280_CONFIG_REG,
++				&v_data_u8r, 1);
++				/* write previous value of
++				humidity oversampling*/
++				pre_ctrl_hum_value = p_bme280->ctrl_hum_reg;
++				comres += bme280_write_register(
++					BME280_CTRLHUM_REG,
++				&pre_ctrl_hum_value, 1);
++				/* write previous value of control
++				measurement register*/
++				pre_ctrl_meas_value =
++				p_bme280->ctrl_meas_reg;
++				comres += bme280_write_register(
++					BME280_CTRLMEAS_REG,
++				&pre_ctrl_meas_value, 1);
++			} else {
++				comres +=
++				p_bme280->BME280_BUS_WRITE_FUNC(
++				p_bme280->dev_addr,
++				BME280_CONFIG_REG_TSB__REG,
++				&v_data_u8r, 1);
++			}
++			/* read the control measurement register value*/
++			comres += bme280_read_register(BME280_CTRLMEAS_REG,
++			&v_data_u8r, 1);
++			p_bme280->ctrl_meas_reg = v_data_u8r;
++			/* read the control humidity register value*/
++			comres += bme280_read_register(BME280_CTRLHUM_REG,
++			&v_data_u8r, 1);
++			p_bme280->ctrl_hum_reg = v_data_u8r;
++			/* read the configuration register value*/
++			comres += bme280_read_register(BME280_CONFIG_REG,
++			&v_data_u8r, 1);
++			p_bme280->config_reg = v_data_u8r;
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ * Description: *//**\brief Writes the working mode to the sensor
++ *
++ *
++ *
++ *
++ *  \param u8 : Mode to be set
++ *				0 -> BME280_ULTRALOWPOWER_MODE
++ *				1 -> BME280_LOWPOWER_MODE
++ *				2 -> BME280_STANDARDRESOLUTION_MODE
++ *				3 -> BME280_HIGHRESOLUTION_MODE
++ *				4 -> BME280_ULTRAHIGHRESOLUTION_MODE
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++/*BME280_RETURN_FUNCTION_TYPE bme280_set_workmode(u8 mode)
++{
++BME280_RETURN_FUNCTION_TYPE comres = SUCCESS;
++u8 v_data_u8r = BME280_Zero_U8X;
++if (p_bme280 == BME280_NULL) {
++	return E_BME280_NULL_PTR;
++} else {
++	if (mode <= BME280_Four_U8X) {
++		comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,	BME280_CTRLMEAS_REG,
++			&v_data_u8r, 1);
++		if (comres == SUCCESS) {
++			switch (mode) {
++			case BME280_ULTRALOWPOWER_MODE:
++				p_bme280->osrs_t =
++				BME280_ULTRALOWPOWER_OSRS_T;
++				p_bme280->osrs_p =
++				BME280_ULTRALOWPOWER_OSRS_P;
++				break;
++			case BME280_LOWPOWER_MODE:
++				p_bme280->osrs_t = BME280_LOWPOWER_OSRS_T;
++				p_bme280->osrs_p = BME280_LOWPOWER_OSRS_P;
++				break;
++			case BME280_STANDARDRESOLUTION_MODE:
++				p_bme280->osrs_t =
++				BME280_STANDARDRESOLUTION_OSRS_T;
++				p_bme280->osrs_p =
++				BME280_STANDARDRESOLUTION_OSRS_P;
++				break;
++			case BME280_HIGHRESOLUTION_MODE:
++				p_bme280->osrs_t = BME280_HIGHRESOLUTION_OSRS_T;
++				p_bme280->osrs_p = BME280_HIGHRESOLUTION_OSRS_P;
++				break;
++			case BME280_ULTRAHIGHRESOLUTION_MODE:
++				p_bme280->osrs_t =
++				BME280_ULTRAHIGHRESOLUTION_OSRS_T;
++				p_bme280->osrs_p =
++				BME280_ULTRAHIGHRESOLUTION_OSRS_P;
++				break;
++			}
++			v_data_u8r = BME280_SET_BITSLICE(v_data_u8r,
++				BME280_CTRLMEAS_REG_OSRST, p_bme280->osrs_t);
++			v_data_u8r = BME280_SET_BITSLICE(v_data_u8r,
++				BME280_CTRLMEAS_REG_OSRSP, p_bme280->osrs_p);
++			comres += p_bme280->BME280_BUS_WRITE_FUNC(
++				p_bme280->dev_addr,	BME280_CTRLMEAS_REG,
++				&v_data_u8r, 1);
++		}
++	} else {
++		comres = E_BME280_OUT_OF_RANGE;
++	}
++}
++return comres;
++}*/
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ * Description: *//**\brief Read both uncompensated temperature,pressure and humidity
++ *                                                       in forced mode
++ *
++ *
++ *	\param s32 upressure: Pointer holding
++ *                     the uncompensated pressure.
++ *	\param s32 utemperature: Pointer holding
++ *                    the uncompensated temperature.
++ *	\param s32 uhumidity: Pointer holding
++ *                     the uncompensated humidity.
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_forced_uputuh(s32 *upressure,
++s32 *utemperature, s32 *uhumidity)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	u8 v_data_u8r = BME280_Zero_U8X;
++	u8 v_waittime_u8r = BME280_Zero_U8X;
++	u8 prev_pow_mode = BME280_Zero_U8X;
++	u8 v_mode_u8r = BME280_Zero_U8X;
++	u8 pre_ctrl_config_value = BME280_Zero_U8X;
++	u8 pre_ctrl_hum_value = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			v_mode_u8r = p_bme280->ctrl_meas_reg;
++			v_mode_u8r =
++			BME280_SET_BITSLICE(v_mode_u8r,
++			BME280_CTRLMEAS_REG_MODE, BME280_FORCED_MODE);
++			comres += bme280_get_mode(&prev_pow_mode);
++			if (prev_pow_mode != BME280_SLEEP_MODE) {
++				comres += bme280_set_softreset();
++				p_bme280->delay_msec(BME280_3MS_DELAY);
++				/* write previous and updated value of
++				configuration register*/
++				pre_ctrl_config_value = p_bme280->config_reg;
++				comres += bme280_write_register(
++					BME280_CONFIG_REG,
++				&pre_ctrl_config_value, 1);
++				/* write previous value of
++				humidity oversampling*/
++				pre_ctrl_hum_value = p_bme280->ctrl_hum_reg;
++				comres += bme280_write_register(
++					BME280_CTRLHUM_REG,
++				&pre_ctrl_hum_value, 1);
++				/* write the force mode  */
++				comres += bme280_write_register(
++					BME280_CTRLMEAS_REG,
++				&v_mode_u8r, 1);
++			} else {
++				/* write previous value of
++				humidity oversampling*/
++				pre_ctrl_hum_value = p_bme280->ctrl_hum_reg;
++				comres += bme280_write_register(
++					BME280_CTRLHUM_REG,
++				&pre_ctrl_hum_value, 1);
++				/* write the force mode  */
++				comres += bme280_write_register(
++					BME280_CTRLMEAS_REG,
++				&v_mode_u8r, 1);
++			}
++			bme280_compute_wait_time(&v_waittime_u8r);
++			p_bme280->delay_msec(v_waittime_u8r);
++			/* read the force-mode value of pressure
++			temperature and humidity*/
++			comres += bme280_read_uputuh(
++			upressure, utemperature, uhumidity);
++
++			/* read the control humidity register value*/
++			comres += bme280_read_register(BME280_CTRLHUM_REG,
++			&v_data_u8r, 1);
++			p_bme280->ctrl_hum_reg = v_data_u8r;
++			/* read the configuration register value*/
++			comres += bme280_read_register(BME280_CONFIG_REG,
++			&v_data_u8r, 1);
++			p_bme280->config_reg = v_data_u8r;
++
++			/* read the control measurement register value*/
++			comres += bme280_read_register(BME280_CTRLMEAS_REG,
++			&v_data_u8r, 1);
++			p_bme280->ctrl_meas_reg = v_data_u8r;
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ * Description: *//**\brief This API gives data to the given register and
++ *                          the data is written in the corresponding register
++ *							address
++ *
++ *
++ *
++ *  \param u8 addr, u8 data, u8 len
++ *          addr -> Address of the register
++ *          data -> Data to be written to the register
++ *          len  -> Length of the Data
++ *
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_write_register(u8 addr,
++u8 *data, u8 len)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_WRITE_FUNC(
++			p_bme280->dev_addr,
++			addr, data, len);
++		}
++	return comres;
++}
++/* Compiler Switch if applicable
++#ifdef
++
++#endif
++*/
++/*******************************************************************************
++ * Description: *//**\brief This API reads the data from the given register
++ *							address
++ *
++ *
++ *
++ *  \param u8 addr, u8 *data, u8 len
++ *         addr -> Address of the register
++ *         data -> address of the variable, read value will be kept
++ *         len  -> Length of the data
++ *
++ *
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_read_register(u8 addr,
++u8 *data, u8 len)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++	if (p_bme280 == BME280_NULL) {
++		return E_BME280_NULL_PTR;
++		} else {
++			comres += p_bme280->BME280_BUS_READ_FUNC(
++			p_bme280->dev_addr,
++			addr, data, len);
++		}
++	return comres;
++}
++#ifdef BME280_ENABLE_FLOAT
++/*******************************************************************************
++ * Description: *//**\brief Reads actual temperature from uncompensated temperature
++ *							and returns the value in Degree centigrade
++ *                          Output value of "51.23" equals 51.23 DegC.
++ *
++ *
++ *
++ *  \param signed long : value of uncompensated temperature
++ *
++ *
++ *
++ *  \return
++ *			double : actual temperature in floating point
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++double bme280_compensate_T_double(s32 adc_t)
++{
++	double v_x1_u32r = BME280_Zero_U8X;
++	double v_x2_u32r = BME280_Zero_U8X;
++	double temperature = BME280_Zero_U8X;
++
++	v_x1_u32r  = (((double)adc_t) / 16384.0 -
++	((double)p_bme280->cal_param.dig_T1) / 1024.0) *
++	((double)p_bme280->cal_param.dig_T2);
++	v_x2_u32r  = ((((double)adc_t) / 131072.0 -
++	((double)p_bme280->cal_param.dig_T1) / 8192.0) *
++	(((double)adc_t) / 131072.0 -
++	((double)p_bme280->cal_param.dig_T1) / 8192.0)) *
++	((double)p_bme280->cal_param.dig_T3);
++	p_bme280->cal_param.t_fine = (s32)(v_x1_u32r + v_x2_u32r);
++	temperature  = (v_x1_u32r + v_x2_u32r) / 5120.0;
++
++
++	return temperature;
++}
++/*******************************************************************************
++ * Description: *//**\brief Reads actual pressure from uncompensated pressure
++ *							and returns pressure in Pa as double.
++ *                          Output value of "96386.2"
++ *                          equals 96386.2 Pa = 963.862 hPa.
++ *
++ *
++ *  \param signed int : value of uncompensated pressure
++ *
++ *
++ *
++ *  \return
++ *			double : actual pressure in floating point
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++double bme280_compensate_P_double(s32 adc_p)
++{
++	double v_x1_u32r = BME280_Zero_U8X;
++	double v_x2_u32r = BME280_Zero_U8X;
++	double pressure = BME280_Zero_U8X;
++
++	v_x1_u32r = ((double)p_bme280->cal_param.t_fine/2.0) - 64000.0;
++	v_x2_u32r = v_x1_u32r * v_x1_u32r *
++	((double)p_bme280->cal_param.dig_P6) / 32768.0;
++	v_x2_u32r = v_x2_u32r + v_x1_u32r *
++	((double)p_bme280->cal_param.dig_P5) * 2.0;
++	v_x2_u32r = (v_x2_u32r / 4.0) +
++	(((double)p_bme280->cal_param.dig_P4) * 65536.0);
++	v_x1_u32r = (((double)p_bme280->cal_param.dig_P3) *
++	v_x1_u32r * v_x1_u32r / 524288.0 +
++	((double)p_bme280->cal_param.dig_P2) * v_x1_u32r) / 524288.0;
++	v_x1_u32r = (1.0 + v_x1_u32r / 32768.0) *
++	((double)p_bme280->cal_param.dig_P1);
++	pressure = 1048576.0 - (double)adc_p;
++	/* Avoid exception caused by division by zero */
++	if (v_x1_u32r != BME280_Zero_U8X)
++		pressure = (pressure - (v_x2_u32r / 4096.0))
++		* 6250.0 / v_x1_u32r;
++	else
++		return 0;
++	v_x1_u32r = ((double)p_bme280->cal_param.dig_P9) *
++	pressure * pressure / 2147483648.0;
++	v_x2_u32r = pressure * ((double)p_bme280->cal_param.dig_P8) / 32768.0;
++	pressure = pressure + (v_x1_u32r + v_x2_u32r +
++	((double)p_bme280->cal_param.dig_P7)) / 16.0;
++
++	return pressure;
++}
++/*******************************************************************************
++ * Description: *//**\brief Reads actual humidity from uncompensated humidity
++ *							and returns the value in relative humidity (%rH)
++ *                          Output value of "42.12" equals 42.12 %rH
++ *
++ *  \param signed int : value of uncompensated humidity
++ *
++ *
++ *
++ *  \return
++ *			double : actual humidity in floating point
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++double bme280_compensate_H_double(s32 adc_h)
++{
++	double var_h = BME280_Zero_U8X;
++	var_h = (((double)p_bme280->cal_param.t_fine)-76800.0);
++	if (var_h != BME280_Zero_U8X)
++		var_h = (adc_h-(((double)p_bme280->cal_param.dig_H4)*64.0 +
++		((double)p_bme280->cal_param.dig_H5) / 16384.0 * var_h))*
++		(((double)p_bme280->cal_param.dig_H2)/65536.0*(1.0 + ((double)
++		p_bme280->cal_param.dig_H6)/67108864.0*var_h*(1.0+((double)
++		p_bme280->cal_param.dig_H3)/67108864.0*var_h)));
++	else
++		return 0;
++	var_h = var_h * (1.0-((double)
++	p_bme280->cal_param.dig_H1)*var_h/524288.0);
++	if (var_h > 100.0)
++		var_h = 100.0;
++	else if (var_h < 0.0)
++		var_h = 0.0;
++	return var_h;
++
++}
++#endif
++#if defined(BME280_ENABLE_INT64) && defined(BME280_64BITSUPPORT_PRESENT)
++/*******************************************************************************
++ * Description: *//**\brief Reads actual pressure from uncompensated pressure
++ *                          and returns the value in Pa as unsigned 32 bit
++ *                          integer in Q24.8 format (24 integer bits and
++ *                          8 fractional bits). Output value of "24674867"
++ *                          represents 24674867 / 256 = 96386.2 Pa = 963.862 hPa
++ *
++ *
++ *
++ *  \param signed long : value of uncompensated temperature
++ *
++ *
++ *  \return
++ *			unsigned long : actual pressure
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++u32 bme280_compensate_P_int64(s32 adc_p)
++{
++	s64 v_x1_s64r = BME280_Zero_U8X;
++	s64 v_x2_s64r = BME280_Zero_U8X;
++	s64 pressure = BME280_Zero_U8X;
++	v_x1_s64r = ((s64)p_bme280->cal_param.t_fine) - 128000;
++	v_x2_s64r = v_x1_s64r * v_x1_s64r *
++	(s64)p_bme280->cal_param.dig_P6;
++	v_x2_s64r = v_x2_s64r + ((v_x1_s64r *
++	(s64)p_bme280->cal_param.dig_P5) << 17);
++	v_x2_s64r = v_x2_s64r +
++	(((s64)p_bme280->cal_param.dig_P4) << 35);
++	v_x1_s64r = ((v_x1_s64r * v_x1_s64r *
++	(s64)p_bme280->cal_param.dig_P3) >> 8) +
++	((v_x1_s64r * (s64)p_bme280->cal_param.dig_P2) << 12);
++	v_x1_s64r = (((((s64)1) << 47) + v_x1_s64r)) *
++	((s64)p_bme280->cal_param.dig_P1) >> 33;
++	pressure = 1048576 - adc_p;
++	/* Avoid exception caused by division by zero */
++	if (v_x1_s64r != BME280_Zero_U8X)
++		#if defined __KERNEL__
++			pressure = div64_s64((((pressure << 31) - v_x2_s64r)
++			* 3125), v_x1_s64r);
++		#else
++			pressure = (((pressure << 31) - v_x2_s64r)
++			* 3125) / v_x1_s64r;
++		#endif
++	else
++		return BME280_Zero_U8X;
++	v_x1_s64r = (((s64)p_bme280->cal_param.dig_P9) *
++	(pressure >> 13) * (pressure >> 13)) >> 25;
++	v_x2_s64r = (((s64)p_bme280->cal_param.dig_P8) *
++	pressure) >> 19;
++	pressure = (((pressure + v_x1_s64r + v_x2_s64r) >> 8) +
++	(((s64)p_bme280->cal_param.dig_P7) << 4));
++
++	return (u32)pressure;
++}
++/*******************************************************************************
++ * Description: *//**\brief Reads actual pressure from uncompensated pressure
++ *              and returns the value in Pa.
++ *				Output value of "12337434"
++ *              represents 12337434 / 128 = 96386.2 Pa = 963.862 hPa
++ *
++ *
++ *
++ *  \param s32 : value of uncompensated temperature
++ *
++ *
++ *  \return
++ *			u32 : actual pressure
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++u32 bme280_compensate_P_int64_twentyfour_bit_output(s32 adc_p)
++{
++	u32 pressure = BME280_Zero_U8X;
++	pressure = bme280_compensate_P_int64(adc_p);
++	pressure = (u32)(pressure >> 1);
++	return pressure;
++}
++#endif
++/*******************************************************************************
++ * Description: *//**\brief Computing waiting time for sensor data read
++ *
++ *
++ *
++ *
++ *  \param
++ *			u8 : value of time
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ****************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_compute_wait_time(u8
++*v_delaytime_u8r)
++{
++	BME280_RETURN_FUNCTION_TYPE comres = BME280_Zero_U8X;
++
++	*v_delaytime_u8r = (T_INIT_MAX + T_MEASURE_PER_OSRS_MAX *
++	(((1 << p_bme280->osrs_t) >> 1) + ((1 << p_bme280->osrs_p)
++	>> 1) + ((1 << p_bme280->osrs_h) >> 1))+
++	(p_bme280->osrs_p ? T_SETUP_PRESSURE_MAX : 0) +
++	(p_bme280->osrs_h ? T_SETUP_HUMIDITY_MAX : 0) + 15) / 16;
++	return comres;
++}
+diff --git a/drivers/input/misc/bme280/bme280.h b/drivers/input/misc/bme280/bme280.h
+new file mode 100644
+index 0000000..4852702
+--- /dev/null
++++ b/drivers/input/misc/bme280/bme280.h
+@@ -0,0 +1,1668 @@
++/*!
++ * @section LICENSE
++ * (C) Copyright 2014 Bosch Sensortec GmbH All Rights Reserved
++ *
++ * This software program is licensed subject to the GNU General
++ * Public License (GPL).Version 2,June 1991,
++ * available at http://www.fsf.org/copyleft/gpl.html
++ *
++ * @filename bme280.h
++ * @date     2014/09/12
++ * @id       "301409e"
++ *
++ * @brief
++ * API Header
++ *
++ * Revision: 2.0.1(Pressure and Temperature compensation code revision is 1.1
++ * and Humidity compensation code revision is 1.0)
++ */
++/**************************************************************************/
++
++#ifndef __BME280_H__
++#define __BME280_H__
++
++
++/*******************************************************
++* These definition uses for define the data types
++********************************************************
++*While porting the API please consider the following
++*Please check the version of C standard
++*Are you using Linux platform
++*******************************************************/
++
++/*********************************************************
++* This definition uses for the Linux platform support
++* Please use the types.h for your data types definitions
++*********************************************************/
++#ifdef	__KERNEL__
++
++#include <linux/types.h>
++#include <linux/math64.h>
++#define BME280_64BITSUPPORT_PRESENT
++#else /* ! __KERNEL__ */
++/**********************************************************
++* These definition uses for define the C
++* standard version data types
++***********************************************************/
++# if !defined(__STDC_VERSION__)
++
++/************************************************
++ * compiler is C11 C standard
++************************************************/
++#if (__STDC_VERSION__ == 201112L)
++
++/************************************************/
++#include <stdint.h>
++/************************************************/
++
++/*unsigned integer types*/
++#define	u8	uint8_t
++#define	u16	uint16_t
++#define	u32	uint32_t
++#define	u64	uint64_t
++
++/*signed integer types*/
++#define	s8	int8_t
++#define	s16	int16_t
++#define	s32	int32_t
++#define	s64	int64_t
++#define BME280_64BITSUPPORT_PRESENT
++/************************************************
++ * compiler is C99 C standard
++************************************************/
++
++#elif (__STDC_VERSION__ == 199901L)
++
++/* stdint.h is a C99 supported c library.
++which is used to fixed the integer size*/
++/************************************************/
++#include <stdint.h>
++/************************************************/
++
++/*unsigned integer types*/
++#define	u8	uint8_t
++#define	u16	uint16_t
++#define	u32	uint32_t
++#define	u64	uint64_t
++
++/*signed integer types*/
++#define s8	int8_t
++#define	s16	int16_t
++#define	s32	int32_t
++#define	s64	int64_t
++#define BME280_64BITSUPPORT_PRESENT
++/************************************************
++ * compiler is C89 or other C standard
++************************************************/
++
++#else /*  !defined(__STDC_VERSION__) */
++/*	By default it is defined as 32 bit machine configuration*/
++/*	define the definition based on your machine configuration*/
++/*	define the data types based on your
++	machine/compiler/controller configuration*/
++#define  MACHINE_32_BIT
++
++/* If your machine support 16 bit
++define the MACHINE_16_BIT*/
++#ifdef MACHINE_16_BIT
++#include <limits.h>
++/*signed integer types*/
++#define	s8	signed char
++#define	s16	signed short int
++#define	s32	signed long int
++
++#if defined(LONG_MAX) && LONG_MAX == 0x7fffffffffffffffL
++#define s64 long int
++#define u64 unsigned long int
++#define BME280_64BITSUPPORT_PRESENT
++#elif defined(LLONG_MAX) && (LLONG_MAX == 0x7fffffffffffffffLL)
++#define s64 long long int
++#define u64 unsigned long long int
++#define BME280_64BITSUPPORT_PRESENT
++#else
++#warning Either the correct data type for signed 64 bit integer \
++could not be found, or 64 bit integers are not supported in your environment.
++#warning The API will only offer 32 bit pressure calculation.This will \
++slightly impede accuracy(noise of ~1 pascal RMS will be added to output).
++#warning If 64 bit integers are supported on your platform, \
++please set s64 manually and "#define(BME280_64BITSUPPORT_PRESENT)" manually.
++#endif
++
++/*unsigned integer types*/
++#define	u8	unsigned char
++#define	u16	unsigned short int
++#define	u32	unsigned long int
++
++
++/* If your machine support 32 bit
++define the MACHINE_32_BIT*/
++#elif defined MACHINE_32_BIT
++/*signed integer types*/
++#define	s8	signed char
++#define	s16	signed short int
++#define	s32	signed int
++#define	s64	signed long long int
++
++/*unsigned integer types*/
++#define	u8	unsigned char
++#define	u16	unsigned short int
++#define	u32	unsigned int
++#define	u64	unsigned long long int
++#define BME280_64BITSUPPORT_PRESENT
++
++/* If your machine support 64 bit
++define the MACHINE_64_BIT*/
++#elif defined MACHINE_64_BIT
++/*signed integer types*/
++#define	s8	signed char
++#define	s16	signed short int
++#define	s32	signed int
++#define	s64	signed long int
++
++/*unsigned integer types*/
++#define	u8	unsigned char
++#define	u16	unsigned short int
++#define	u32	unsigned int
++#define	u64	unsigned long int
++#define BME280_64BITSUPPORT_PRESENT
++
++#else
++#warning If the above provided data types not supported\
++define the data types manualy
++#endif
++#endif
++
++/*** This else will execute for the compilers
++ *	which are not supported the C standards
++ *	Like C89/C99/C11***/
++#else
++/*	By default it is defined as 32 bit machine configuration*/
++/*	define the definition based on your machine configuration*/
++/*	define the data types based on your
++	machine/compiler/controller configuration*/
++#define  MACHINE_32_BIT
++
++/* If your machine support 16 bit
++define the MACHINE_16_BIT*/
++#ifdef MACHINE_16_BIT
++#include <limits.h>
++/*signed integer types*/
++#define	s8	signed char
++#define	s16	signed short int
++#define	s32	signed long int
++
++#if defined(LONG_MAX) && LONG_MAX == 0x7fffffffffffffffL
++#define s64 long int
++#define u64 unsigned long int
++#define BME280_64BITSUPPORT_PRESENT
++#elif defined(LLONG_MAX) && (LLONG_MAX == 0x7fffffffffffffffLL)
++#define s64 long long int
++#define u64 unsigned long long int
++#define BME280_64BITSUPPORT_PRESENT
++#else
++#warning Either the correct data type for signed 64 bit integer \
++could not be found, or 64 bit integers are not supported in your environment.
++#warning The API will only offer 32 bit pressure calculation.This will \
++slightly impede accuracy(noise of ~1 pascal RMS will be added to output).
++#warning If 64 bit integers are supported on your platform, \
++please set s64 manually and "#define(BME280_64BITSUPPORT_PRESENT)" manually.
++#endif
++
++/*unsigned integer types*/
++#define	u8	unsigned char
++#define	u16	unsigned short int
++#define	u32	unsigned long int
++
++
++/* If your machine support 32 bit
++define the MACHINE_32_BIT*/
++#elif defined MACHINE_32_BIT
++/*signed integer types*/
++#define	s8	signed char
++#define	s16	signed short int
++#define	s32	signed int
++#define	s64	signed long long int
++
++/*unsigned integer types*/
++#define	u8	unsigned char
++#define	u16	unsigned short int
++#define	u32	unsigned int
++#define	u64	unsigned long long int
++#define BME280_64BITSUPPORT_PRESENT
++
++
++/* If your machine support 64 bit
++define the MACHINE_64_BIT*/
++#elif defined MACHINE_64_BIT
++/*signed integer types*/
++#define	s8	signed char
++#define	s16	signed short int
++#define	s32	signed int
++#define	s64	signed long int
++
++/*unsigned integer types*/
++#define	u8	unsigned char
++#define	u16	unsigned short int
++#define	u32	unsigned int
++#define	u64	unsigned long int
++#define BME280_64BITSUPPORT_PRESENT
++
++#else
++#warning If the above provided data types not supported\
++define the data types manualy
++#endif
++#endif
++#endif
++
++
++/* If the user wants to support floating point calculations, please set
++	the following #define. If floating point
++	calculation is not wanted or allowed
++	(e.g. in Linux kernel), please do not set the define. */
++#if 0
++#define BME280_ENABLE_FLOAT
++#endif
++/* If the user wants to support 64 bit integer calculation
++	(needed for optimal pressure accuracy) please set
++	the following #define. If int64 calculation is not wanted
++	(e.g. because it would include
++	large libraries), please do not set the define. */
++#define BME280_ENABLE_INT64
++
++/** defines the return parameter type of the BME280_WR_FUNCTION */
++#define BME280_BUS_WR_RETURN_TYPE s8
++
++/**\brief links the order of parameters defined in
++BME280_BUS_WR_PARAM_TYPE to function calls used inside the API*/
++#define BME280_BUS_WR_PARAM_TYPES u8, u8,\
++		u8 *, u8
++
++/**\brief links the order of parameters defined in
++BME280_BUS_WR_PARAM_TYPE to function calls used inside the API*/
++#define BME280_BUS_WR_PARAM_ORDER(device_addr, register_addr,\
++		register_data, wr_len)
++
++/* never change this line */
++#define BME280_BUS_WRITE_FUNC(device_addr, register_addr,\
++register_data, wr_len) bus_write(device_addr, register_addr,\
++		register_data, wr_len)
++
++/**\brief defines the return parameter type of the BME280_RD_FUNCTION
++*/
++#define BME280_BUS_RD_RETURN_TYPE s8
++
++/**\brief defines the calling parameter types of the BME280_RD_FUNCTION
++*/
++#define BME280_BUS_RD_PARAM_TYPES (u8, u8,\
++		u8 *, u8)
++
++/**\brief links the order of parameters defined in \
++BME280_BUS_RD_PARAM_TYPE to function calls used inside the API
++*/
++#define BME280_BUS_RD_PARAM_ORDER (device_addr, register_addr,\
++		register_data)
++
++/* never change this line */
++#define BME280_BUS_READ_FUNC(device_addr, register_addr,\
++		register_data, rd_len)bus_read(device_addr, register_addr,\
++		register_data, rd_len)
++
++/**\brief defines the return parameter type of the BME280_DELAY_FUNCTION
++*/
++#define BME280_DELAY_RETURN_TYPE void
++
++/**\brief defines the calling parameter types of the BME280_DELAY_FUNCTION
++*/
++#define BME280_DELAY_PARAM_TYPES u16
++
++/* never change this line */
++#define BME280_DELAY_FUNC(delay_in_msec)\
++		delay_func(delay_in_msec)
++
++#define BME280_GET_BITSLICE(regvar, bitname)\
++		((regvar & bitname##__MSK) >> bitname##__POS)
++
++#define BME280_SET_BITSLICE(regvar, bitname, val)\
++((regvar & ~bitname##__MSK) | ((val<<bitname##__POS)&bitname##__MSK))
++
++
++/* Constants */
++#define BME280_NULL                          0
++#define BME280_RETURN_FUNCTION_TYPE          s8
++
++#define SHIFT_RIGHT_4_POSITION               4
++#define SHIFT_LEFT_2_POSITION                2
++#define SHIFT_LEFT_4_POSITION                4
++#define SHIFT_LEFT_5_POSITION                5
++#define SHIFT_LEFT_8_POSITION                8
++#define SHIFT_LEFT_12_POSITION               12
++#define SHIFT_LEFT_16_POSITION               16
++#define BME280_Four_U8X                      4
++#define BME280_Zero_U8X                      0
++#define BME280_Eight_U8X                     8
++#define	SUCCESS								((u8)0)
++
++#define E_BME280_NULL_PTR                    ((s8)-127)
++#define E_BME280_COMM_RES                    ((s8)-1)
++#define E_BME280_OUT_OF_RANGE                ((s8)-2)
++
++#define BME280_I2C_ADDRESS1                  0x76
++#define BME280_I2C_ADDRESS2                  0x77
++
++/* Sensor Specific constants */
++#define BME280_SLEEP_MODE                    0x00
++#define BME280_FORCED_MODE                   0x01
++#define BME280_NORMAL_MODE                   0x03
++#define BME280_SOFT_RESET_CODE               0xB6
++
++#define BME280_STANDBYTIME_1_MS              0x00
++#define BME280_STANDBYTIME_63_MS             0x01
++#define BME280_STANDBYTIME_125_MS			 0x02
++#define BME280_STANDBYTIME_250_MS            0x03
++#define BME280_STANDBYTIME_500_MS            0x04
++#define BME280_STANDBYTIME_1000_MS           0x05
++#define BME280_STANDBYTIME_10_MS             0x06
++#define BME280_STANDBYTIME_20_MS             0x07
++
++#define BME280_OVERSAMPLING_SKIPPED          0x00
++#define BME280_OVERSAMPLING_1X               0x01
++#define BME280_OVERSAMPLING_2X               0x02
++#define BME280_OVERSAMPLING_4X               0x03
++#define BME280_OVERSAMPLING_8X               0x04
++#define BME280_OVERSAMPLING_16X              0x05
++
++/*#define BME280_ULTRALOWPOWER_MODE            0x00
++#define BME280_LOWPOWER_MODE                 0x01
++#define BME280_STANDARDRESOLUTION_MODE       0x02
++#define BME280_HIGHRESOLUTION_MODE           0x03
++#define BME280_ULTRAHIGHRESOLUTION_MODE      0x04
++
++#define BME280_ULTRALOWPOWER_OSRS_P          BME280_OVERSAMPLING_1X
++#define BME280_ULTRALOWPOWER_OSRS_T          BME280_OVERSAMPLING_1X
++
++#define BME280_LOWPOWER_OSRS_P               BME280_OVERSAMPLING_2X
++#define BME280_LOWPOWER_OSRS_T               BME280_OVERSAMPLING_1X
++
++#define BME280_STANDARDRESOLUTION_OSRS_P     BME280_OVERSAMPLING_4X
++#define BME280_STANDARDRESOLUTION_OSRS_T     BME280_OVERSAMPLING_1X
++
++#define BME280_HIGHRESOLUTION_OSRS_P         BME280_OVERSAMPLING_8X
++#define BME280_HIGHRESOLUTION_OSRS_T         BME280_OVERSAMPLING_1X
++
++#define BME280_ULTRAHIGHRESOLUTION_OSRS_P    BME280_OVERSAMPLING_16X
++#define BME280_ULTRAHIGHRESOLUTION_OSRS_T    BME280_OVERSAMPLING_2X */
++
++#define BME280_STANDARD_OSRS_H			BME280_OVERSAMPLING_1X
++#define BME280_FILTERCOEFF_OFF               0x00
++#define BME280_FILTERCOEFF_2                 0x01
++#define BME280_FILTERCOEFF_4                 0x02
++#define BME280_FILTERCOEFF_8                 0x03
++#define BME280_FILTERCOEFF_16                0x04
++
++#define T_INIT_MAX                             20
++		/* 20/16 = 1.25 ms */
++#define T_MEASURE_PER_OSRS_MAX                          37
++		/* 37/16 = 2.3125 ms*/
++
++#define T_SETUP_PRESSURE_MAX                            10
++		/* 10/16 = 0.625 ms */
++
++#define T_SETUP_HUMIDITY_MAX                            10
++		/* 10/16 = 0.625 ms */
++
++/*calibration parameters */
++#define BME280_DIG_T1_LSB_REG                0x88
++#define BME280_DIG_T1_MSB_REG                0x89
++#define BME280_DIG_T2_LSB_REG                0x8A
++#define BME280_DIG_T2_MSB_REG                0x8B
++#define BME280_DIG_T3_LSB_REG                0x8C
++#define BME280_DIG_T3_MSB_REG                0x8D
++#define BME280_DIG_P1_LSB_REG                0x8E
++#define BME280_DIG_P1_MSB_REG                0x8F
++#define BME280_DIG_P2_LSB_REG                0x90
++#define BME280_DIG_P2_MSB_REG                0x91
++#define BME280_DIG_P3_LSB_REG                0x92
++#define BME280_DIG_P3_MSB_REG                0x93
++#define BME280_DIG_P4_LSB_REG                0x94
++#define BME280_DIG_P4_MSB_REG                0x95
++#define BME280_DIG_P5_LSB_REG                0x96
++#define BME280_DIG_P5_MSB_REG                0x97
++#define BME280_DIG_P6_LSB_REG                0x98
++#define BME280_DIG_P6_MSB_REG                0x99
++#define BME280_DIG_P7_LSB_REG                0x9A
++#define BME280_DIG_P7_MSB_REG                0x9B
++#define BME280_DIG_P8_LSB_REG                0x9C
++#define BME280_DIG_P8_MSB_REG                0x9D
++#define BME280_DIG_P9_LSB_REG                0x9E
++#define BME280_DIG_P9_MSB_REG                0x9F
++
++#define BME280_DIG_H1_REG                    0xA1
++
++#define BME280_DIG_H2_LSB_REG                0xE1
++#define BME280_DIG_H2_MSB_REG                0xE2
++#define BME280_DIG_H3_REG                    0xE3
++#define BME280_DIG_H4_MSB_REG                0xE4
++#define BME280_DIG_H5_LSB_H4_LSB_REG         0xE5
++#define BME280_DIG_H5_MSB_REG                0xE6
++#define BME280_DIG_H6_REG                    0xE7
++
++
++#define BME280_CHIPID_REG                    0xD0  /*Chip ID Register */
++#define BME280_RESET_REG                     0xE0  /*Softreset Register */
++#define BME280_STATUS_REG                    0xF3  /*Status Register */
++#define BME280_CTRLMEAS_REG                  0xF4  /*Ctrl Measure Register */
++#define BME280_CTRLHUM_REG                   0xF2  /*Ctrl Humidity Register*/
++#define BME280_CONFIG_REG                    0xF5  /*Configuration Register */
++#define BME280_PRESSURE_MSB_REG              0xF7  /*Pressure MSB Register */
++#define BME280_PRESSURE_LSB_REG              0xF8  /*Pressure LSB Register */
++#define BME280_PRESSURE_XLSB_REG             0xF9  /*Pressure XLSB Register */
++#define BME280_TEMPERATURE_MSB_REG           0xFA  /*Temperature MSB Reg */
++#define BME280_TEMPERATURE_LSB_REG           0xFB  /*Temperature LSB Reg */
++#define BME280_TEMPERATURE_XLSB_REG          0xFC  /*Temperature XLSB Reg */
++#define BME280_HUMIDITY_MSB_REG              0xFD  /*Humidity MSB Reg */
++#define BME280_HUMIDITY_LSB_REG              0xFE  /*Humidity LSB Reg */
++
++/* Status Register */
++#define BME280_STATUS_REG_MEASURING__POS           3
++#define BME280_STATUS_REG_MEASURING__MSK           0x08
++#define BME280_STATUS_REG_MEASURING__LEN           1
++#define BME280_STATUS_REG_MEASURING__REG           BME280_STATUS_REG
++
++#define BME280_STATUS_REG_IMUPDATE__POS            0
++#define BME280_STATUS_REG_IMUPDATE__MSK            0x01
++#define BME280_STATUS_REG_IMUPDATE__LEN            1
++#define BME280_STATUS_REG_IMUPDATE__REG            BME280_STATUS_REG
++
++/* Control Measurement Register */
++#define BME280_CTRLMEAS_REG_OSRST__POS             5
++#define BME280_CTRLMEAS_REG_OSRST__MSK             0xE0
++#define BME280_CTRLMEAS_REG_OSRST__LEN             3
++#define BME280_CTRLMEAS_REG_OSRST__REG             BME280_CTRLMEAS_REG
++
++#define BME280_CTRLMEAS_REG_OSRSP__POS             2
++#define BME280_CTRLMEAS_REG_OSRSP__MSK             0x1C
++#define BME280_CTRLMEAS_REG_OSRSP__LEN             3
++#define BME280_CTRLMEAS_REG_OSRSP__REG             BME280_CTRLMEAS_REG
++
++#define BME280_CTRLMEAS_REG_MODE__POS              0
++#define BME280_CTRLMEAS_REG_MODE__MSK              0x03
++#define BME280_CTRLMEAS_REG_MODE__LEN              2
++#define BME280_CTRLMEAS_REG_MODE__REG              BME280_CTRLMEAS_REG
++
++#define BME280_CTRLHUM_REG_OSRSH__POS             0
++#define BME280_CTRLHUM_REG_OSRSH__MSK             0x07
++#define BME280_CTRLHUM_REG_OSRSH__LEN             3
++#define BME280_CTRLHUM_REG_OSRSH__REG             BME280_CTRLHUM_REG
++
++/* Configuration Register */
++#define BME280_CONFIG_REG_TSB__POS                 5
++#define BME280_CONFIG_REG_TSB__MSK                 0xE0
++#define BME280_CONFIG_REG_TSB__LEN                 3
++#define BME280_CONFIG_REG_TSB__REG                 BME280_CONFIG_REG
++
++#define BME280_CONFIG_REG_FILTER__POS              2
++#define BME280_CONFIG_REG_FILTER__MSK              0x1C
++#define BME280_CONFIG_REG_FILTER__LEN              3
++#define BME280_CONFIG_REG_FILTER__REG              BME280_CONFIG_REG
++
++#define BME280_CONFIG_REG_SPI3WEN__POS             0
++#define BME280_CONFIG_REG_SPI3WEN__MSK             0x01
++#define BME280_CONFIG_REG_SPI3WEN__LEN             1
++#define BME280_CONFIG_REG_SPI3WEN__REG             BME280_CONFIG_REG
++
++/* Data Register */
++#define BME280_PRESSURE_XLSB_REG_DATA__POS         4
++#define BME280_PRESSURE_XLSB_REG_DATA__MSK         0xF0
++#define BME280_PRESSURE_XLSB_REG_DATA__LEN         4
++#define BME280_PRESSURE_XLSB_REG_DATA__REG         BME280_PRESSURE_XLSB_REG
++
++#define BME280_TEMPERATURE_XLSB_REG_DATA__POS      4
++#define BME280_TEMPERATURE_XLSB_REG_DATA__MSK      0xF0
++#define BME280_TEMPERATURE_XLSB_REG_DATA__LEN      4
++#define BME280_TEMPERATURE_XLSB_REG_DATA__REG      BME280_TEMPERATURE_XLSB_REG
++
++#define BME280_WR_FUNC_PTR\
++		s8 (*bus_write)(u8, u8,\
++		u8 *, u8)
++
++#define BME280_RD_FUNC_PTR\
++		s8 (*bus_read)(u8, u8,\
++		u8 *, u8)
++
++#define BME280_MDELAY_DATA_TYPE u16
++
++#define	BME280_3MS_DELAY	3
++/** this structure holds all device specific calibration parameters */
++struct bme280_calibration_param_t {
++	u16 dig_T1;
++	s16 dig_T2;
++	s16 dig_T3;
++	u16 dig_P1;
++	s16 dig_P2;
++	s16 dig_P3;
++	s16 dig_P4;
++	s16 dig_P5;
++	s16 dig_P6;
++	s16 dig_P7;
++	s16 dig_P8;
++	s16 dig_P9;
++
++	u8  dig_H1;
++	s16 dig_H2;
++	u8  dig_H3;
++	s16 dig_H4;
++	s16 dig_H5;
++	s8  dig_H6;
++
++	s32 t_fine;
++};
++/** BME280 image registers data structure */
++struct bme280_t {
++	struct bme280_calibration_param_t cal_param;
++
++	u8 chip_id;
++	u8 dev_addr;
++
++	u8 osrs_t;
++	u8 osrs_p;
++	u8 osrs_h;
++	u8 ctrl_hum_reg;
++	u8 ctrl_meas_reg;
++	u8 config_reg;
++	BME280_WR_FUNC_PTR;
++	BME280_RD_FUNC_PTR;
++	void(*delay_msec)(BME280_MDELAY_DATA_TYPE);
++};
++/* Function Declarations */
++/*******************************************************************************
++ *	Description: *//**\brief This function is used for initialize
++ *	the bus read and bus write functions
++ *  and assign the chip id and I2C address of the BME280 sensor
++ *	chip id is read in the register 0xD0 bit from 0 to 7
++ *
++ *	 \param p_bme280 *bme280 structure pointer.
++ *
++ *	While changing the parameter of the p_bme280
++ *	consider the following point:
++ *	Changing the reference value of the parameter
++ *	will changes the local copy or local reference
++ *	make sure your changes will not
++ *	affect the reference value of the parameter
++ *	(Better case don't change the reference value of the parameter)
++ *
++ *
++ *
++ *
++ * \return results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_init(struct bme280_t *bme280);
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to read uncompensated temperature
++ *	in the registers 0xFA, 0xFB and 0xFC
++ *	0xFA -> MSB -> bit from 0 to 7
++ *	0xFB -> LSB -> bit from 0 to 7
++ *	0xFC -> LSB -> bit from 4 to 7
++ *
++ * \param s32 utemperature : Pointer holding
++ *			the uncompensated temperature.
++ *
++ *
++ *
++ *  \return	results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_read_ut(s32 *utemperature);
++/*******************************************************************************
++ * Description: *//**\brief Reads actual temperature from uncompensated temperature
++ *                    and returns the value in 0.01 degree Centigrade
++ *                    Output value of "5123" equals 51.23 DegC.
++ *
++ *
++ *
++ *  \param s32 : value of uncompensated temperature
++ *
++ *  \return
++ *			s32 : actual temperature
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++s32 bme280_compensate_T_int32(s32 adc_t);
++/*******************************************************************************
++ * Description: *//**\brief Reads actual temperature from uncompensated temperature
++ *		and returns the value with 500LSB/DegC centred around 24 DegC
++ *		output value of "5123" equals(5123/500)+24 = 34.246DegC
++ *
++ *
++ *  \param s32 : value of uncompensated temperature
++ *
++ *
++ *
++ *  \return
++ *			s16 : actual temperature
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++s16 bme280_compensate_T_int32_sixteen_bit_output(s32 adc_t);
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to read uncompensated pressure.
++ *	in the registers 0xF7, 0xF8 and 0xF9
++ *	0xF7 -> MSB -> bit from 0 to 7
++ *	0xF8 -> LSB -> bit from 0 to 7
++ *	0xF9 -> LSB -> bit from 4 to 7
++ *
++ *
++ *
++ *	\param s32 upressure : Pointer holding the uncompensated pressure.
++ *
++ *
++ *
++ *	\return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_read_up(s32 *upressure);
++/*******************************************************************************
++ * Description: *//**\brief Reads actual pressure from uncompensated pressure
++ *							and returns the value in Pascal(Pa)
++ *                          Output value of "96386" equals 96386 Pa =
++ *                          963.86 hPa = 963.86 millibar
++ *
++ *
++ *
++ *  \param s32 : value of uncompensated pressure
++ *
++ *
++ *
++ *  \return
++ *			u32 : actual pressure
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++u32 bme280_compensate_P_int32(s32 adc_p);
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to read uncompensated humidity.
++ *	in the registers 0xF7, 0xF8 and 0xF9
++ *	0xFD -> MSB -> bit from 0 to 7
++ *	0xFE -> LSB -> bit from 0 to 7
++ *
++ *
++ *
++ *	\param s32 uhumidity : Pointer holding the uncompensated humidity.
++ *
++ *
++ *
++ *	\return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_read_uh(s32 *uhumidity);
++/*******************************************************************************
++ * Description: *//**\brief Reads actual humidity from
++ *        uncompensated humidity
++ *        and returns the value in %rH as unsigned 32bit integer
++ *        in Q22.10 format(22 integer 10 fractional bits).
++ *        An output value of 42313
++ *        represents 42313 / 1024 = 41.321 %rH
++ *
++ *
++ *
++ *  \param s32 adc_h : value of uncompensated humidity
++ *
++ *
++ *  \return
++ *			u32 : actual relative humidity
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++u32 bme280_compensate_H_int32(s32 adc_h);
++/*******************************************************************************
++ * Description: *//**\brief Reads actual humidity from
++ *        uncompensated humidity
++ *        and returns the value in %rH as unsigned 16bit integer
++ *        An output value of 42313
++ *        represents 42313/512 = 82.643 %rH
++ *
++ *
++ *
++ *  \param s32 : value of uncompensated humidity
++ *
++ *
++ *
++ *  \return
++ *			u16 : actual relative humidity
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++u16 bme280_compensate_H_int32_sixteen_bit_output(s32 adc_h);
++/*******************************************************************************
++ * Description: *//**\brief reads uncompensated pressure,temperature and humidity
++ *
++ *
++ *
++ *
++ *  \param s32 upressure: Pointer holding the uncompensated pressure.
++ *  \param s32 utemperature: Pointer holding
++ *                    the uncompensated temperature.
++ *  \param s32 uhumidity: Pointer holding the uncompensated humidity.
++ *
++ *
++ *
++ *  \return results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_read_uputuh(s32 *upressure,
++s32 *utemperature, s32 *uhumidity);
++/*******************************************************************************
++ * Description: *//**\brief reads pressure, temperature and humidity.
++ *
++ *
++ *
++ *
++ *	\param u32 pressure : Pointer holding
++ *                          the compensated pressure.
++ *	\param s32 temperature : Pointer holding
++ *                      the compensated temperature.
++ *	\param u32 humidity : Pointer holding
++ *                         the compensated humidity.
++ *
++ *
++ *  \return results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_read_pth(u32 *pressure,
++s32 *temperature, u32 *humidity);
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to
++ *	calibration parameters used for calculation in the registers
++ *	parameter	Register address	bit
++ *	dig_T1			0x88/0x89		0 : 7 / 8: 15
++ *	dig_T2			0x8A/0x8B		0 : 7 / 8: 15
++ *	dig_T3			0x8C/0x8D		0 : 7 / 8: 15
++ *	dig_P1			0x8E/0x8F		0 : 7 / 8: 15
++ *	dig_P2			0x90/0x91		0 : 7 / 8: 15
++ *	dig_P3			0x92/0x93		0 : 7 / 8: 15
++ *	dig_P4			0x94/0x95		0 : 7 / 8: 15
++ *	dig_P5			0x96/0x97		0 : 7 / 8: 15
++ *	dig_P6			0x98/0x99		0 : 7 / 8: 15
++ *	dig_P7			0x9A/0x9B		0 : 7 / 8: 15
++ *	dig_P8			0x9C/0x9D		0 : 7 / 8: 15
++ *	dig_P9			0x9E/0x9F		0 : 7 / 8: 15
++ *	dig_H1				0xA1			0 : 7
++ *	dig_H2			0xE1/0xE2		0 : 7 / 8: 15
++ *	dig_H3				0xE3			0 : 7
++ *
++ *	\param:  None
++ *
++ *
++ *
++ *	\return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_calib_param(void);
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to get
++ *	the temperature oversampling setting in the register 0xF4
++ *	bits from 5 to 7
++ *
++ *	bit					temperature oversampling
++ *	0x00						Skipped
++ *	0x01						BME280_OVERSAMPLING_1X
++ *	0x02						BME280_OVERSAMPLING_2X
++ *	0x03						BME280_OVERSAMPLING_4X
++ *	0x04						BME280_OVERSAMPLING_8X
++ *	0x05,0x06 and 0x07			BME280_OVERSAMPLING_16X
++ *
++ *
++ *  \param u8 value : Pointer holding the osrs_t value
++ *
++ *
++ *
++ *  \return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_osrs_t(u8 *value);
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to set
++ *	the temperature oversampling in the register 0xF4
++ *	bits from 5 to 7
++ *
++ *	bit					temperature oversampling
++ *	0x00						Skipped
++ *	0x01						BME280_OVERSAMPLING_1X
++ *	0x02						BME280_OVERSAMPLING_2X
++ *	0x03						BME280_OVERSAMPLING_4X
++ *	0x04						BME280_OVERSAMPLING_8X
++ *	0x05,0x06 and 0x07			BME280_OVERSAMPLING_16X
++ *
++ *
++ *  \param u8 value : the osrs_t value
++ *
++ *
++ *
++ *  \return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_osrs_t(u8 value);
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to get
++ *	the pressure oversampling setting in the register 0xF4
++ *	bits from 2 to 4
++ *
++ *	bit					pressure oversampling
++ *	0x00						Skipped
++ *	0x01						BME280_OVERSAMPLING_1X
++ *	0x02						BME280_OVERSAMPLING_2X
++ *	0x03						BME280_OVERSAMPLING_4X
++ *	0x04						BME280_OVERSAMPLING_8X
++ *	0x05,0x06 and 0x07			BME280_OVERSAMPLING_16X
++ *
++ *
++ *  \param u8 value : Pointer holding the osrs_p value
++ *
++ *
++ *
++ *  \return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_osrs_p(u8 *value);
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to set
++ *	the pressure oversampling in the register 0xF4
++ *	bits from 2 to 4
++ *
++ *	bit					pressure oversampling
++ *	0x00						Skipped
++ *	0x01						BME280_OVERSAMPLING_1X
++ *	0x02						BME280_OVERSAMPLING_2X
++ *	0x03						BME280_OVERSAMPLING_4X
++ *	0x04						BME280_OVERSAMPLING_8X
++ *	0x05,0x06 and 0x07			BME280_OVERSAMPLING_16X
++ *
++ *
++ *  \param u8 value : the osrs_p value
++ *
++ *
++ *
++ *  \return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_osrs_p(u8 value);
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to get
++ *	the humidity oversampling setting in the register 0xF2
++ *	bits from 0 to 2
++ *
++ *	bit					pressure oversampling
++ *	0x00						Skipped
++ *	0x01						BME280_OVERSAMPLING_1X
++ *	0x02						BME280_OVERSAMPLING_2X
++ *	0x03						BME280_OVERSAMPLING_4X
++ *	0x04						BME280_OVERSAMPLING_8X
++ *	0x05,0x06 and 0x07			BME280_OVERSAMPLING_16X
++ *
++ *
++ *  \param u8 value : Pointer holding the osrs_h value
++ *
++ *
++ *
++ *  \return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_osrs_h(u8 *value);
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to set
++ *	the humidity oversampling setting in the register 0xF2
++ *	bits from 0 to 2
++ *
++ *	bit					pressure oversampling
++ *	0x00						Skipped
++ *	0x01						BME280_OVERSAMPLING_1X
++ *	0x02						BME280_OVERSAMPLING_2X
++ *	0x03						BME280_OVERSAMPLING_4X
++ *	0x04						BME280_OVERSAMPLING_8X
++ *	0x05,0x06 and 0x07			BME280_OVERSAMPLING_16X
++ *
++ *
++ *
++ * The "BME280_CTRLHUM_REG_OSRSH" register sets the humidity
++ * data acquisition options of the device.
++ * changes to this registers only become effective after a write operation to
++ * "BME280_CTRLMEAS_REG" register.
++ * In the code automated reading and writing of "BME280_CTRLHUM_REG_OSRSH"
++ * register first set the "BME280_CTRLHUM_REG_OSRSH" and then read and write
++ * the "BME280_CTRLMEAS_REG" register in the function.
++ *
++ *
++ *
++ *  \param u8 value : Value of the humidity oversampling setting
++ *
++ *  \return: results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_osrs_h(u8 value);
++/*******************************************************************************
++ *	Description: *//**\brief This API used to get the
++ *	Operational Mode from the sensor in the register 0xF4 bit 0 and 1
++ *
++ *
++ *
++ *	\param u8 *mode : Pointer holding the mode value.
++ *	0x00			->	BME280_SLEEP_MODE
++ *	0x01 and 0x02	->	BME280_FORCED_MODE
++ *	0x03			->	BME280_NORMAL_MODE
++ *
++ *  \return : results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_mode(u8 *mode);
++/*******************************************************************************
++ *	Description: *//**\brief This API used to set the
++ *	Operational Mode from the sensor in the register 0xF4 bit 0 and 1
++ *
++ *
++ *
++ *	\param u8 *mode : Pointer holding the mode value.
++ *	0x00			->	BME280_SLEEP_MODE
++ *	0x01 and 0x02	->	BME280_FORCED_MODE
++ *	0x03			->	BME280_NORMAL_MODE
++ *
++ *
++ *  \return : results of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_mode(u8 mode);
++/*******************************************************************************
++ * Description: *//**\brief Used to reset the sensor
++ * The value 0xB6 is written to the 0xE0 register the device is reset using the
++ * complete power-on-reset procedure.
++ * Softreset can be easily set using bme280_set_softreset().
++ * Usage Hint : bme280_set_softreset()
++ *
++ *
++ *  \param:	None
++ *
++ *
++ *
++ *  \return: result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_softreset(void);
++/*******************************************************************************
++ *	Description: *//**\brief This API used to set the sensor
++ *	SPI mode(communication type) in the register 0xF5 bit 0
++ *
++ *
++ *
++ *	\param  u8 *enable_disable : Pointer holding the
++ *	spi3 enable or disable state.
++ *
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_spi3(u8 *enable_disable);
++/*******************************************************************************
++ *	Description: *//**\brief This API used to set the sensor
++ *	SPI mode(communication type) in the register 0xF5 bit 0
++ *
++ *
++ *
++ *	\param  u8 enable_disable : the spi3 enable or disable value.
++ *
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_spi3(u8 enable_disable);
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to reads filter setting
++ *	in the register 0xF5 bit 3 and 4
++ *
++ *
++ *
++ *	\param u8 *value : Pointer holding the filter value.
++ *
++ *	value			Filter coefficient
++ *	0x00				Filter Off
++ *	0x01				2
++ *	0x02				4
++ *	0x03				8
++ *	0x04				16
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_filter(u8 *value);
++/*******************************************************************************
++ *	Description: *//**\brief This API is used to set filter setting
++ *	in the register 0xF5 bit 3 and 4
++ *
++ *
++ *
++ *	\param u8 value : The filter coefficient value
++ *
++ *	value			Filter coefficient
++ *	0x00				Filter Off
++ *	0x01				2
++ *	0x02				4
++ *	0x03				8
++ *	0x04				16
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_filter(u8 value);
++/*******************************************************************************
++ *	Description: *//**\brief This API used to Read the
++ *	standby duration time from the sensor in the register 0xF5 bit 5 to 7
++ *
++ *	\param u8 *time : Pointer holding
++ *                        the standby duration time value.
++ *              0x00 - BME280_STANDBYTIME_1_MS
++ *              0x01 - BME280_STANDBYTIME_63_MS
++ *              0x02 - BME280_STANDBYTIME_125_MS
++ *              0x03 - BME280_STANDBYTIME_250_MS
++ *              0x04 - BME280_STANDBYTIME_500_MS
++ *              0x05 - BME280_STANDBYTIME_1000_MS
++ *              0x06 - BME280_STANDBYTIME_2000_MS
++ *              0x07 - BME280_STANDBYTIME_4000_MS
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_standbydur(u8 *time);
++/*******************************************************************************
++ *	Description: *//**\brief This API used to write
++ *	standby duration time from the sensor in the register 0xF5 bit 5 to 7
++ *	Normal mode comprises an automated perpetual cycling between an (active)
++ *	Measurement period and an (inactive) standby period.
++ *	The standby time is determined by the contents of the register t_sb.
++ *	Standby time can be set using BME280_STANDBYTIME_125_MS.
++ *
++ *	Usage Hint : bme280_set_standbydur(BME280_STANDBYTIME_125_MS)
++ *
++ *	\param u8 time : Value of the standby duration
++ *              0x00 - BME280_STANDBYTIME_1_MS
++ *              0x01 - BME280_STANDBYTIME_63_MS
++ *              0x02 - BME280_STANDBYTIME_125_MS
++ *              0x03 - BME280_STANDBYTIME_250_MS
++ *              0x04 - BME280_STANDBYTIME_500_MS
++ *              0x05 - BME280_STANDBYTIME_1000_MS
++ *              0x06 - BME280_STANDBYTIME_2000_MS
++ *              0x07 - BME280_STANDBYTIME_4000_MS
++ *
++ *
++ *
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_set_standbydur(u8 time);
++/*******************************************************************************
++ * Description: *//**\brief Writes the working mode to the sensor
++ *
++ *
++ *
++ *
++ *  \param u8 : Mode to be set
++ *				0 -> BME280_ULTRALOWPOWER_MODE
++ *				1 -> BME280_LOWPOWER_MODE
++ *				2 -> BME280_STANDARDRESOLUTION_MODE
++ *				3 -> BME280_HIGHRESOLUTION_MODE
++ *				4 -> BME280_ULTRAHIGHRESOLUTION_MODE
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++/*BME280_RETURN_FUNCTION_TYPE bme280_set_workmode(u8 mode);*/
++/*******************************************************************************
++ * Description: *//**\brief Read both uncompensated temperature,pressure and humidity
++ *                                                       in forced mode
++ *
++ *
++ *	\param s32 upressure: Pointer holding
++ *                     the uncompensated pressure.
++ *	\param s32 utemperature: Pointer holding
++ *                    the uncompensated temperature.
++ *	\param s32 uhumidity: Pointer holding
++ *                     the uncompensated humidity.
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_get_forced_uputuh(s32 *upressure,
++s32 *utemperature, s32 *uhumidity);
++/*******************************************************************************
++ * Description: *//**\brief This API gives data to the given register and
++ *                          the data is written in the corresponding register
++ *							address
++ *
++ *
++ *
++ *  \param u8 addr, u8 data, u8 len
++ *          addr -> Address of the register
++ *          data -> Data to be written to the register
++ *          len  -> Length of the Data
++ *
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_write_register(u8 addr,
++u8 *data, u8 len);
++/*******************************************************************************
++ * Description: *//**\brief This API reads the data from the given register
++ *							address
++ *
++ *
++ *
++ *  \param u8 addr, u8 *data, u8 len
++ *         addr -> Address of the register
++ *         data -> address of the variable, read value will be kept
++ *         len  -> Length of the data
++ *
++ *
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_read_register(u8 addr,
++u8 *data, u8 len);
++
++#ifdef BME280_ENABLE_FLOAT
++/*******************************************************************************
++ * Description: *//**\brief Reads actual temperature from uncompensated temperature
++ *							and returns the value in Degree centigrade
++ *                          Output value of "51.23" equals 51.23 DegC.
++ *
++ *
++ *
++ *  \param signed long : value of uncompensated temperature
++ *
++ *
++ *
++ *  \return
++ *			double : actual temperature in floating point
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++double bme280_compensate_T_double(s32 adc_t);
++/*******************************************************************************
++ * Description: *//**\brief Reads actual pressure from uncompensated pressure
++ *							and returns pressure in Pa as double.
++ *                          Output value of "96386.2"
++ *                          equals 96386.2 Pa = 963.862 hPa.
++ *
++ *
++ *  \param signed int : value of uncompensated pressure
++ *
++ *
++ *
++ *  \return
++ *			double : actual pressure in floating point
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++double bme280_compensate_P_double(s32 adc_p);
++/*******************************************************************************
++ * Description: *//**\brief Reads actual humidity from uncompensated humidity
++ *							and returns the value in relative humidity (%rH)
++ *                          Output value of "42.12" equals 42.12 %rH
++ *
++ *  \param signed int : value of uncompensated humidity
++ *
++ *
++ *
++ *  \return
++ *			double : actual humidity in floating point
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++double bme280_compensate_H_double(s32 adc_h);
++#endif
++#if defined(BME280_ENABLE_INT64) && defined(BME280_64BITSUPPORT_PRESENT)
++/*******************************************************************************
++ * Description: *//**\brief Reads actual pressure from uncompensated pressure
++ *                          and returns the value in Pa as unsigned 32 bit
++ *                          integer in Q24.8 format (24 integer bits and
++ *                          8 fractional bits). Output value of "24674867"
++ *                          represents 24674867 / 256 = 96386.2 Pa = 963.862 hPa
++ *
++ *
++ *
++ *  \param signed long : value of uncompensated temperature
++ *
++ *
++ *
++ *  \return
++ *			unsigned long : actual pressure
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++u32 bme280_compensate_P_int64(s32 adc_p);
++/*******************************************************************************
++ * Description: *//**\brief Reads actual pressure from uncompensated pressure
++ *		and returns the value in Pa.
++ *		Output value of "12337434"
++ *		represents 12337434 / 128 = 96386.2 Pa = 963.862 hPa
++ *
++ *
++ *
++ *  \param s32 : value of uncompensated temperature
++ *
++ *
++ *  \return
++ *			u32 : actual pressure
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ******************************************************************************/
++u32 bme280_compensate_P_int64_twentyfour_bit_output(s32 adc_p);
++#endif
++/*******************************************************************************
++ * Description: *//**\brief Computing waiting time for sensor data read
++ *
++ *
++ *
++ *
++ *  \param
++ *			u8 : value of time
++ *
++ *
++ *  \return result of bus communication function
++ *
++ *
++ ******************************************************************************/
++/* Scheduling:
++ *
++ *
++ *
++ * Usage guide:
++ *
++ *
++ * Remarks:
++ *
++ ****************************************************************************/
++BME280_RETURN_FUNCTION_TYPE bme280_compute_wait_time(u8
++*v_delaytime_u8r);
++#endif
+diff --git a/drivers/input/misc/bme280/bme280_core.c b/drivers/input/misc/bme280/bme280_core.c
+new file mode 100644
+index 0000000..22f56e8
+--- /dev/null
++++ b/drivers/input/misc/bme280/bme280_core.c
+@@ -0,0 +1,1989 @@
++/*!
++ * @section LICENSE
++ * (C) Copyright 2013 Bosch Sensortec GmbH All Rights Reserved
++ *
++ * This software program is licensed subject to the GNU General
++ * Public License (GPL).Version 2,June 1991,
++ * available at http://www.fsf.org/copyleft/gpl.html
++ *
++ * @filename bme280_core.c
++ * @date     2014/09/18
++ * @id       "f5681eb"
++ * @version  1.3
++ *
++ * @brief
++ * The core code of BME280 device driver
++ *
++ * @detail
++ * This file implements the core code of BME280 device driver,
++ * which includes hardware related functions, input device register,
++ * device attribute files, etc.
++ * This file calls some functions defined in BME280.c and could be
++ * called by bme280_i2c.c and bme280_spi.c separately.
++ *
++ * ////////////////////////////////////////////////////////////////
++ *            Hardware Abstration Layer                | user space
++ * ----------------------------------------------------------------
++ *                                | |                  |
++ *              _________________\| |/_____________    |
++ *             |                  \ /              |   |
++ *             |             --------------        |   |
++ *bme280_i2c.c-|----|        | sysfs nodes |       |   |
++ *             |    |        --------------        |   |
++ *             |   \|/                             |   |
++ *             | |-----|                           |   |
++ *             | |probe|      bme280_core.c        |   |
++ *             | |-----|                           |   |
++ *             |   /|\                             |   |kernel space
++ *             |    |                              |   |
++ *bme280_spi.c-|----|                              |   |
++ *             |                                   |   |
++ *             |___________________________________|   |
++ *                                | |                  |
++ *                               \| |/                 |
++ *                           _____\ /_____             |
++ *                           |            |            |
++ *                           |  BME280.c  |            |
++ *                           |____________|            |
++ * //////////////////////////////////////////////////////////////////
++ *
++ *  REVISION: V1.3
++ *  HISTORY:  V1.0 --- Driver code creation
++ *            V1.1 --- API Update
++ *            V1.1.1 - Fix return type bug
++ *            V1.1.2 - Remove __dev Macros
++ *            V1.2 --- API Update to 2.0
++ *            V1.2.1 - Update Selftest Function for C9 sample
++ *            V1.3 --- API Update to 2.0.1
++*/
++
++#include <linux/device.h>
++#include <linux/init.h>
++#include <linux/slab.h>
++#include <linux/delay.h>
++#include <linux/input.h>
++#include <linux/workqueue.h>
++#include <linux/module.h>
++#ifdef CONFIG_HAS_EARLYSUSPEND
++#include <linux/earlysuspend.h>
++#endif
++#include "bme280_core.h"
++
++/*! @defgroup bme280_core_src
++ *  @brief The core code of BME280 device driver
++ @{*/
++/*! define sensor chip id [BME280 = 0x60] */
++#define BME_SENSOR_CHIP_ID        0x60
++/*! define sensor i2c address */
++#define BME_I2C_ADDRESS           BME280_I2C_ADDRESS2
++/*! define minimum pressure value by input event */
++#define ABS_MIN_PRESSURE          30000
++/*! define maximum pressure value by input event */
++#define ABS_MAX_PRESSURE          110000
++/*! define default delay time used by input event [unit:ms] */
++#define BME_DELAY_DEFAULT         200
++/*! define maximum temperature oversampling */
++#define BME_OVERSAMPLING_T_MAX    BME_VAL_NAME(OVERSAMPLING_16X)
++/*! define maximum pressure oversampling */
++#define BME_OVERSAMPLING_P_MAX    BME_VAL_NAME(OVERSAMPLING_16X)
++/*! define maximum humidity oversampling */
++#define BME_OVERSAMPLING_H_MAX    BME_VAL_NAME(OVERSAMPLING_16X)
++/*! define defalut filter coefficient */
++#define BME_FILTER_DEFAULT        BME_VAL_NAME(FILTERCOEFF_8)
++/*! define maximum filter coefficient */
++#define BME_FILTER_MAX            BME_VAL_NAME(FILTERCOEFF_16)
++/*! define default work mode */
++#define BME_WORKMODE_DEFAULT      BME_VAL_NAME(STANDARDRESOLUTION_MODE)
++/*! define default standby duration [unit:ms] */
++#define BME_STANDBYDUR_DEFAULT    1
++/*! define i2c interface disable switch */
++#define BME280_I2C_DISABLE_SWITCH 0x87
++/*! no action to selftest */
++#define BME_SELFTEST_NO_ACTION    -1
++/*! selftest failed */
++#define BME_SELFTEST_FAILED       0
++/*! selftest success */
++#define BME_SELFTEST_SUCCESS      1
++/*! selftest for temperature range(value in 0.01 degree)*/
++#define SELFTEST_LOW_TEMPERATURE     0
++#define SELFTEST_HIGH_TEMPERATURE    4000
++/*! selftest for pressure range(value in pascal)*/
++#define SELFTEST_LOW_PRESSURE        90000
++#define SELFTEST_HIGH_PRESSURE       110000
++/*! selftest for humidity range(value in 0.001%rH)*/
++#define SELFTEST_LOW_HUMIDITY        20000
++#define SELFTEST_HIGH_HUMIDITY       80000
++/*!
++ * @brief Each client has this additional data, this particular
++ * data structure is defined for bme280 client
++*/
++struct bme_client_data {
++	/*!data bus for hardware communication */
++	struct bme_data_bus data_bus;
++	/*!device information used by sensor API */
++	struct bme280_t device;
++	/*!device register to kernel device model */
++	struct device *dev;
++	/*!mutex lock variable */
++	struct mutex lock;
++
++	/*!temperature oversampling variable */
++	uint8_t oversampling_t;
++	/*!pressure oversampling variable */
++	uint8_t oversampling_p;
++	/*!pressure oversampling variable */
++	uint8_t oversampling_h;
++	/*!indicate operation mode */
++	uint8_t op_mode;
++	/*!indicate filter coefficient */
++	uint8_t filter;
++	/*!indicate standby duration */
++	uint32_t standbydur;
++	/*!indicate work mode */
++#if 0
++	uint8_t workmode;
++#endif
++#ifdef CONFIG_HAS_EARLYSUSPEND
++	/*!early suspend variable */
++	struct early_suspend early_suspend;
++#endif
++	/*!indicate input device; register to input core in kernel */
++	struct input_dev *input;
++	/*!register to work queue */
++	struct delayed_work work;
++	/*!delay time used by input event */
++	uint32_t delay;
++	/*!enable/disable sensor output */
++	uint32_t enable;
++	/*! indicate selftest status
++	* -1: no action
++	*  0: failed
++	*  1: success
++	*/
++	int8_t selftest;
++};
++
++#ifdef CONFIG_HAS_EARLYSUSPEND
++static void bme_early_suspend(struct early_suspend *h);
++static void bme_late_resume(struct early_suspend *h);
++#endif
++
++/*!
++ * @brief list all the standby duration
++ * that could be set[unit:ms]
++*/
++static const uint32_t standbydur_list[] = {
++	1, 63, 125, 250, 500, 1000, 2000, 4000
++};
++/*!
++ * @brief list all the sensor operation modes
++*/
++static const uint8_t op_mode_list[] = {
++	BME_VAL_NAME(SLEEP_MODE),
++	BME_VAL_NAME(FORCED_MODE),
++	BME_VAL_NAME(NORMAL_MODE)
++};
++/*!
++ * @brief list all the sensor work modes
++*/
++/*
++static const uint8_t workmode_list[] = {
++	BME_VAL_NAME(ULTRALOWPOWER_MODE),
++	BME_VAL_NAME(LOWPOWER_MODE),
++	BME_VAL_NAME(STANDARDRESOLUTION_MODE),
++	BME_VAL_NAME(HIGHRESOLUTION_MODE),
++	BME_VAL_NAME(ULTRAHIGHRESOLUTION_MODE)
++};
++*/
++/*!
++ * @brief implement delay function
++ *
++ * @param msec	  millisecond numbers
++ *
++ * @return no return value
++*/
++static void bme_delay(uint16_t msec)
++{
++	mdelay(msec);
++}
++
++/*!
++ * @brief check bme sensor's chip id
++ *
++ * @param data_bus the pointer of data bus
++ *
++ * @return zero success, non-zero failed
++ * @retval zero  success
++ * @retval -EIO communication error
++ * @retval -ENODEV chip id dismatch
++*/
++static int bme_check_chip_id(struct bme_data_bus *data_bus)
++{
++	int err = 0;
++	uint8_t chip_id = 0;
++
++	err = data_bus->bops->bus_read(BME_I2C_ADDRESS, \
++		BME_REG_NAME(CHIPID_REG), &chip_id, 1);
++	if (err < 0) {
++		err = -EIO;
++		PERR("bus read failed\n");
++		return err;
++	}
++
++	if (BME_SENSOR_CHIP_ID != (chip_id&0xFF)) {
++		err = -ENODEV;
++		PERR("read %s chip id failed, read value = %d\n", \
++				BME_NAME, chip_id);
++		return err;
++	}
++	PINFO("read %s chip id successfully", BME_NAME);
++
++	return err;
++}
++
++/*!
++ * @brief get compersated temperature value
++ *
++ * @param data the pointer of bme client data
++ * @param temperature the pointer of temperature value
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_get_temperature(struct bme_client_data *data,
++		int32_t *temperature)
++{
++	int32_t utemperature;
++	int err = 0;
++
++	err = BME_CALL_API(read_ut)(&utemperature);
++	if (err)
++		return err;
++	*temperature = BME_CALL_API(compensate_T_int32)(utemperature);
++	return err;
++}
++
++/*!
++ * @brief get compersated pressure value
++ *
++ * @param data the pointer of bme client data
++ * @param pressure the pointer of pressure value
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_get_pressure(struct bme_client_data *data, uint32_t *pressure)
++{
++	int32_t temperature;
++	int32_t upressure;
++	int err = 0;
++
++	/*
++	 *get current temperature to compersate pressure value
++	 *via variable t_fine, which is defined in sensor function API
++	 */
++	err = bme_get_temperature(data, &temperature);
++	if (err)
++		return err;
++
++	err = BME_CALL_API(read_up)(&upressure);
++	if (err)
++		return err;
++
++	*pressure = (BME_CALL_API(compensate_P_int64)(upressure))>>8;
++	return err;
++}
++
++/*!
++ * @brief get compersated humidity value
++ *
++ * @param data the pointer of bme client data
++ * @param humidity the pointer of pressure value
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_get_humidity(struct bme_client_data *data, uint32_t *humidity)
++{
++	int32_t temperature;
++	int32_t uhumidity;
++	int err = 0;
++
++	/*
++	 *get current temperature to compersate humidity value
++	 *via variable t_fine, which is defined in sensor function API
++	 */
++	err = bme_get_temperature(data, &temperature);
++	if (err)
++		return err;
++
++	err = BME_CALL_API(read_uh)(&uhumidity);
++	if (err)
++		return err;
++	/*check the excel of user API, essentially it has to shift 10 bits*/
++	*humidity = (BME_CALL_API(compensate_H_int32)(uhumidity));
++	return err;
++}
++
++/*!
++ * @brief get temperature oversampling
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return temperature oversampling value
++ * @retval 0 oversampling skipped
++ * @retval 1 oversampling1X
++ * @retval 2 oversampling2X
++ * @retval 3 oversampling4X
++ * @retval 4 oversampling8X
++ * @retval 5 oversampling16X
++*/
++static uint32_t bme_get_oversampling_t(struct bme_client_data *data)
++{
++	BME_CALL_API(get_osrs_t)(&data->oversampling_t);
++
++	return data->oversampling_t;
++}
++
++/*!
++ * @brief set temperature oversampling
++ *
++ * @param data the pointer of bme client data
++ * @param oversampling temperature oversampling value need to set
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_set_oversampling_t(struct bme_client_data *data,
++		uint8_t oversampling)
++{
++	int err = 0;
++
++	if (oversampling > BME_OVERSAMPLING_T_MAX)
++		oversampling = BME_OVERSAMPLING_T_MAX;
++
++	err = BME_CALL_API(set_osrs_t)(oversampling);
++	if (err)
++		return err;
++
++	data->oversampling_t = oversampling;
++	return err;
++}
++
++/*!
++ * @brief get pressure oversampling
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return pressure oversampling value
++ * @retval 0 oversampling skipped
++ * @retval 1 oversampling1X
++ * @retval 2 oversampling2X
++ * @retval 3 oversampling4X
++ * @retval 4 oversampling8X
++ * @retval 5 oversampling16X
++*/
++static uint32_t bme_get_oversampling_p(struct bme_client_data *data)
++{
++	BME_CALL_API(get_osrs_p)(&data->oversampling_p);
++
++	return data->oversampling_p;
++}
++
++/*!
++ * @brief set pressure oversampling
++ *
++ * @param data the pointer of bme client data
++ * @param oversampling pressure oversampling value needed to set
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_set_oversampling_p(struct bme_client_data *data,
++		uint8_t oversampling)
++{
++	int err = 0;
++
++	if (oversampling > BME_OVERSAMPLING_P_MAX)
++		oversampling = BME_OVERSAMPLING_P_MAX;
++
++	err = BME_CALL_API(set_osrs_p)(oversampling);
++	if (err)
++		return err;
++
++	data->oversampling_p = oversampling;
++	return err;
++}
++
++/*!
++ * @brief get humidity oversampling
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return humidity oversampling value
++ * @retval 0 oversampling skipped
++ * @retval 1 oversampling1X
++ * @retval 2 oversampling2X
++ * @retval 3 oversampling4X
++ * @retval 4 oversampling8X
++ * @retval 5 oversampling16X
++*/
++static uint32_t bme_get_oversampling_h(struct bme_client_data *data)
++{
++	BME_CALL_API(get_osrs_h)(&data->oversampling_h);
++
++	return data->oversampling_h;
++}
++
++/*!
++ * @brief set humidity oversampling
++ *
++ * @param data the pointer of bme client data
++ * @param oversampling humidity oversampling value needed to set
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_set_oversampling_h(struct bme_client_data *data,
++		uint8_t oversampling)
++{
++	int err = 0;
++
++	if (oversampling > BME_OVERSAMPLING_H_MAX)
++		oversampling = BME_OVERSAMPLING_H_MAX;
++
++	err = BME_CALL_API(set_osrs_h)(oversampling);
++	if (err)
++		return err;
++
++	data->oversampling_h = oversampling;
++	return err;
++}
++
++/*!
++ * @brief get operation mode
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return operation mode
++ * @retval 0  SLEEP MODE
++ * @retval 1  FORCED MODE
++ * @retval 3  NORMAL MODE
++*/
++static uint32_t bme_get_op_mode(struct bme_client_data *data)
++{
++	BME_CALL_API(get_mode)(&data->op_mode);
++
++	if (data->op_mode == 0x01 || data->op_mode == 0x02)
++		data->op_mode = BME_VAL_NAME(FORCED_MODE);
++
++	return data->op_mode;
++}
++
++/*!
++ * @brief set operation mode
++ *
++ * @param data the pointer of bme client data
++ * @param op_mode operation mode need to set
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_set_op_mode(struct bme_client_data *data, uint8_t op_mode)
++{
++	int err = 0;
++	int i;
++
++	for (i = 0; i < ARRAY_SIZE(op_mode_list); i++) {
++		if (op_mode_list[i] == op_mode)
++			break;
++	}
++
++	if (ARRAY_SIZE(op_mode_list) <= i)
++		return -1;
++
++	err = BME_CALL_API(set_mode)(op_mode);
++	if (err)
++		return err;
++
++	data->op_mode = op_mode;
++	return err;
++}
++
++/*!
++ * @brief get filter coefficient
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return filter coefficient value
++ * @retval 0 filter off
++ * @retval 1 filter 2
++ * @retval 2 filter 4
++ * @retval 3 filter 8
++ * @retval 4 filter 16
++*/
++static uint32_t bme_get_filter(struct bme_client_data *data)
++{
++	BME_CALL_API(get_filter)(&data->filter);
++
++	return data->filter;
++}
++
++/*!
++ * @brief set filter coefficient
++ *
++ * @param data the pointer of bme client data
++ * @param filter filter coefficient need to set
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_set_filter(struct bme_client_data *data, uint8_t filter)
++{
++	int err = 0;
++
++	if (filter > BME_FILTER_MAX)
++		filter = BME_FILTER_MAX;
++
++	err = BME_CALL_API(set_filter)(filter);
++	if (err)
++		return err;
++
++	data->filter = filter;
++	return err;
++}
++
++/*!
++ * @brief get standby duration
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return standby duration value
++ * @retval 1 0.5ms
++ * @retval 63 62.5ms
++ * @retval 125 125ms
++ * @retval 250 250ms
++ * @retval 500 500ms
++ * @retval 1000 1000ms
++ * @retval 2000 2000ms
++ * @retval 4000 4000ms
++*/
++static uint32_t bme_get_standbydur(struct bme_client_data *data)
++{
++	uint8_t standbydur;
++
++	BME_CALL_API(get_standbydur)(&standbydur);
++
++	data->standbydur = standbydur_list[standbydur];
++	return data->standbydur;
++}
++
++/*!
++ * @brief set standby duration
++ *
++ * @param data the pointer of bme client data
++ * @param standbydur standby duration need to set
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_set_standbydur(struct bme_client_data *data, uint32_t standbydur)
++{
++	int err = 0;
++	int i;
++
++	for (i = 0; i < ARRAY_SIZE(standbydur_list); i++) {
++		if (standbydur_list[i] == standbydur)
++			break;
++	}
++
++	if (ARRAY_SIZE(standbydur_list) <= i)
++		return -1;
++
++	err = BME_CALL_API(set_standbydur)(i);
++	if (err)
++		return err;
++
++	data->standbydur = standbydur;
++	return err;
++}
++
++/*!
++ * @brief get work mode
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return work mode
++ * @retval 0 ULTRLOWPOWER MODE
++ * @retval 1 LOWPOWER MODE
++ * @retval 2 STANDARDSOLUTION MODE
++ * @retval 3 HIGHRESOLUTION MODE
++ * @retval 4 ULTRAHIGHRESOLUTION MODE
++*/
++#if 0
++static unsigned char bme_get_workmode(struct bme_client_data *data)
++{
++	return data->workmode;
++}
++
++/*!
++ * @brief set work mode, which is defined by software, not hardware.
++ * This setting will impact oversampling value of sensor.
++ *
++ * @param data the pointer of bme client data
++ * @param workmode work mode need to set
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_set_workmode(struct bme_client_data *data, uint8_t workmode)
++{
++	int err = 0;
++	int i;
++
++	for (i = 0; i < ARRAY_SIZE(workmode_list); i++) {
++		if (workmode_list[i] == workmode)
++			break;
++	}
++
++	if (ARRAY_SIZE(workmode_list) <= i)
++		return -1;
++
++	err = BME_CALL_API(set_workmode)(workmode);
++	if (err)
++		return err;
++	else
++		data->workmode = workmode;
++/*
++	bme_get_oversampling_t(data);
++	bme_get_oversampling_p(data);
++	bme_get_oversampling_h(data);
++*/
++	return err;
++}
++#endif
++
++static int bme_set_default_sampling(struct bme_client_data *data)
++{
++	int err = 0;
++	uint8_t oversampling = 1;
++	err = BME_CALL_API(set_osrs_t)(oversampling);
++	err += BME_CALL_API(set_osrs_p)(oversampling);
++	err += BME_CALL_API(set_osrs_h)(oversampling);
++
++	data->oversampling_t = oversampling;
++	data->oversampling_p = oversampling;
++	data->oversampling_h = oversampling;
++
++	return err;
++}
++/*!
++ * @brief verify i2c disable switch status
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme280_verify_i2c_disable_switch(struct bme_client_data *data)
++{
++	int err = 0;
++	uint8_t reg_val = 0xFF;
++
++	err = BME_CALL_API(read_register)
++		(BME280_I2C_DISABLE_SWITCH, &reg_val, 1);
++	if (err < 0) {
++		err = -EIO;
++		PERR("bus read failed\n");
++		return err;
++	}
++
++	if ((reg_val & 0x10) == 0x00) {
++		PINFO("bme280 i2c interface is available\n");
++		return 0;
++	}
++
++	PERR("verification of i2c interface is failure\n");
++	return -1;
++}
++
++/*!
++ * @brief verify calibration parameters
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme280_verify_calib_param(struct bme_client_data *data)
++{
++	struct bme280_calibration_param_t *cali = &(data->device.cal_param);
++
++	/* verify that not all calibration parameters are 0 */
++	if (cali->dig_T1 == 0 && cali->dig_T2 == 0 && cali->dig_T3 == 0
++		&& cali->dig_P1 == 0 && cali->dig_P2 == 0
++		&& cali->dig_P3 == 0 && cali->dig_P4 == 0
++		&& cali->dig_P5 == 0 && cali->dig_P6 == 0
++		&& cali->dig_P7 == 0 && cali->dig_P8 == 0
++		&& cali->dig_P9 == 0
++		&& cali->dig_H1 == 0 && cali->dig_H2 == 0
++		&& cali->dig_H3 == 0 && cali->dig_H4 == 0
++		&& cali->dig_H5 == 0 && cali->dig_H6 == 0) {
++		PERR("all calibration parameters are zero\n");
++		return -1;
++	}
++
++	/* verify whether all the calibration parameters are within range */
++	if (cali->dig_T1 < 19000 || cali->dig_T1 > 35000)
++		return -1;
++	else if (cali->dig_T2 < 22000 || cali->dig_T2 > 30000)
++		return -1;
++	else if (cali->dig_T3 < -3000 || cali->dig_T3 > 1000)
++		return -1;
++	else if (cali->dig_P1 < 30000 || cali->dig_P1 > 42000)
++		return -1;
++	else if (cali->dig_P2 < -12970 || cali->dig_P2 > -8000)
++		return -1;
++	else if (cali->dig_P3 < -5000 || cali->dig_P3 > 8000)
++		return -1;
++	else if (cali->dig_P4 < -10000 || cali->dig_P4 > 18000)
++		return -1;
++	else if (cali->dig_P5 < -500 || cali->dig_P5 > 1100)
++		return -1;
++	else if (cali->dig_P6 < -1000 || cali->dig_P6 > 1000)
++		return -1;
++	else if (cali->dig_P7 < -32768 || cali->dig_P7 > 32767)
++		return -1;
++	else if (cali->dig_P8 < -30000 || cali->dig_P8 > 10000)
++		return -1;
++	else if (cali->dig_P9 < -10000 || cali->dig_P9 > 30000)
++		return -1;
++#if 0 /*No check range for dig_H*/
++	else if (cali->dig_H1 < 100)
++		return -1;
++	else if (cali->dig_H2 < 310 || cali->dig_H2 > 415)
++		return -1;
++	else if (cali->dig_H3 < 0)
++		return -1;
++	else if (cali->dig_H4 < 170 || cali->dig_H4 > 300)
++		return -1;
++	else if (cali->dig_H5 < -70 || cali->dig_H5 > 15)
++		return -1;
++	else if (cali->dig_H6 < -50)
++		return -1;
++#endif
++	PINFO("calibration parameters are OK\n");
++	return 0;
++}
++
++/*!
++ * @brief verify compensated temperature and humidity value
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme280_verify_pth(struct bme_client_data *data)
++{
++	uint8_t wait_time = 0;
++	int32_t temperature = 0;
++	uint32_t pressure = 0;
++	uint32_t humidity = 0;
++
++	/*bme_set_workmode(data, BME_VAL_NAME(ULTRALOWPOWER_MODE));*/
++	bme_set_default_sampling(data);
++	bme_set_op_mode(data, BME_VAL_NAME(FORCED_MODE));
++	BME_CALL_API(compute_wait_time)(&wait_time);
++	bme_delay(wait_time);
++
++	bme_get_temperature(data, &temperature);
++	if (temperature <= SELFTEST_LOW_TEMPERATURE ||
++			temperature >= SELFTEST_HIGH_TEMPERATURE) {
++		PERR("temperature value is out of range:%d*0.01degree\n",
++			temperature);
++		return -1;
++	}
++
++	bme_get_pressure(data, &pressure);
++	if (pressure <= SELFTEST_LOW_PRESSURE ||
++			pressure >= SELFTEST_HIGH_PRESSURE) {
++		PERR("pressure value is out of range:%d Pa\n", pressure);
++		return -1;
++	}
++
++	bme_get_humidity(data, &humidity);
++	if (humidity <= SELFTEST_LOW_HUMIDITY ||
++			humidity >= SELFTEST_HIGH_HUMIDITY) {
++		PERR("humidity value is out of range:%d %%\n", humidity);
++		return -1;
++	}
++	PINFO("bme280 temperature & pressure & humidity values are OK\n");
++	return 0;
++}
++/*!
++ * @brief subfunction of crc check
++ *
++ * @param   seed actual seed value
++ *          data the pointer of bme client data
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++uint8_t bme280_calc_crc(uint8_t seed, uint8_t data)
++{
++	uint8_t poly = 0x1D;
++	uint8_t bit, din;
++
++	for (bit = 0; bit < 8; bit++) {
++		if (((seed & 0x80) > 0) ^ ((data & 0x80) > 0))
++			din = 1;
++		else
++			din = 0;
++		seed = (seed & 0x7F) << 1;
++		data = (data & 0x7F) << 1;
++		seed = seed ^ (poly * din);
++	}
++
++	return seed;
++}
++/*!
++ * @brief verify crc register content
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme280_check_crc(struct bme_client_data *data)
++{
++	uint8_t i = 0, x = 0;
++	uint8_t current_register;
++	uint8_t crc_val = 0xFF;
++	uint8_t registers[50];
++	uint8_t crc_stored;
++
++	for (i = 0x88; i < 0xA2; i++) {
++		/*read all relevant registers for CRC calculation*/
++		BME_CALL_API(read_register)(i, &registers[x], 1);
++		x++;
++	}
++
++	for (i = 0xE1; i < 0xE8; i++) {
++		/*read all relevant registers for CRC calculation*/
++		BME_CALL_API(read_register)(i, &registers[x], 1);
++		x++;
++	}
++
++	/*read stored CRC value for CRC calculation*/
++	BME_CALL_API(read_register)(0xE8, &crc_stored, 1);
++	for (i = 0; i < x; i++) {
++		current_register = registers[i];
++		crc_val = bme280_calc_crc(crc_val, current_register);
++	}
++
++	crc_val = (crc_val ^ 0xFF);
++	if (crc_val == crc_stored) {
++		/*calculated crc is correct*/
++		PINFO("CRC check is passed, crc_val=%d", crc_val);
++		return 0;
++	} else {
++		/*data or crc is wrong*/
++		PERR("CRC check is wrong, crc_val=%d", crc_val);
++		return -1;
++	}
++}
++
++/*!
++ * @brief do selftest
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_do_selftest(struct bme_client_data *data)
++{
++	int err = 0;
++
++	if (data == NULL)
++		return -EINVAL;
++
++	err = bme280_verify_i2c_disable_switch(data);
++	if (err) {
++		data->selftest = 0;
++		return BME_SELFTEST_FAILED;
++	}
++
++	err = bme280_verify_calib_param(data);
++	if (err) {
++		data->selftest = 0;
++		return BME_SELFTEST_FAILED;
++	}
++
++	err = bme280_check_crc(data);
++	if (err) {
++		data->selftest = 0;
++		return BME_SELFTEST_FAILED;
++	}
++
++	err = bme280_verify_pth(data);
++	if (err) {
++		data->selftest = 0;
++		return BME_SELFTEST_FAILED;
++	}
++	/* selftest is OK */
++	data->selftest = 1;
++	return BME_SELFTEST_SUCCESS;
++}
++
++/* sysfs callbacks */
++/*!
++ * @brief get delay value via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of delay buffer
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t show_delay(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	return sprintf(buf, "%d\n", data->delay);
++}
++
++/*!
++ * @brief set delay value via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of delay buffer
++ * @param count buffer size
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t store_delay(struct device *dev,
++			struct device_attribute *attr,
++			const char *buf, size_t count)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	unsigned long delay;
++	int status = kstrtoul(buf, 10, &delay);
++	if (status == 0) {
++		mutex_lock(&data->lock);
++		data->delay = delay;
++		mutex_unlock(&data->lock);
++		return count;
++	}
++	return status;
++}
++
++/*!
++ * @brief get compersated temperature value via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of temperature buffer
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t show_temperature(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	int32_t temperature;
++	int status;
++	struct bme_client_data *data = dev_get_drvdata(dev);
++
++	mutex_lock(&data->lock);
++	status = bme_get_temperature(data, &temperature);
++	mutex_unlock(&data->lock);
++	if (status == 0)
++		return sprintf(buf, "%d\n", temperature);
++
++	return status;
++}
++
++/*!
++ * @brief set compersated pressure value via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of pressure buffer
++ * @param count buffer size
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t show_pressure(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	uint32_t pressure;
++	int status;
++	struct bme_client_data *data = dev_get_drvdata(dev);
++
++	mutex_lock(&data->lock);
++	status = bme_get_pressure(data, &pressure);
++	mutex_unlock(&data->lock);
++	if (status == 0)
++		return sprintf(buf, "%d\n", pressure);
++
++	return status;
++}
++
++/*!
++ * @brief set compersated humidity value via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of humidity buffer
++ * @param count buffer size
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t show_humidity(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	uint32_t humidity;
++	int status;
++	struct bme_client_data *data = dev_get_drvdata(dev);
++
++	mutex_lock(&data->lock);
++	status = bme_get_humidity(data, &humidity);
++	mutex_unlock(&data->lock);
++	if (status == 0)
++		return sprintf(buf, "%d\n", humidity);
++
++	return status;
++}
++
++/*!
++ * @brief get temperature oversampling value via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of temperature oversampling buffer
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t show_oversampling_t(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	return sprintf(buf, "%d\n", bme_get_oversampling_t(data));
++}
++
++/*!
++ * @brief set temperature oversampling value via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of temperature oversampling buffer
++ * @param count buffer size
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t store_oversampling_t(struct device *dev,
++			struct device_attribute *attr,
++			const char *buf, size_t count)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	unsigned long oversampling;
++	int status = kstrtoul(buf, 10, &oversampling);
++	if (status == 0) {
++		mutex_lock(&data->lock);
++		bme_set_oversampling_t(data, oversampling);
++		mutex_unlock(&data->lock);
++		return count;
++	}
++	return status;
++}
++
++/*!
++ * @brief get pressure oversampling value via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of pressure oversampling buffer
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t show_oversampling_p(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	return sprintf(buf, "%d\n", bme_get_oversampling_p(data));
++}
++
++/*!
++ * @brief set pressure oversampling value via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of pressure oversampling buffer
++ * @param count buffer size
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t store_oversampling_p(struct device *dev,
++			struct device_attribute *attr,
++			const char *buf, size_t count)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	unsigned long oversampling;
++	int status = kstrtoul(buf, 10, &oversampling);
++	if (status == 0) {
++		mutex_lock(&data->lock);
++		bme_set_oversampling_p(data, oversampling);
++		mutex_unlock(&data->lock);
++		return count;
++	}
++	return status;
++}
++
++/*!
++ * @brief get humidity oversampling value via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of humidity oversampling buffer
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t show_oversampling_h(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	return sprintf(buf, "%d\n", bme_get_oversampling_h(data));
++}
++
++/*!
++ * @brief set humidity oversampling value via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of humidity oversampling buffer
++ * @param count buffer size
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t store_oversampling_h(struct device *dev,
++			struct device_attribute *attr,
++			const char *buf, size_t count)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	unsigned long oversampling;
++	int status = kstrtoul(buf, 10, &oversampling);
++	if (status == 0) {
++		mutex_lock(&data->lock);
++		bme_set_oversampling_h(data, oversampling);
++		mutex_unlock(&data->lock);
++		return count;
++	}
++	return status;
++}
++
++/*!
++ * @brief get operation mode via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of operation mode buffer
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t show_op_mode(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	return sprintf(buf, "%d\n", bme_get_op_mode(data));
++}
++
++/*!
++ * @brief set operation mode via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of operation mode buffer
++ * @param count buffer size
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t store_op_mode(struct device *dev,
++			struct device_attribute *attr,
++			const char *buf, size_t count)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	unsigned long op_mode;
++	int status = kstrtoul(buf, 10, &op_mode);
++	if (status == 0) {
++		mutex_lock(&data->lock);
++		bme_set_op_mode(data, op_mode);
++		mutex_unlock(&data->lock);
++		return count;
++	}
++	return status;
++}
++
++/*!
++ * @brief get filter coefficient via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of filter coefficient buffer
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t show_filter(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	return sprintf(buf, "%d\n", bme_get_filter(data));
++}
++
++/*!
++ * @brief set filter coefficient via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of filter coefficient buffer
++ * @param count buffer size
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t store_filter(struct device *dev,
++			struct device_attribute *attr,
++			const char *buf, size_t count)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	unsigned long filter;
++	int status = kstrtoul(buf, 10, &filter);
++	if (status == 0) {
++		mutex_lock(&data->lock);
++		bme_set_filter(data, filter);
++		mutex_unlock(&data->lock);
++		return count;
++	}
++	return status;
++}
++
++/*!
++ * @brief get standby duration via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of standby duration buffer
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t show_standbydur(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	return sprintf(buf, "%d\n", bme_get_standbydur(data));
++}
++
++/*!
++ * @brief set standby duration via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of standby duration buffer
++ * @param count buffer size
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t store_standbydur(struct device *dev,
++			struct device_attribute *attr,
++			const char *buf, size_t count)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	unsigned long standbydur;
++	int status = kstrtoul(buf, 10, &standbydur);
++	if (status == 0) {
++		mutex_lock(&data->lock);
++		bme_set_standbydur(data, standbydur);
++		mutex_unlock(&data->lock);
++		return count;
++	}
++	return status;
++}
++
++/*!
++ * @brief get work mode via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of work mode buffer
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++#if 0
++static ssize_t show_workmode(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	return sprintf(buf, "%d\n", bme_get_workmode(data));
++}
++
++/*!
++ * @brief set work mode via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of work mode buffer
++ * @param count buffer size
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t store_workmode(struct device *dev,
++			struct device_attribute *attr,
++			const char *buf, size_t count)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	unsigned long workmode;
++	int status = kstrtoul(buf, 10, &workmode);
++	if (status == 0) {
++		mutex_lock(&data->lock);
++		bme_set_workmode(data, workmode);
++		mutex_unlock(&data->lock);
++		return count;
++	}
++	return status;
++}
++#endif
++/*!
++ * @brief get sensor work state via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of enable/disable value buffer
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t show_enable(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	return sprintf(buf, "%d\n", data->enable);
++}
++
++/*!
++ * @brief enable/disable sensor function via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of enable/disable buffer
++ * @param count buffer size
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t store_enable(struct device *dev,
++			struct device_attribute *attr,
++			const char *buf, size_t count)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	unsigned long enable;
++	int status = kstrtoul(buf, 10, &enable);
++	if (status == 0) {
++		enable = enable ? 1 : 0;
++		mutex_lock(&data->lock);
++		if (data->enable != enable) {
++			if (enable) {
++				#ifdef CONFIG_PM
++				bme_enable(dev);
++				#endif
++				bme_set_op_mode(data, \
++					BME_VAL_NAME(NORMAL_MODE));
++				schedule_delayed_work(&data->work,
++					msecs_to_jiffies(data->delay));
++			} else{
++				cancel_delayed_work_sync(&data->work);
++				bme_set_op_mode(data, \
++					BME_VAL_NAME(SLEEP_MODE));
++				#ifdef CONFIG_PM
++				bme_disable(dev);
++				#endif
++			}
++			data->enable = enable;
++		}
++		mutex_unlock(&data->lock);
++		return count;
++	}
++	return status;
++}
++
++/*!
++ * @brief get selftest status via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of selftest buffer
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t show_selftest(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	return sprintf(buf, "%d\n", data->selftest);
++}
++
++/*!
++ * @brief do selftest via sysfs node
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of selftest buffer
++ * @param count buffer size
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static ssize_t store_selftest(struct device *dev,
++			struct device_attribute *attr,
++			const char *buf, size_t count)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	unsigned long action;
++	int status = kstrtoul(buf, 10, &action);
++	if (0 != status)
++		return status;
++
++	/* 1 means do selftest */
++	if (1 != action)
++		return -EINVAL;
++
++	mutex_lock(&data->lock);
++	status = bme_do_selftest(data);
++	mutex_unlock(&data->lock);
++
++	if (BME_SELFTEST_SUCCESS == status)
++		return count;
++	else
++		return status;
++}
++
++#ifdef DEBUG_BME280
++/*!
++ * @brief dump significant registers value from hardware
++ * and copy to use space via sysfs node. This node only for debug,
++ * which could dump registers from 0xF3 to 0xFC.
++ *
++ * @param dev the pointer of device
++ * @param attr the pointer of device attribute file
++ * @param buf the pointer of registers value buffer
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++/*Need to be updated*/
++static ssize_t show_dump_reg(struct device *dev,
++			struct device_attribute *attr, char *buf)
++{
++	#define REG_CALI_NUM (0xA1 - 0x88 + 1)
++	#define REG_CALI2_NUM (0xF0 - 0xE1 + 1)
++	#define REG_CTRL_NUM (0xFE - 0xF2 + 1)
++	struct bme_client_data *data = dev_get_drvdata(dev);
++	char regsbuf[REG_CALI_NUM + REG_CALI2_NUM + REG_CTRL_NUM];
++	char strbuf[REG_CALI_NUM + REG_CALI2_NUM + REG_CTRL_NUM + 256] = {0};
++	int err = 0, i;
++
++	sprintf(strbuf + strlen(strbuf), \
++			"-----calib regs[0x88 ~ 0xA1]-----\n");
++	err = data->data_bus.bops->bus_read(BME_I2C_ADDRESS, \
++			0x88, regsbuf, REG_CALI_NUM);
++	if (err)
++		return err;
++
++	for (i = 0; i < REG_CALI_NUM; i++)
++		sprintf(strbuf + strlen(strbuf), "%02X%c", \
++				regsbuf[i], ((i+1)%0x10 == 0) ? '\n' : ' ');
++
++	sprintf(strbuf + strlen(strbuf), \
++			"\n-----calib regs[0xE1 ~ 0xF0]-----\n");
++	err = data->data_bus.bops->bus_read(BME_I2C_ADDRESS, \
++			0xE1, regsbuf, REG_CALI2_NUM);
++	if (err)
++		return err;
++
++	for (i = 0; i < REG_CALI2_NUM; i++)
++		sprintf(strbuf + strlen(strbuf), "%02X%c", \
++				regsbuf[i], ((i+1)%0x10 == 0) ? '\n' : ' ');
++
++	sprintf(strbuf + strlen(strbuf), \
++			"\n-----ctrl  regs[0xF2 ~ 0xFE]-----\n");
++	err = data->data_bus.bops->bus_read(BME_I2C_ADDRESS, \
++		0xF2, regsbuf, REG_CTRL_NUM);
++	if (err)
++		return err;
++
++	for (i = 0; i < REG_CTRL_NUM; i++)
++		sprintf(strbuf + strlen(strbuf), "%02X ", regsbuf[i]);
++
++	return snprintf(buf, 4096, "%s\n", strbuf);
++}
++#endif/*DEBUG_BME280*/
++
++static DEVICE_ATTR(delay, S_IWUSR | S_IRUGO,
++			show_delay, store_delay);
++static DEVICE_ATTR(temperature, S_IRUGO,
++			show_temperature, NULL);
++static DEVICE_ATTR(pressure, S_IRUGO,
++			show_pressure, NULL);
++static DEVICE_ATTR(humidity, S_IRUGO,
++			show_humidity, NULL);
++static DEVICE_ATTR(oversampling_t, S_IWUSR | S_IRUGO,
++			show_oversampling_t, store_oversampling_t);
++static DEVICE_ATTR(oversampling_p, S_IWUSR | S_IRUGO,
++			show_oversampling_p, store_oversampling_p);
++static DEVICE_ATTR(oversampling_h, S_IWUSR | S_IRUGO,
++			show_oversampling_h, store_oversampling_h);
++static DEVICE_ATTR(op_mode, S_IWUSR | S_IRUGO,
++			show_op_mode, store_op_mode);
++static DEVICE_ATTR(filter, S_IWUSR | S_IRUGO,
++			show_filter, store_filter);
++static DEVICE_ATTR(standbydur, S_IWUSR | S_IRUGO,
++			show_standbydur, store_standbydur);
++#if 0
++static DEVICE_ATTR(workmode, S_IWUSR | S_IRUGO,
++			show_workmode, store_workmode);
++#endif
++static DEVICE_ATTR(enable, S_IWUSR | S_IRUGO,
++			show_enable, store_enable);
++static DEVICE_ATTR(selftest, S_IWUSR | S_IRUGO,
++			show_selftest, store_selftest);
++
++#ifdef DEBUG_BME280
++static DEVICE_ATTR(dump_reg, S_IRUGO,
++			show_dump_reg, NULL);
++#endif
++
++/*!
++ * @brief device attribute files
++*/
++static struct attribute *bme_attributes[] = {
++	/**< delay attribute */
++	&dev_attr_delay.attr,
++	/**< compersated temperature attribute */
++	&dev_attr_temperature.attr,
++	/**< compersated pressure attribute */
++	&dev_attr_pressure.attr,
++	/**< compersated humidity attribute */
++	&dev_attr_humidity.attr,
++	/**< temperature oversampling attribute */
++	&dev_attr_oversampling_t.attr,
++	/**< pressure oversampling attribute */
++	&dev_attr_oversampling_p.attr,
++	/**< humidity oversampling attribute */
++	&dev_attr_oversampling_h.attr,
++	/**< operature mode attribute */
++	&dev_attr_op_mode.attr,
++	/**< filter coefficient attribute */
++	&dev_attr_filter.attr,
++	/**< standby duration attribute */
++	&dev_attr_standbydur.attr,
++	/**< work mode attribute */
++#if 0
++	&dev_attr_workmode.attr,
++#endif
++	/**< enable/disable attribute */
++	&dev_attr_enable.attr,
++	/**< selftest attribute */
++	&dev_attr_selftest.attr,
++	/**< dump registers attribute */
++#ifdef DEBUG_BME280
++	&dev_attr_dump_reg.attr,
++#endif
++	/**< flag to indicate the end */
++	NULL
++};
++
++/*!
++ * @brief attribute files group
++*/
++static const struct attribute_group bme_attr_group = {
++	/**< bme attributes */
++	.attrs = bme_attributes,
++};
++
++/*!
++ * @brief workqueue function to report input event
++ *
++ * @param work the pointer of workqueue
++ *
++ * @return no return value
++*/
++static void bme_work_func(struct work_struct *work)
++{
++	struct bme_client_data *client_data =
++		container_of((struct delayed_work *)work,
++		struct bme_client_data, work);
++	uint32_t delay = msecs_to_jiffies(client_data->delay);
++	uint32_t j1 = jiffies;
++	uint32_t pressure = 0;
++	uint32_t humidity = 0;
++	int32_t temperature = 0;
++	int status1, status2, status3;
++
++	mutex_lock(&client_data->lock);
++	status1 = bme_get_pressure(client_data, &pressure);
++	status2 = bme_get_humidity(client_data, &humidity);
++	status3 = bme_get_temperature(client_data, &temperature);
++	mutex_unlock(&client_data->lock);
++	if (status1 == 0)
++		input_event(client_data->input, EV_MSC, MSC_RAW, pressure);
++
++	if (status2 == 0)
++		input_event(client_data->input, EV_MSC, MSC_SCAN, humidity);
++
++	if (status3 == 0)
++		input_event(client_data->input, EV_MSC, MSC_GESTURE,
++				temperature);
++
++	if (status1 == 0 || status2 == 0 || status3 == 0)
++		input_sync(client_data->input);
++
++	schedule_delayed_work(&client_data->work, delay-(jiffies-j1));
++}
++
++/*!
++ * @brief initialize input device
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_input_init(struct bme_client_data *data)
++{
++	struct input_dev *dev;
++	int err;
++
++	dev = input_allocate_device();
++	if (!dev)
++		return -ENOMEM;
++	dev->name = BME_NAME;
++	dev->id.bustype = BUS_I2C;
++
++	input_set_capability(dev, EV_MSC, MSC_RAW);
++	input_set_capability(dev, EV_MSC, MSC_SCAN);
++	input_set_capability(dev, EV_MSC, MSC_GESTURE);
++	input_set_drvdata(dev, data);
++
++	err = input_register_device(dev);
++	if (err < 0) {
++		input_free_device(dev);
++		return err;
++	}
++	data->input = dev;
++
++	return 0;
++}
++
++/*!
++ * @brief delete input device
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return no return value
++*/
++static void bme_input_delete(struct bme_client_data *data)
++{
++	struct input_dev *dev = data->input;
++
++	input_unregister_device(dev);
++	input_free_device(dev);
++}
++
++/*!
++ * @brief initialize bme client
++ *
++ * @param data the pointer of bme client data
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_init_client(struct bme_client_data *data)
++{
++	int status;
++
++	data->device.bus_read = data->data_bus.bops->bus_read;
++	data->device.bus_write = data->data_bus.bops->bus_write;
++	data->device.delay_msec = bme_delay;
++	data->device.dev_addr = BME_I2C_ADDRESS;
++
++	status = BME_CALL_API(init)(&data->device);
++	if (status)
++		return status;
++
++	mutex_init(&data->lock);
++
++	data->delay  = BME_DELAY_DEFAULT;
++	data->enable = 0;
++	data->selftest = BME_SELFTEST_NO_ACTION;/* no action to selftest */
++
++	status = bme_set_op_mode(data, BME_VAL_NAME(SLEEP_MODE));
++	if (status)
++		return status;
++
++	status = bme_set_filter(data, BME_FILTER_DEFAULT);
++	if (status)
++		return status;
++
++	status = bme_set_standbydur(data, BME_STANDBYDUR_DEFAULT);
++	if (status)
++		return status;
++
++	status = bme_set_default_sampling(data);
++#if 0
++	status = bme_set_workmode(data, BME_WORKMODE_DEFAULT);
++#endif
++	return status;
++}
++
++/*!
++ * @brief probe bme sensor
++ *
++ * @param dev the pointer of device
++ * @param data_bus the pointer of data bus communication
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++int bme_probe(struct device *dev, struct bme_data_bus *data_bus)
++{
++	struct bme_client_data *data;
++	int err = 0;
++
++
++	if (!dev || !data_bus) {
++		err = -EINVAL;
++		goto exit;
++	}
++
++	/* check chip id */
++	err = bme_check_chip_id(data_bus);
++	if (err) {
++		PERR("Bosch Sensortec Device not found, chip id mismatch!\n");
++		goto exit;
++	} else {
++		PNOTICE("Bosch Sensortec Device %s detected.\n", BME_NAME);
++	}
++
++	data = kzalloc(sizeof(struct bme_client_data), GFP_KERNEL);
++	if (!data) {
++		err = -ENOMEM;
++		goto exit;
++	}
++
++	dev_set_drvdata(dev, data);
++	data->data_bus = *data_bus;
++	data->dev = dev;
++
++	/* Initialize the BME chip */
++	err = bme_init_client(data);
++	if (err != 0)
++		goto exit_free;
++
++	/* Initialize the BME input device */
++	err = bme_input_init(data);
++	if (err != 0)
++		goto exit_free;
++
++	/* Register sysfs hooks */
++	err = sysfs_create_group(&data->input->dev.kobj, &bme_attr_group);
++	if (err)
++		goto error_sysfs;
++
++	/* workqueue init */
++	INIT_DELAYED_WORK(&data->work, bme_work_func);
++
++#ifdef CONFIG_HAS_EARLYSUSPEND
++	data->early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
++	data->early_suspend.suspend = bme_early_suspend;
++	data->early_suspend.resume = bme_late_resume;
++	register_early_suspend(&data->early_suspend);
++#endif
++
++	PINFO("Succesfully probe sensor %s\n", BME_NAME);
++	return 0;
++
++error_sysfs:
++	bme_input_delete(data);
++exit_free:
++	kfree(data);
++exit:
++	return err;
++}
++EXPORT_SYMBOL(bme_probe);
++
++/*!
++ * @brief remove bme client
++ *
++ * @param dev the pointer of device
++ *
++ * @return zero
++ * @retval zero
++*/
++int bme_remove(struct device *dev)
++{
++	struct bme_client_data *data = dev_get_drvdata(dev);
++#ifdef CONFIG_HAS_EARLYSUSPEND
++	unregister_early_suspend(&data->early_suspend);
++#endif
++	sysfs_remove_group(&data->input->dev.kobj, &bme_attr_group);
++	kfree(data);
++
++	return 0;
++}
++EXPORT_SYMBOL(bme_remove);
++
++#ifdef CONFIG_PM
++/*!
++ * @brief disable power
++ *
++ * @param dev the pointer of device
++ *
++ * @return zero
++ * @retval zero
++*/
++int bme_disable(struct device *dev)
++{
++	return 0;
++}
++EXPORT_SYMBOL(bme_disable);
++
++/*!
++ * @brief enable power
++ *
++ * @param dev the pointer of device
++ *
++ * @return zero
++ * @retval zero
++*/
++int bme_enable(struct device *dev)
++{
++	return 0;
++}
++EXPORT_SYMBOL(bme_enable);
++#endif
++
++#ifdef CONFIG_HAS_EARLYSUSPEND
++/*!
++ * @brief early suspend function of bme sensor
++ *
++ * @param h the pointer of early suspend
++ *
++ * @return no return value
++*/
++static void bme_early_suspend(struct early_suspend *h)
++{
++	struct bme_client_data *data =
++		container_of(h, struct bme_client_data, early_suspend);
++
++	mutex_lock(&data->lock);
++	if (data->enable) {
++		cancel_delayed_work_sync(&data->work);
++		bme_set_op_mode(data, BME_VAL_NAME(SLEEP_MODE));
++		#ifdef CONFIG_PM
++		(void) bme_disable(data->dev);
++		#endif
++	}
++	mutex_unlock(&data->lock);
++}
++
++/*!
++ * @brief late resume function of bme sensor
++ *
++ * @param h the pointer of early suspend
++ *
++ * @return no return value
++*/
++static void bme_late_resume(struct early_suspend *h)
++{
++	struct bme_client_data *data =
++		container_of(h, struct bme_client_data, early_suspend);
++
++	mutex_lock(&data->lock);
++	if (data->enable) {
++		#ifdef CONFIG_PM
++		(void) bme_enable(data->dev);
++		#endif
++		bme_set_op_mode(data, BME_VAL_NAME(NORMAL_MODE));
++		schedule_delayed_work(&data->work,
++			msecs_to_jiffies(data->delay));
++	}
++	mutex_unlock(&data->lock);
++}
++#endif
++
++MODULE_AUTHOR("contact@bosch-sensortec.com");
++MODULE_DESCRIPTION("BME280 ENVIRONMENT SENSOR DRIVER");
++MODULE_LICENSE("GPL v2");
++/*@}*/
+diff --git a/drivers/input/misc/bme280/bme280_core.h b/drivers/input/misc/bme280/bme280_core.h
+new file mode 100644
+index 0000000..6d931f1
+--- /dev/null
++++ b/drivers/input/misc/bme280/bme280_core.h
+@@ -0,0 +1,65 @@
++/*!
++ * @section LICENSE
++ * (C) Copyright 2013 Bosch Sensortec GmbH All Rights Reserved
++ *
++ * This software program is licensed subject to the GNU General
++ * Public License (GPL).Version 2,June 1991,
++ * available at http://www.fsf.org/copyleft/gpl.html
++ *
++ * @filename bme280_core.h
++ * @date     "Wed Feb 19 16:27:25 2014 +0800"
++ * @id       "7f466fb"
++ *
++ * @brief
++ * The head file of BME280 device driver core code
++*/
++#ifndef _BME280_CORE_H
++#define _BME280_CORE_H
++
++#include "bme280.h"
++#include "bs_log.h"
++
++/*! @defgroup bme280_core_inc
++ *  @brief The head file of BME280 device driver core code
++ @{*/
++/*! define BME device name */
++#define BME_NAME "bme280"
++
++/*! define BME register name according to API */
++#define BME_REG_NAME(name) BME280_##name
++/*! define BME value name according to API */
++#define BME_VAL_NAME(name) BME280_##name
++/*! define BME hardware-related function according to API */
++#define BME_CALL_API(name) bme280_##name
++/*! only for debug */
++#define DEBUG_BME280
++
++/*!
++ * @brief bus communication operation
++*/
++struct bme_bus_ops {
++	/*!write pointer */
++	BME280_WR_FUNC_PTR;
++	/*!read pointer */
++	BME280_RD_FUNC_PTR;
++};
++
++/*!
++ * @brief bus data client
++*/
++struct bme_data_bus {
++	/*!bus communication operation */
++	const struct bme_bus_ops *bops;
++	/*!bme client */
++	void *client;
++};
++
++int bme_probe(struct device *dev, struct bme_data_bus *data_bus);
++int bme_remove(struct device *dev);
++#ifdef CONFIG_PM
++int bme_enable(struct device *dev);
++int bme_disable(struct device *dev);
++#endif
++
++#endif/*_BME280_CORE_H*/
++/*@}*/
+diff --git a/drivers/input/misc/bme280/bme280_i2c.c b/drivers/input/misc/bme280/bme280_i2c.c
+new file mode 100644
+index 0000000..5004e69
+--- /dev/null
++++ b/drivers/input/misc/bme280/bme280_i2c.c
+@@ -0,0 +1,348 @@
++/*!
++ * @section LICENSE
++ * (C) Copyright 2013 Bosch Sensortec GmbH All Rights Reserved
++ *
++ * This software program is licensed subject to the GNU General
++ * Public License (GPL).Version 2,June 1991,
++ * available at http://www.fsf.org/copyleft/gpl.html
++ *
++ * @filename bme280_i2c.c
++ * @date     "Thu Nov 20 17:26:03 2014 +0800"
++ * @id       "f5681eb"
++ *
++ * @brief
++ * This file implements moudle function, which add
++ * the driver to I2C core.
++*/
++
++#include <linux/module.h>
++#include <linux/i2c.h>
++#include <linux/delay.h>
++#include "bme280_core.h"
++
++static struct i2c_client *bme_i2c_client;
++
++/*! @defgroup bme280_i2c_src
++ *  @brief bme280 i2c driver module
++ @{*/
++/*! maximum retry times during i2c transfer */
++#define BME_MAX_RETRY_I2C_XFER   10
++/*! wait time after i2c transfer error occurred */
++#define BME_I2C_WRITE_DELAY_TIME 1
++
++#ifdef BME_USE_BASIC_I2C_FUNC
++/*!
++ * @brief define i2c wirte function
++ *
++ * @param client the pointer of i2c client
++ * @param reg_addr register address
++ * @param data the pointer of data buffer
++ * @param len block size need to write
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static s8 bme_i2c_read(struct i2c_client *client, u8 reg_addr,
++		u8 *data, u8 len)
++{
++	int retry;
++
++	struct i2c_msg msg[] = {
++		{
++			.addr = client->addr,
++			.flags = 0,
++			.len = 1,
++			.buf = &reg_addr,
++		},
++
++		{
++			.addr = client->addr,
++			.flags = I2C_M_RD,
++			.len = len,
++			.buf = data,
++		},
++	};
++
++	for (retry = 0; retry < BME_MAX_RETRY_I2C_XFER; retry++) {
++		if (i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg)) > 0)
++			break;
++		else
++			mdelay(BME_I2C_WRITE_DELAY_TIME);
++	}
++
++	if (BME_MAX_RETRY_I2C_XFER <= retry) {
++		PERR("I2C xfer error");
++		return -EIO;
++	}
++
++	return 0;
++}
++
++/*!
++ * @brief define i2c wirte function
++ *
++ * @param client the pointer of i2c client
++ * @param reg_addr register address
++ * @param data the pointer of data buffer
++ * @param len block size need to write
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static s8 bme_i2c_write(struct i2c_client *client, u8 reg_addr,
++		u8 *data, u8 len)
++{
++	u8 buffer[2];
++	int retry;
++	struct i2c_msg msg = {
++		.addr = client->addr,
++		.flags = 0,
++		.len = 2,
++		.buf = buffer,
++	};
++
++	while (0 != len--) {
++		msg.buf = buffer;
++		msg.buf[0] = reg_addr;
++		msg.buf[1] = *data;
++
++		for (retry = 0; retry < BME_MAX_RETRY_I2C_XFER; retry++) {
++			if (i2c_transfer(client->adapter, &msg, 1) > 0)
++				break;
++			mdelay(BME_I2C_WRITE_DELAY_TIME);
++		}
++		if (BME_MAX_RETRY_I2C_XFER <= retry) {
++			PERR("I2C xfer error");
++			return -EIO;
++		}
++		reg_addr++;
++		data++;
++	}
++
++	return 0;
++}
++#endif/*BME_USE_BASIC_I2C_FUNC*/
++
++/*!
++ * @brief define i2c block wirte function
++ *
++ * @param dev_addr sensor i2c address
++ * @param reg_addr register address
++ * @param data the pointer of data buffer
++ * @param len block size need to write
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static s8 bme_i2c_write_block(u8 dev_addr, u8 reg_addr, u8 *data, u8 len)
++{
++	s8 err = 0;
++
++	if (NULL == bme_i2c_client)
++		return -1;
++
++#ifdef BME_USE_BASIC_I2C_FUNC
++	err = bme_i2c_write(bme_i2c_client, reg_addr, data, len);
++#else
++	err = i2c_smbus_write_i2c_block_data(bme_i2c_client, \
++			reg_addr, len, data);
++#endif
++
++	return err;
++}
++
++/*!
++ * @brief define i2c block read function
++ *
++ * @param dev_addr sensor i2c address
++ * @param reg_addr register address
++ * @param data the pointer of data buffer
++ * @param len block size need to read
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static s8 bme_i2c_read_block(u8 dev_addr, u8 reg_addr, u8 *data, u8 len)
++{
++	s8 err = 0;
++
++	if (NULL == bme_i2c_client)
++		return -1;
++
++#ifdef BME_USE_BASIC_I2C_FUNC
++	err = bme_i2c_read(bme_i2c_client, reg_addr, data, len);
++#else
++	err = i2c_smbus_read_i2c_block_data(bme_i2c_client, \
++			reg_addr, len, data);
++#endif
++
++	return err;
++}
++
++/*!
++ * @brief i2c bus operation
++*/
++static const struct bme_bus_ops bme_i2c_bus_ops = {
++	/**< i2c block write pointer */
++	.bus_write	= bme_i2c_write_block,
++	/**< i2c block read pointer */
++	.bus_read	= bme_i2c_read_block
++};
++
++/*!
++ * @brief BME probe function via i2c bus
++ *
++ * @param client the pointer of i2c client
++ * @param id the pointer of i2c device id
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_i2c_probe(struct i2c_client *client,
++		const struct i2c_device_id *id)
++{
++	struct bme_data_bus data_bus = {
++		.bops = &bme_i2c_bus_ops,
++		.client = client
++	};
++
++	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
++		PERR("i2c_check_functionality error!");
++		return -EIO;
++	}
++
++	if (NULL == bme_i2c_client)
++		bme_i2c_client = client;
++	else{
++		PERR("This driver does not support multiple clients!\n");
++		return -EINVAL;
++	}
++
++	return bme_probe(&client->dev, &data_bus);
++}
++
++/*!
++ * @brief shutdown bme device in i2c driver
++ *
++ * @param client the pointer of i2c client
++ *
++ * @return no return value
++*/
++static void bme_i2c_shutdown(struct i2c_client *client)
++{
++#ifdef CONFIG_PM
++	bme_disable(&client->dev);
++#endif
++}
++
++/*!
++ * @brief remove bme i2c client
++ *
++ * @param client the pointer of i2c client
++ *
++ * @return zero
++ * @retval zero
++*/
++static int bme_i2c_remove(struct i2c_client *client)
++{
++	return bme_remove(&client->dev);
++}
++
++#ifdef CONFIG_PM
++/*!
++ * @brief suspend bme device in i2c driver
++ *
++ * @param dev the pointer of device
++ *
++ * @return zero
++ * @retval zero
++*/
++static int bme_i2c_suspend(struct device *dev)
++{
++	return bme_disable(dev);
++}
++
++/*!
++ * @brief resume bme device in i2c driver
++ *
++ * @param dev the pointer of device
++ *
++ * @return zero
++ * @retval zero
++*/
++static int bme_i2c_resume(struct device *dev)
++{
++	return bme_enable(dev);
++}
++
++/*!
++ * @brief register i2c device power manager hooks
++*/
++static const struct dev_pm_ops bme_i2c_pm_ops = {
++	/**< device suspend */
++	.suspend = bme_i2c_suspend,
++	/**< device resume */
++	.resume = bme_i2c_resume
++};
++#endif
++
++/*!
++ * @brief register i2c device id
++*/
++static const struct i2c_device_id bme_id[] = {
++	{ BME_NAME, 0 },
++	{ }
++};
++MODULE_DEVICE_TABLE(i2c, bme_id);
++
++/*!
++ * @brief register i2c driver hooks
++*/
++static struct i2c_driver bme_i2c_driver = {
++	.driver = {
++		.owner	= THIS_MODULE,
++		.name	= BME_NAME,
++#ifdef CONFIG_PM
++		.pm	= &bme_i2c_pm_ops,
++#endif
++	},
++	.id_table	= bme_id,
++	.probe		= bme_i2c_probe,
++	.shutdown	= bme_i2c_shutdown,
++	.remove		= bme_i2c_remove
++};
++
++/*!
++ * @brief initialize bme i2c module
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int __init bme_i2c_init(void)
++{
++	return i2c_add_driver(&bme_i2c_driver);
++}
++
++/*!
++ * @brief remove bme i2c module
++ *
++ * @return no return value
++*/
++static void __exit bme_i2c_exit(void)
++{
++	i2c_del_driver(&bme_i2c_driver);
++}
++
++
++MODULE_DESCRIPTION("BME280 I2C BUS DRIVER");
++MODULE_LICENSE("GPL v2");
++
++module_init(bme_i2c_init);
++module_exit(bme_i2c_exit);
++/*@}*/
+diff --git a/drivers/input/misc/bme280/bme280_spi.c b/drivers/input/misc/bme280/bme280_spi.c
+new file mode 100644
+index 0000000..daba7d0
+--- /dev/null
++++ b/drivers/input/misc/bme280/bme280_spi.c
+@@ -0,0 +1,262 @@
++/*!
++ * @section LICENSE
++ * (C) Copyright 2013 Bosch Sensortec GmbH All Rights Reserved
++ *
++ * This software program is licensed subject to the GNU General
++ * Public License (GPL).Version 2,June 1991,
++ * available at http://www.fsf.org/copyleft/gpl.html
++ *
++ * @filename bme280_spi.c
++ * @date     "Tue Jul 15 16:09:26 2014 +0800"
++ * @id       "5d14431"
++ *
++ * @brief
++ * This file implements moudle function, which add
++ * the driver to SPI core.
++*/
++
++#include <linux/module.h>
++#include <linux/spi/spi.h>
++#include <linux/delay.h>
++#include "bme280_core.h"
++#include "bs_log.h"
++
++/*! @defgroup bme280_spi_src
++ *  @brief bme280 spi driver module
++ @{*/
++/*! the maximum of transfer buffer size */
++#define BME_MAX_BUFFER_SIZE      32
++
++static struct spi_device *bme_spi_client;
++
++/*!
++ * @brief define spi wirte function
++ *
++ * @param dev_addr sensor device address
++ * @param reg_addr register address
++ * @param data the pointer of data buffer
++ * @param len block size need to write
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static s8 bme_spi_write_block(u8 dev_addr, u8 reg_addr, u8 *data, u8 len)
++{
++	struct spi_device *client = bme_spi_client;
++	u8 buffer[BME_MAX_BUFFER_SIZE + 1];
++	struct spi_transfer xfer = {
++		.tx_buf     = buffer,
++		.len        = len + 1,
++	};
++	struct spi_message msg;
++
++	if (len > BME_MAX_BUFFER_SIZE)
++		return -EINVAL;
++
++	buffer[0] = reg_addr&0x7F;/* write: MSB = 0 */
++	memcpy(&buffer[1], data, len);
++
++	spi_message_init(&msg);
++	spi_message_add_tail(&xfer, &msg);
++	return spi_sync(client, &msg);
++}
++
++/*!
++ * @brief define spi read function
++ *
++ * @param dev_addr sensor device address
++ * @param reg_addr register address
++ * @param data the pointer of data buffer
++ * @param len block size need to read
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static s8 bme_spi_read_block(u8 dev_addr, u8 reg_addr, u8 *data, u8 len)
++{
++	struct spi_device *client = bme_spi_client;
++	u8 reg = reg_addr | 0x80;/* read: MSB = 1 */
++	struct spi_transfer xfer[2] = {
++		[0] = {
++			.tx_buf = &reg,
++			.len = 1,
++		},
++		[1] = {
++			.rx_buf = data,
++			.len = len,
++		}
++	};
++	struct spi_message msg;
++
++	spi_message_init(&msg);
++	spi_message_add_tail(&xfer[0], &msg);
++	spi_message_add_tail(&xfer[1], &msg);
++	return spi_sync(client, &msg);
++}
++
++/*!
++ * @brief spi bus operation
++*/
++static const struct bme_bus_ops bme_spi_bus_ops = {
++	/**< spi block write pointer */
++	.bus_write  = bme_spi_write_block,
++	/**< spi block read pointer */
++	.bus_read   = bme_spi_read_block
++};
++
++/*!
++ * @brief BME probe function via spi bus
++ *
++ * @param client the pointer of spi client
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int bme_spi_probe(struct spi_device *client)
++{
++	int status;
++	struct bme_data_bus data_bus = {
++		.bops = &bme_spi_bus_ops,
++		.client = client
++	};
++
++	if (NULL == bme_spi_client)
++		bme_spi_client = client;
++	else{
++		PERR("This driver does not support multiple clients!\n");
++		return -EINVAL;
++	}
++
++	client->bits_per_word = 8;
++	status = spi_setup(client);
++	if (status < 0) {
++		PERR("spi_setup failed!\n");
++		return status;
++	}
++
++	return bme_probe(&client->dev, &data_bus);
++}
++
++/*!
++ * @brief shutdown bme device in spi driver
++ *
++ * @param client the pointer of spi client
++ *
++ * @return no return value
++*/
++static void bme_spi_shutdown(struct spi_device *client)
++{
++#ifdef CONFIG_PM
++	bme_disable(&client->dev);
++#endif
++}
++
++/*!
++ * @brief remove bme spi client
++ *
++ * @param client the pointer of spi client
++ *
++ * @return zero
++ * @retval zero
++*/
++static int bme_spi_remove(struct spi_device *client)
++{
++	return bme_remove(&client->dev);
++}
++
++#ifdef CONFIG_PM
++/*!
++ * @brief suspend bme device in spi driver
++ *
++ * @param dev the pointer of device
++ *
++ * @return zero
++ * @retval zero
++*/
++static int bme_spi_suspend(struct device *dev)
++{
++	return bme_disable(dev);
++}
++
++/*!
++ * @brief resume bme device in spi driver
++ *
++ * @param dev the pointer of device
++ *
++ * @return zero
++ * @retval zero
++*/
++static int bme_spi_resume(struct device *dev)
++{
++	return bme_enable(dev);
++}
++
++/*!
++ * @brief register spi device power manager hooks
++*/
++static const struct dev_pm_ops bme_spi_pm_ops = {
++	/**< device suspend */
++	.suspend = bme_spi_suspend,
++	/**< device resume */
++	.resume  = bme_spi_resume
++};
++#endif
++
++/*!
++ * @brief register spi device id
++*/
++static const struct spi_device_id bme_id[] = {
++	{ BME_NAME, 0 },
++	{ }
++};
++MODULE_DEVICE_TABLE(spi, bme_id);
++
++/*!
++ * @brief register spi driver hooks
++*/
++static struct spi_driver bme_spi_driver = {
++	.driver = {
++		.owner = THIS_MODULE,
++		.name  = BME_NAME,
++#ifdef CONFIG_PM
++		.pm = &bme_spi_pm_ops,
++#endif
++	},
++	.id_table = bme_id,
++	.probe    = bme_spi_probe,
++	.shutdown = bme_spi_shutdown,
++	.remove   = bme_spi_remove
++};
++
++/*!
++ * @brief initialize bme spi module
++ *
++ * @return zero success, non-zero failed
++ * @retval zero success
++ * @retval non-zero failed
++*/
++static int __init bme_spi_init(void)
++{
++	return spi_register_driver(&bme_spi_driver);
++}
++
++/*!
++ * @brief remove bme spi module
++ *
++ * @return no return value
++*/
++static void __exit bme_spi_exit(void)
++{
++	spi_unregister_driver(&bme_spi_driver);
++}
++
++
++MODULE_DESCRIPTION("BME280 SPI BUS DRIVER");
++MODULE_LICENSE("GPL v2");
++
++module_init(bme_spi_init);
++module_exit(bme_spi_exit);
++/*@}*/
+diff --git a/drivers/input/misc/bme280/bs_log.h b/drivers/input/misc/bme280/bs_log.h
+new file mode 100644
+index 0000000..788f7a6
+--- /dev/null
++++ b/drivers/input/misc/bme280/bs_log.h
+@@ -0,0 +1,83 @@
++/*!
++ * @section LICENSE
++ * (C) Copyright 2013 Bosch Sensortec GmbH All Rights Reserved
++ *
++ * This software program is licensed subject to the GNU General
++ * Public License (GPL).Version 2,June 1991,
++ * available at http://www.fsf.org/copyleft/gpl.html
++ *
++ * @filename bs_log.h
++ * @date     "Fri Dec 13 14:33:28 2013 +0800"
++ * @id       "ba28356"
++ *
++ * @brief
++ * The head file of BOSCH SENSOR LOG
++*/
++
++#ifndef __BS_LOG_H
++#define __BS_LOG_H
++
++#include <linux/kernel.h>
++
++/*! @defgroup bme280_core_src
++ *  @brief The core code of BME280 device driver
++ @{*/
++/*! ERROR LOG LEVEL */
++#define LOG_LEVEL_E 3
++/*! NOTICE LOG LEVEL */
++#define LOG_LEVEL_N 5
++/*! INFORMATION LOG LEVEL */
++#define LOG_LEVEL_I 6
++/*! DEBUG LOG LEVEL */
++#define LOG_LEVEL_D 7
++
++#ifndef LOG_LEVEL
++/*! LOG LEVEL DEFINATION */
++#define LOG_LEVEL LOG_LEVEL_I
++#endif
++
++#ifndef MODULE_TAG
++/*! MODULE TAG DEFINATION */
++#define MODULE_TAG "<BME280>"
++#endif
++
++#if (LOG_LEVEL >= LOG_LEVEL_E)
++/*! print error message */
++#define PERR(fmt, args...) \
++	printk(KERN_INFO "\n" "[E]" KERN_ERR MODULE_TAG \
++	"<%s><%d>" fmt "\n", __func__, __LINE__, ##args)
++#else
++/*! invalid message */
++#define PERR(fmt, args...)
++#endif
++
++#if (LOG_LEVEL >= LOG_LEVEL_N)
++/*! print notice message */
++#define PNOTICE(fmt, args...) \
++	printk(KERN_INFO "\n" "[N]" KERN_NOTICE MODULE_TAG \
++	"<%s><%d>" fmt "\n", __func__, __LINE__, ##args)
++#else
++/*! invalid message */
++#define PNOTICE(fmt, args...)
++#endif
++
++#if (LOG_LEVEL >= LOG_LEVEL_I)
++/*! print information message */
++#define PINFO(fmt, args...) printk(KERN_INFO "\n" "[I]" KERN_INFO MODULE_TAG \
++	"<%s><%d>" fmt "\n", __func__, __LINE__, ##args)
++#else
++/*! invalid message */
++#define PINFO(fmt, args...)
++#endif
++
++#if (LOG_LEVEL >= LOG_LEVEL_D)
++/*! print debug message */
++#define PDEBUG(fmt, args...) printk(KERN_INFO "\n" "[D]" KERN_DEBUG MODULE_TAG \
++	"<%s><%d>" fmt "\n", __func__, __LINE__, ##args)
++#else
++/*! invalid message */
++#define PDEBUG(fmt, args...)
++#endif
++
++#endif/*__BS_LOG_H*/
++/*@}*/
+-- 
+2.10.1
+

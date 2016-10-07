@@ -1,0 +1,84 @@
+From 4e97d0ce49b3af801e3d762f62b131f7e3c6f4ea Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Tue, 29 Jul 2014 07:48:36 +0200
+Subject: [PATCH 18/83] pwm: new fields, max and resolution, added to framework
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/pwm/core.c  |  2 ++
+ drivers/pwm/sysfs.c | 22 ++++++++++++++++++++++
+ include/linux/pwm.h |  2 ++
+ 3 files changed, 26 insertions(+)
+
+diff --git a/drivers/pwm/core.c b/drivers/pwm/core.c
+index 966497d..755efcc 100644
+--- a/drivers/pwm/core.c
++++ b/drivers/pwm/core.c
+@@ -259,6 +259,8 @@ int pwmchip_add(struct pwm_chip *chip)
+ 		pwm->chip = chip;
+ 		pwm->pwm = chip->base + i;
+ 		pwm->hwpwm = i;
++		pwm->resolution = 1;
++		pwm->max = 0xffffffff;
+ 
+ 		radix_tree_insert(&pwm_tree, pwm->pwm, pwm);
+ 	}
+diff --git a/drivers/pwm/sysfs.c b/drivers/pwm/sysfs.c
+index 021f9a9..7704d63 100644
+--- a/drivers/pwm/sysfs.c
++++ b/drivers/pwm/sysfs.c
+@@ -163,16 +163,38 @@ static ssize_t pwm_polarity_store(struct device *child,
+ 	return ret ? : size;
+ }
+ 
++static ssize_t pwm_resolution_show(struct device *child,
++				 struct device_attribute *attr,
++				 char *buf)
++{
++	const struct pwm_device *pwm = child_to_pwm_device(child);
++
++	return sprintf(buf, "%u\n", pwm->resolution);
++}
++
++static ssize_t pwm_max_show(struct device *child,
++				 struct device_attribute *attr,
++				 char *buf)
++{
++	const struct pwm_device *pwm = child_to_pwm_device(child);
++
++	return sprintf(buf, "%u\n", pwm->max);
++}
++
+ static DEVICE_ATTR(period, 0644, pwm_period_show, pwm_period_store);
+ static DEVICE_ATTR(duty_cycle, 0644, pwm_duty_cycle_show, pwm_duty_cycle_store);
+ static DEVICE_ATTR(enable, 0644, pwm_enable_show, pwm_enable_store);
+ static DEVICE_ATTR(polarity, 0644, pwm_polarity_show, pwm_polarity_store);
++static DEVICE_ATTR(resolution, 0444, pwm_resolution_show, NULL);
++static DEVICE_ATTR(max, 0444, pwm_max_show, NULL);
+ 
+ static struct attribute *pwm_attrs[] = {
+ 	&dev_attr_period.attr,
+ 	&dev_attr_duty_cycle.attr,
+ 	&dev_attr_enable.attr,
+ 	&dev_attr_polarity.attr,
++	&dev_attr_resolution.attr,
++	&dev_attr_max.attr,
+ 	NULL
+ };
+ ATTRIBUTE_GROUPS(pwm);
+diff --git a/include/linux/pwm.h b/include/linux/pwm.h
+index edabd51..f18d200 100644
+--- a/include/linux/pwm.h
++++ b/include/linux/pwm.h
+@@ -89,6 +89,8 @@ struct pwm_device {
+ 
+ 	unsigned int		period; 	/* in nanoseconds */
+ 	unsigned int		duty_cycle;	/* in nanoseconds */
++	unsigned int		resolution;	/* in nanoseconds */
++	unsigned int		max;		/* in nanoseconds */
+ 	enum pwm_polarity	polarity;
+ };
+ 
+-- 
+2.10.1
+

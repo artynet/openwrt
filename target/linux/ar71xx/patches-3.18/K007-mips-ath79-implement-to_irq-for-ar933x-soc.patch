@@ -1,0 +1,82 @@
+From 6c17eab2e9261b552c7b90ad5fabe155d643f532 Mon Sep 17 00:00:00 2001
+From: Davide Ciminaghi <ciminaghi@gnudd.com>
+Date: Thu, 27 Mar 2014 10:45:04 +0100
+Subject: [PATCH 07/83] mips ath79, implement to_irq for ar933x soc
+
+Signed-off-by: Davide Ciminaghi <ciminaghi@gnudd.com>
+---
+ arch/mips/ath79/gpio.c | 28 ++++++++++++++++++++++++----
+ 1 file changed, 24 insertions(+), 4 deletions(-)
+
+diff --git a/arch/mips/ath79/gpio.c b/arch/mips/ath79/gpio.c
+index 8f6fd196..f947880 100644
+--- a/arch/mips/ath79/gpio.c
++++ b/arch/mips/ath79/gpio.c
+@@ -20,11 +20,18 @@
+ #include <linux/io.h>
+ #include <linux/ioport.h>
+ #include <linux/gpio.h>
++#include <linux/irq.h>
+ 
+ #include <asm/mach-ath79/ar71xx_regs.h>
+ #include <asm/mach-ath79/ath79.h>
++#include <asm/mach-ath79/irq.h>
+ #include "common.h"
+ 
++struct ath79_gpio_data {
++	struct irq_chip chip;
++	int irq_base;
++};
++
+ void __iomem *ath79_gpio_base;
+ EXPORT_SYMBOL_GPL(ath79_gpio_base);
+ 
+@@ -251,6 +258,16 @@ void __init ath79_gpio_output_select(unsigned gpio, u8 val)
+ 	spin_unlock_irqrestore(&ath79_gpio_lock, flags);
+ }
+ 
++static struct ath79_gpio_data gpio_data = {
++	.irq_base = -1,
++};
++
++static int ar933x_gpio_to_irq(struct gpio_chip *chip, unsigned offset)
++{
++	return gpio_data.irq_base > 0 ?
++		gpio_data.irq_base + offset : -ENXIO;
++}
++
+ void __init ath79_gpio_init(void)
+ {
+ 	int err;
+@@ -283,6 +300,8 @@ void __init ath79_gpio_init(void)
+ 		ath79_gpio_chip.direction_input = ar934x_gpio_direction_input;
+ 		ath79_gpio_chip.direction_output = ar934x_gpio_direction_output;
+ 	}
++	if (soc_is_ar933x())
++		ath79_gpio_chip.to_irq = ar933x_gpio_to_irq;
+ 
+ 	err = gpiochip_add(&ath79_gpio_chip);
+ 	if (err)
+@@ -309,14 +328,15 @@ EXPORT_SYMBOL(gpio_set_value);
+ 
+ int gpio_to_irq(unsigned gpio)
+ {
+-	/* FIXME */
+-	return -EINVAL;
++	return __gpio_to_irq(gpio);
+ }
+ EXPORT_SYMBOL(gpio_to_irq);
+ 
+ int irq_to_gpio(unsigned irq)
+ {
+-	/* FIXME */
+-	return -EINVAL;
++	if (irq < gpio_data.irq_base ||
++	    irq > gpio_data.irq_base + ath79_gpio_chip.ngpio - 1)
++		return -EINVAL;
++	return irq - gpio_data.irq_base;
+ }
+ EXPORT_SYMBOL(irq_to_gpio);
+-- 
+2.10.1
+
