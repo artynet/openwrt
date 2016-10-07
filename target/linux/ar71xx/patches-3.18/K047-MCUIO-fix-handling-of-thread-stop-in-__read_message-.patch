@@ -1,0 +1,41 @@
+From 0a1b2ccc4e914b1da09ca530e5799155edd9b1f8 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Thu, 12 Nov 2015 09:06:04 +0100
+Subject: [PATCH 47/83] MCUIO: fix handling of thread stop in __read_message
+ function
+
+This patch fixes function __read_message inside drivers/mcuio/mcuio-hc-drv.c
+src file. If kthread_should_stop() evaluates to true, it must return a
+negative errno (-EINTR) in order not to be confused with an incoming
+message.
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ drivers/mcuio/mcuio-hc-drv.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/mcuio/mcuio-hc-drv.c b/drivers/mcuio/mcuio-hc-drv.c
+index c515b44..5904703 100644
+--- a/drivers/mcuio/mcuio-hc-drv.c
++++ b/drivers/mcuio/mcuio-hc-drv.c
+@@ -299,10 +299,16 @@ static int __read_message(struct mcuio_hc_data *data,
+ 					__get_available(map) >= count ||
+ 					kthread_should_stop());
+ 	/* FIXME: handle signals */
+-	if (stat < 0 || kthread_should_stop()) {
++	if (stat < 0) {
+ 		pr_debug("%s returns %d\n", __func__, stat);
+ 		return stat;
+ 	}
++
++	if (kthread_should_stop()) {
++		pr_debug("%s kthread_should_stop\n", __func__);
++		return -EINTR;
++	}
++
+ 	for (i = 0; i < count; i++, ptr++) {
+ 		stat = regmap_read(map, MCUIO_HC_INBUF + i * sizeof(u32), ptr);
+ 		if (stat < 0) {
+-- 
+2.10.1
+

@@ -1,0 +1,28 @@
+From fcc2e982557bede92d18993d194ef353ee5aedc1 Mon Sep 17 00:00:00 2001
+From: Davide Ciminaghi <ciminaghi@gnudd.com>
+Date: Thu, 19 Feb 2015 18:16:22 +0100
+Subject: [PATCH 25/83] MCUIO, mcuio-hc-ldisc: deal with NULL flags buffer
+ pointer.
+
+The flag buffer is not always there (for instance if the terminal is
+a pseudo tty), don't do flags check if buffer ptr is NULL.
+---
+ drivers/mcuio/mcuio-hc-ldisc.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/mcuio/mcuio-hc-ldisc.c b/drivers/mcuio/mcuio-hc-ldisc.c
+index 3e50de7..da6eb6d 100644
+--- a/drivers/mcuio/mcuio-hc-ldisc.c
++++ b/drivers/mcuio/mcuio-hc-ldisc.c
+@@ -106,7 +106,7 @@ static void mcuio_ldisc_receive_buf(struct tty_struct *tty,
+ 		WARN_ON(1);
+ 		return;
+ 	}
+-	for (i = 0; i < count; i++)
++	for (i = 0; fp && i < count; i++)
+ 		if (fp[i]) {
+ 			pr_err("%s: flags for char %d = 0x%02x\n",
+ 			       __func__, i, (u8)fp[i]);
+-- 
+2.10.1
+

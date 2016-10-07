@@ -1,0 +1,206 @@
+From 8910afcad2bedb8eafa02c3e03110a138a78ae89 Mon Sep 17 00:00:00 2001
+From: Davide Ciminaghi <ciminaghi@gnudd.com>
+Date: Thu, 27 Mar 2014 14:03:05 +0100
+Subject: [PATCH 08/83] mips, ath79, implement gpios interrupts.
+
+Code comes from Federico Vaga's spi-tty-ds driver and from
+drivers/gpio/gpio-pca953x.c
+
+Signed-off-by: Davide Ciminaghi <ciminaghi@gnudd.com>
+---
+ arch/mips/ath79/gpio.c | 141 +++++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 137 insertions(+), 4 deletions(-)
+
+diff --git a/arch/mips/ath79/gpio.c b/arch/mips/ath79/gpio.c
+index f947880..9b5e8e8 100644
+--- a/arch/mips/ath79/gpio.c
++++ b/arch/mips/ath79/gpio.c
+@@ -20,6 +20,7 @@
+ #include <linux/io.h>
+ #include <linux/ioport.h>
+ #include <linux/gpio.h>
++#include <linux/interrupt.h>
+ #include <linux/irq.h>
+ 
+ #include <asm/mach-ath79/ar71xx_regs.h>
+@@ -28,7 +29,6 @@
+ #include "common.h"
+ 
+ struct ath79_gpio_data {
+-	struct irq_chip chip;
+ 	int irq_base;
+ };
+ 
+@@ -38,6 +38,11 @@ EXPORT_SYMBOL_GPL(ath79_gpio_base);
+ static unsigned long ath79_gpio_count;
+ static DEFINE_SPINLOCK(ath79_gpio_lock);
+ 
++static inline u32 __ath79_gpio_get_int_pending(void)
++{
++	return __raw_readl(ath79_gpio_base + AR71XX_GPIO_REG_INT_PENDING);
++}
++
+ static void __ath79_gpio_set_value(unsigned gpio, int value)
+ {
+ 	void __iomem *base = ath79_gpio_base;
+@@ -258,6 +263,74 @@ void __init ath79_gpio_output_select(unsigned gpio, u8 val)
+ 	spin_unlock_irqrestore(&ath79_gpio_lock, flags);
+ }
+ 
++static void __ath79_gpio_set_int_reg(unsigned long offset,
++				     unsigned gpio, int value)
++{
++	void __iomem *base = ath79_gpio_base;
++	unsigned long flags;
++	int reg_val;
++
++	spin_lock_irqsave(&ath79_gpio_lock, flags);
++
++	reg_val = __raw_readl(base + offset);
++	if (value)
++		reg_val |= (1 << gpio);
++	else
++		reg_val &= (~(1 << gpio));
++
++
++	__raw_writel(reg_val, base + offset);
++
++	spin_unlock_irqrestore(&ath79_gpio_lock, flags);
++}
++
++static void __ath79_gpio_set_int_type(unsigned gpio, int value)
++{
++	__ath79_gpio_set_int_reg(AR71XX_GPIO_REG_INT_TYPE, gpio, value);
++}
++
++static void __ath79_gpio_set_int_polarity(unsigned gpio, int value)
++{
++	__ath79_gpio_set_int_reg(AR71XX_GPIO_REG_INT_POLARITY, gpio, value);
++}
++
++static int ar933x_irq_set_type(struct irq_data *d, unsigned int flow_type)
++{
++	int edge, polarity;
++	struct irq_chip_generic *gc = irq_data_get_irq_chip_data(d);
++	struct ath79_gpio_data *data = gc->private;
++	unsigned gpio = d->irq - data->irq_base;
++
++	switch (flow_type & IRQF_TRIGGER_MASK) {
++	case IRQF_TRIGGER_HIGH:
++		edge = 0;
++		polarity = 1;
++		break;
++	case IRQF_TRIGGER_LOW:
++		edge = 0;
++		polarity = 0;
++		break;
++	case IRQF_TRIGGER_RISING:
++		edge = 1;
++		polarity = 1;
++		break;
++	case IRQF_TRIGGER_FALLING:
++		edge = 1;
++		polarity = 0;
++		break;
++	default:
++		__ath79_gpio_set_int_reg(AR71XX_GPIO_REG_INT_MODE, gpio, 0);
++		return -EINVAL;
++	}
++
++	/* The manual seems wrong !!! (edge and level modes seem inverted) */
++	__ath79_gpio_set_int_type(gpio, !edge);
++	__ath79_gpio_set_int_polarity(gpio, polarity);
++	__ath79_gpio_set_int_reg(AR71XX_GPIO_REG_INT_MODE, gpio, 1);
++
++	return 0;
++}
++
+ static struct ath79_gpio_data gpio_data = {
+ 	.irq_base = -1,
+ };
+@@ -268,6 +341,61 @@ static int ar933x_gpio_to_irq(struct gpio_chip *chip, unsigned offset)
+ 		gpio_data.irq_base + offset : -ENXIO;
+ }
+ 
++static irqreturn_t ath79_gpio_irq_handler(int irq, void *dev_id)
++{
++	struct ath79_gpio_data *data = dev_id;
++	u32 pending;
++	int i, __irq;
++
++	pending = __ath79_gpio_get_int_pending();
++	if (!pending)
++		return IRQ_NONE;
++	do {
++		i = __ffs(pending);
++		__irq = i + data->irq_base;
++		generic_handle_irq(__irq);
++		pending &= ~(1 << i);
++	} while(pending);
++
++	return IRQ_HANDLED;
++}
++
++static void ath79_setup_irqs(void)
++{
++	struct irq_chip_generic *gc;
++	struct irq_chip_type *ct;
++
++	gpio_data.irq_base = irq_alloc_descs(-1, 0, ath79_gpio_chip.ngpio, 0);
++	if (gpio_data.irq_base < 0) {
++		pr_err("cannot alloc descriptors for AR933x gpio irq "
++		       "chip (%d)\n", gpio_data.irq_base);
++		return;
++	}
++
++	gc = irq_alloc_generic_chip("GPIO-ATH79", 1, gpio_data.irq_base,
++				    ath79_gpio_base, handle_level_irq);
++	gc->private = &gpio_data;
++
++	ct = gc->chip_types;
++	ct->chip.irq_mask = irq_gc_mask_clr_bit;
++	ct->chip.irq_unmask = irq_gc_mask_set_bit;
++	ct->chip.irq_set_type = ar933x_irq_set_type;
++	ct->regs.mask = AR71XX_GPIO_REG_INT_ENABLE;
++
++	irq_setup_generic_chip(gc, IRQ_MSK(ath79_gpio_count), 0,
++			       IRQ_NOREQUEST, 0);
++
++	if (request_irq(ATH79_MISC_IRQ(2),
++			ath79_gpio_irq_handler,
++			0,
++			"ath79-gpio",
++			&gpio_data) < 0) {
++		pr_err("error requesting gpio irq\n");
++		return;
++	}
++	ath79_gpio_chip.to_irq = ar933x_gpio_to_irq;
++}
++
+ void __init ath79_gpio_init(void)
+ {
+ 	int err;
+@@ -300,12 +428,17 @@ void __init ath79_gpio_init(void)
+ 		ath79_gpio_chip.direction_input = ar934x_gpio_direction_input;
+ 		ath79_gpio_chip.direction_output = ar934x_gpio_direction_output;
+ 	}
+-	if (soc_is_ar933x())
+-		ath79_gpio_chip.to_irq = ar933x_gpio_to_irq;
+ 
+ 	err = gpiochip_add(&ath79_gpio_chip);
+-	if (err)
++	if (err) {
+ 		panic("cannot add AR71xx GPIO chip, error=%d", err);
++		return;
++	}
++	/* Irqs supported for ar933x only at the moment */
++	if (!soc_is_ar933x())
++		return;
++
++	ath79_setup_irqs();
+ }
+ 
+ int gpio_get_value(unsigned gpio)
+-- 
+2.10.1
+
