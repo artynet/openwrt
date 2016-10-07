@@ -10,7 +10,7 @@ start() {
 
 	case $boardname in
 		'Chiwawa')
-			boardname="Industrial"
+			boardname="Ind-101"
 			;;
 	esac
 
