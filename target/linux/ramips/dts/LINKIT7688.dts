@@ -4,7 +4,7 @@
 
 / {
 	compatible = "mediatek,linkit", "mediatek,mt7628an-soc";
-	model = "MediaTek LinkIt Smart 7688";
+	model = "Seeed ReSpeaker v1 7688";
 
 	chosen {
 		bootargs = "console=ttyS2,57600";
