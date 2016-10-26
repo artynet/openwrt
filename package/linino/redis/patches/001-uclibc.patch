@@ -11,7 +11,7 @@ Signed-off-by: Daniel Price <daniel.price@gmail.com>
 diff -ur old/src/config.h new/src/config.h
 --- old/src/config.h	2012-10-26 07:20:24.000000000 -0700
 +++ new/src/config.h	2012-10-31 13:41:51.206309564 -0700
-@@ -30,6 +30,10 @@
+@@ -1,6 +1,10 @@
  #ifndef __CONFIG_H
  #define __CONFIG_H
  
@@ -22,7 +22,7 @@ diff -ur old/src/config.h new/src/config.h
  #ifdef __APPLE__
  #include <AvailabilityMacros.h>
  #endif
-@@ -56,7 +60,7 @@
+@@ -25,7 +29,7 @@
  #endif
  
  /* Test for backtrace() */
@@ -32,9 +32,9 @@ diff -ur old/src/config.h new/src/config.h
  #endif
  
 diff -ur old/src/Makefile new/src/Makefile
---- a/src/Makefile	2012-10-26 07:20:24.000000000 -0700
-+++ b/src/Makefile	2012-10-31 13:40:39.224728830 -0700
-@@ -143,7 +143,7 @@
+--- old/src/Makefile	2012-10-26 07:20:24.000000000 -0700
++++ new/src/Makefile	2012-10-31 13:40:39.224728830 -0700
+@@ -135,7 +135,7 @@
  	echo REDIS_LDFLAGS=$(REDIS_LDFLAGS) >> .make-settings
  	echo PREV_FINAL_CFLAGS=$(FINAL_CFLAGS) >> .make-settings
  	echo PREV_FINAL_LDFLAGS=$(FINAL_LDFLAGS) >> .make-settings
