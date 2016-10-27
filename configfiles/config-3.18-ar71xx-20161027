@@ -117,10 +117,10 @@ CONFIG_TARGET_ar71xx_generic=y
 # CONFIG_TARGET_ar71xx_generic_JA76PF is not set
 # CONFIG_TARGET_ar71xx_generic_JA76PF2 is not set
 # CONFIG_TARGET_ar71xx_generic_JWAP003 is not set
-# CONFIG_TARGET_ar71xx_generic_LININO is not set
+CONFIG_TARGET_ar71xx_generic_LININO=y
 # CONFIG_TARGET_ar71xx_generic_LININO_YUNONE is not set
 # CONFIG_TARGET_ar71xx_generic_LININO_YUNONELEI is not set
-CONFIG_TARGET_ar71xx_generic_LININO_AVR=y
+# CONFIG_TARGET_ar71xx_generic_LININO_AVR is not set
 # CONFIG_TARGET_ar71xx_generic_LININO_YUN is not set
 # CONFIG_TARGET_ar71xx_generic_LININO_ONE is not set
 # CONFIG_TARGET_ar71xx_generic_LININO_FREEDOG is not set
@@ -418,9 +418,7 @@ CONFIG_BUILD_SUFFIX=""
 CONFIG_TARGET_ROOTFS_DIR=""
 # CONFIG_CCACHE is not set
 CONFIG_EXTERNAL_KERNEL_TREE=""
-CONFIG_KERNEL_GIT_CLONE_URI="http://github.com/linino/linux.git"
-CONFIG_KERNEL_GIT_LOCAL_REPOSITORY=""
-CONFIG_KERNEL_GIT_BRANCH="for-15.05-rc2"
+CONFIG_KERNEL_GIT_CLONE_URI=""
 # CONFIG_BUILD_LOG is not set
 # CONFIG_SRC_TREE_OVERRIDE is not set
 CONFIG_EXTRA_OPTIMIZATION="-fno-caller-saves"
@@ -2364,11 +2362,12 @@ CONFIG_PACKAGE_uboot-ar71xx-linino-yun-mini=y
 # Development
 #
 CONFIG_PACKAGE_ar=m
-# CONFIG_PACKAGE_arduino-files is not set
+CONFIG_PACKAGE_arduino-files=m
 CONFIG_PACKAGE_arm-none-eabi-gdb=m
-# CONFIG_PACKAGE_arm-toolchain is not set
+CONFIG_PACKAGE_arm-toolchain=m
 CONFIG_PACKAGE_autoconf=m
 CONFIG_PACKAGE_automake=m
+CONFIG_PACKAGE_avr-toolchain=m
 CONFIG_PACKAGE_binutils=m
 CONFIG_PACKAGE_cmake-343=m
 CONFIG_PACKAGE_cmake-352=m
@@ -3926,7 +3925,7 @@ CONFIG_PACKAGE_libicu=m
 CONFIG_PACKAGE_libid3tag=m
 CONFIG_PACKAGE_libidn=m
 # CONFIG_PACKAGE_libimobiledevice is not set
-# CONFIG_PACKAGE_libintl is not set
+CONFIG_PACKAGE_libintl=m
 CONFIG_PACKAGE_libintl-full=m
 CONFIG_PACKAGE_libiw=m
 CONFIG_PACKAGE_libiwinfo=y
@@ -6351,7 +6350,7 @@ CONFIG_PACKAGE_dbus=y
 # CONFIG_PACKAGE_dbus-launch-x is not set
 CONFIG_PACKAGE_dbus-utils=m
 CONFIG_PACKAGE_dmesg=m
-# CONFIG_PACKAGE_dos2unix is not set
+CONFIG_PACKAGE_dos2unix=m
 CONFIG_PACKAGE_dropbearconvert=m
 # CONFIG_PACKAGE_dump1090 is not set
 CONFIG_PACKAGE_fbtest=m
