@@ -11,8 +11,8 @@ PKG_NAME:=arm-toolchain
 PKG_VERSION:=48q3
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://download.linino.org/pkg-src/
-PKG_SOURCE:=gcc-arm-none-eabi-4_8-2016q3-20160822-linux-mips-openwrt.tar.bz2
+PKG_SOURCE_URL:=http://download.linino.org/sources/
+PKG_SOURCE:=gcc-arm-none-eabi-4_8-2016q3-20160822-linux-mips-openwrt-uclibc.tar.bz2
 # PKG_SOURCE:=arm-none-eabi-mips-48q3.tar.gz
 # PKG_MD5SUM:=5605048c486c41c52ac2583918fdf5b6
 
