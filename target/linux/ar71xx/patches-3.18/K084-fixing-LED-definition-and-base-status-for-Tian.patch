@@ -1,0 +1,41 @@
+From f212eadae4d99b65a737a34d204ff786bd7114cc Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Fri, 28 Oct 2016 15:59:08 +0200
+Subject: [PATCH] fixing LED definition and base status for Tian
+
+---
+ arch/mips/ath79/mach-linino-tian.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/arch/mips/ath79/mach-linino-tian.c b/arch/mips/ath79/mach-linino-tian.c
+index 99be4f5..f6a637b 100644
+--- a/arch/mips/ath79/mach-linino-tian.c
++++ b/arch/mips/ath79/mach-linino-tian.c
+@@ -35,8 +35,8 @@
+ #include <linux/spi/spi_gpio.h>
+ 
+ #define CHOWCHOW_GPIO_MCU_RESET	17
+-#define CHOWCHOW_GPIO_LED0		12
+-#define CHOWCHOW_GPIO_LED1		11
++#define CHOWCHOW_GPIO_LED0		11
++#define CHOWCHOW_GPIO_LED1		12
+ 
+ #define LININO_TIAN 1
+ 
+@@ -69,11 +69,11 @@ static struct gpio_led chowchow_leds_gpio[] __initdata = {
+ 	{
+ 		.name		= "usb",
+ 		.gpio		= CHOWCHOW_GPIO_LED0,
+-		.active_low	= 0,
++		.active_low	= 1,
+ 	}, {
+ 		.name		= "wlan",
+ 		.gpio		= CHOWCHOW_GPIO_LED1,
+-		.active_low	= 0,
++		.active_low	= 1,
+ 	}
+ };
+ 
+-- 
+2.10.1
+
