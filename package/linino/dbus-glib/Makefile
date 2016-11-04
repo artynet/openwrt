@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=dbus-glib
-PKG_VERSION:=0.106
+PKG_VERSION:=0.108
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://dbus.freedesktop.org/releases/dbus-glib/
-# PKG_MD5SUM:=86ea60ba2118a1b9deafe8257f6a6a1a
+PKG_MD5SUM:=a66a613705870752ca9786e0359aea97
 
 # PKG_FIXUP:=autoreconf
 
