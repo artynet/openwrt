@@ -20,7 +20,7 @@ diff --git a/drivers/video/fbdev/Kconfig b/drivers/video/fbdev/Kconfig
 index c7bf606..41763f4 100644
 --- a/drivers/video/fbdev/Kconfig
 +++ b/drivers/video/fbdev/Kconfig
-@@ -2490,7 +2490,6 @@ config FB_SH_MOBILE_MERAM
+@@ -2489,7 +2489,6 @@ config FB_SH_MOBILE_MERAM
  config FB_SSD1307
  	tristate "Solomon SSD1307 framebuffer support"
  	depends on FB && I2C
@@ -37,7 +37,7 @@ index f4daa59..af6caab 100644
  #include <linux/pwm.h>
  #include <linux/delay.h>
 +#include <linux/platform_data/ssd1307.h>
- 
+
  #define SSD1307FB_DATA			0x40
  #define SSD1307FB_COMMAND		0x80
 @@ -55,6 +56,8 @@ struct ssd1307fb_par {
@@ -47,30 +47,30 @@ index f4daa59..af6caab 100644
 +	u32 display_offset;
 +	u8 pins_config;
  };
- 
+
  struct ssd1307fb_array {
 @@ -342,7 +345,7 @@ static int ssd1307fb_ssd1306_init(struct ssd1307fb_par *par)
- 
+
  	/* set display offset value */
  	ret = ssd1307fb_write_cmd(par->client, SSD1307FB_SET_DISPLAY_OFFSET);
 -	ret = ssd1307fb_write_cmd(par->client, 0x20);
 +	ret = ssd1307fb_write_cmd(par->client, par->display_offset);
  	if (ret < 0)
  		return ret;
- 
+
 @@ -360,7 +363,7 @@ static int ssd1307fb_ssd1306_init(struct ssd1307fb_par *par)
- 
+
  	/* Set COM pins configuration */
  	ret = ssd1307fb_write_cmd(par->client, SSD1307FB_SET_COM_PINS_CONFIG);
 -	ret = ret & ssd1307fb_write_cmd(par->client, 0x22);
 +	ret = ret & ssd1307fb_write_cmd(par->client, par->pins_config);
  	if (ret < 0)
  		return ret;
- 
+
 @@ -421,19 +424,36 @@ static const struct of_device_id ssd1307fb_of_match[] = {
  };
  MODULE_DEVICE_TABLE(of, ssd1307fb_of_match);
- 
+
 -static int ssd1307fb_probe(struct i2c_client *client,
 -			   const struct i2c_device_id *id)
 +static struct ssd1307fb_ops *
@@ -96,7 +96,7 @@ index f4daa59..af6caab 100644
 +	struct ssd1307_platform_data *plat = NULL;
  	u8 *vmem;
  	int ret;
- 
+
  	if (!node) {
 -		dev_err(&client->dev, "No device tree data found!\n");
 -		return -EINVAL;
@@ -106,7 +106,7 @@ index f4daa59..af6caab 100644
 +			return -EINVAL;
 +		}
  	}
- 
+
  	info = framebuffer_alloc(sizeof(struct ssd1307fb_par), &client->dev);
 @@ -445,25 +465,41 @@ static int ssd1307fb_probe(struct i2c_client *client,
  	par = info->par;
@@ -123,19 +123,19 @@ index f4daa59..af6caab 100644
 +	par->reset = plat ? plat->reset_gpio :
 +		of_get_named_gpio(client->dev.of_node,
 +				  "reset-gpios", 0);
- 
+
 -	par->ops = (struct ssd1307fb_ops *)of_match_device(ssd1307fb_of_match,
 -							   &client->dev)->data;
 +	par->pins_config = plat ? plat->pins_config : 0x22;
 +	par->display_offset = plat ? plat->display_offset : 0x20;
- 
+
 -	par->reset = of_get_named_gpio(client->dev.of_node,
 -					 "reset-gpios", 0);
  	if (!gpio_is_valid(par->reset)) {
  		ret = -EINVAL;
  		goto fb_alloc_error;
  	}
- 
+
 -	if (of_property_read_u32(node, "solomon,width", &par->width))
 -		par->width = 96;
 +	if (plat) {
@@ -145,21 +145,21 @@ index f4daa59..af6caab 100644
 +	} else {
 +		if (of_property_read_u32(node, "solomon,width", &par->width))
 +			par->width = 96;
- 
+
 -	if (of_property_read_u32(node, "solomon,height", &par->height))
 -		par->width = 16;
 +		if (of_property_read_u32(node, "solomon,height", &par->height))
 +			par->width = 16;
- 
+
 -	if (of_property_read_u32(node, "solomon,page-offset", &par->page_offset))
 -		par->page_offset = 1;
 +		if (of_property_read_u32(node, "solomon,page-offset",
 +					 &par->page_offset))
 +			par->page_offset = 1;
 +	}
- 
+
  	vmem_size = par->width * par->height / 8;
- 
+
 diff --git a/include/linux/platform_data/ssd1307.h b/include/linux/platform_data/ssd1307.h
 new file mode 100644
 index 0000000..e515e8b
@@ -194,6 +194,5 @@ index 0000000..e515e8b
 +};
 +
 +#endif /* _SSD1307_H */
--- 
+--
 2.10.1
-
