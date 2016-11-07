@@ -18,10 +18,10 @@ diff --git a/arch/mips/ath79/Kconfig b/arch/mips/ath79/Kconfig
 index 688dd48..dd6a883 100644
 --- a/arch/mips/ath79/Kconfig
 +++ b/arch/mips/ath79/Kconfig
-@@ -1553,6 +1553,16 @@ config ATH79_ROUTERBOOT
+@@ -1569,6 +1569,16 @@ config ATH79_ROUTERBOOT
  	select LZO_DECOMPRESS
  	def_bool n
- 
+
 +config ATH79_TWEAK_UART_BAUDRATES_FOR_ATMEGA32U4
 +	bool "Tweak baudrates for Atmega32U4 compatibility"
 +	depends on SOC_AR934X || SOC_AR933X
@@ -34,14 +34,14 @@ index 688dd48..dd6a883 100644
 +
  config PCI_AR724X
  	def_bool n
- 
+
 diff --git a/arch/mips/ath79/dev-common.c b/arch/mips/ath79/dev-common.c
 index 8d124f1..4172417 100644
 --- a/arch/mips/ath79/dev-common.c
 +++ b/arch/mips/ath79/dev-common.c
 @@ -70,6 +70,38 @@ static struct resource ar933x_uart_resources[] = {
  };
- 
+
  static struct ar933x_uart_platform_data ar93xx_uart_data;
 +static struct ar933x_uart_clk_params ar933x_clk_params[] = {
 +	{
@@ -81,7 +81,7 @@ index 8d124f1..4172417 100644
 @@ -93,6 +125,37 @@ static struct resource ar934x_uart_resources[] = {
  	},
  };
- 
+
 +static struct ar933x_uart_clk_params ar934x_clk_params[] = {
 +	{
 +		.baudrate = 115200,
@@ -132,6 +132,5 @@ index 8d124f1..4172417 100644
  		ar93xx_uart_data.fifosize = AR934X_UART_FIFO_SIZE;
  		platform_device_register(&ar934x_uart_device);
  	} else {
--- 
+--
 2.10.1
-
