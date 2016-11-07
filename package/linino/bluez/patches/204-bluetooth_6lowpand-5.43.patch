@@ -1,15 +1,7 @@
-diff -Nbur bluez-5.42/Makefile.in bluez-5.42-patch/Makefile.in
---- bluez-5.42/Makefile.in	2016-09-26 14:29:40.000000000 +0200
-+++ bluez-5.42-patch/Makefile.in	2016-09-27 13:19:02.757222953 +0200
-@@ -156,6 +156,7 @@
- @EXPERIMENTAL_TRUE@	tools/btgatt-server tools/test-runner \
- @EXPERIMENTAL_TRUE@	tools/check-selftest
- @TOOLS_TRUE@am__append_17 = tools/hciattach tools/hciconfig tools/hcitool tools/hcidump \
-+@TOOLS_TRUE@			tools/bluetooth_6lowpand \
- @TOOLS_TRUE@			tools/rfcomm tools/rctest tools/l2test tools/l2ping \
- @TOOLS_TRUE@			tools/sdptool tools/ciptool tools/bccmd \
- @TOOLS_TRUE@			tools/bluemoon tools/hex2hcd tools/mpris-proxy
-@@ -418,6 +419,7 @@
+diff -Nbur bluez-5.43/Makefile.in bluez-5.43-patch/Makefile.in
+--- bluez-5.43/Makefile.in	2016-10-28 14:58:07.000000000 +0200
++++ bluez-5.43-patch/Makefile.in	2016-11-04 12:22:39.319202383 +0100
+@@ -400,6 +400,7 @@
  @CLIENT_TRUE@am__EXEEXT_1 = client/bluetoothctl$(EXEEXT)
  @MONITOR_TRUE@am__EXEEXT_2 = monitor/btmon$(EXEEXT)
  @TOOLS_TRUE@am__EXEEXT_3 = tools/hciattach$(EXEEXT) \
@@ -17,7 +9,7 @@ diff -Nbur bluez-5.42/Makefile.in bluez-5.42-patch/Makefile.in
  @TOOLS_TRUE@	tools/hciconfig$(EXEEXT) tools/hcitool$(EXEEXT) \
  @TOOLS_TRUE@	tools/hcidump$(EXEEXT) tools/rfcomm$(EXEEXT) \
  @TOOLS_TRUE@	tools/rctest$(EXEEXT) tools/l2test$(EXEEXT) \
-@@ -1305,6 +1307,9 @@
+@@ -1264,6 +1265,9 @@
  @TOOLS_TRUE@	src/oui.$(OBJEXT)
  tools_hcitool_OBJECTS = $(am_tools_hcitool_OBJECTS)
  @TOOLS_TRUE@tools_hcitool_DEPENDENCIES = lib/libbluetooth-internal.la
@@ -27,7 +19,7 @@ diff -Nbur bluez-5.42/Makefile.in bluez-5.42-patch/Makefile.in
  am__tools_hex2hcd_SOURCES_DIST = tools/hex2hcd.c
  @TOOLS_TRUE@am_tools_hex2hcd_OBJECTS = tools/hex2hcd.$(OBJEXT)
  tools_hex2hcd_OBJECTS = $(am_tools_hex2hcd_OBJECTS)
-@@ -1673,6 +1678,7 @@
+@@ -1632,6 +1636,7 @@
  	$(tools_create_image_SOURCES) $(tools_eddystone_SOURCES) \
  	$(tools_gap_tester_SOURCES) $(tools_gatt_service_SOURCES) \
  	$(tools_hci_tester_SOURCES) $(tools_hciattach_SOURCES) \
@@ -35,7 +27,7 @@ diff -Nbur bluez-5.42/Makefile.in bluez-5.42-patch/Makefile.in
  	$(tools_hciconfig_SOURCES) $(tools_hcidump_SOURCES) \
  	tools/hcieventmask.c tools/hcisecfilter.c \
  	$(tools_hcitool_SOURCES) $(tools_hex2hcd_SOURCES) \
-@@ -1754,6 +1760,7 @@
+@@ -1713,6 +1718,7 @@
  	$(am__tools_hci_tester_SOURCES_DIST) \
  	$(am__tools_hciattach_SOURCES_DIST) \
  	$(am__tools_hciconfig_SOURCES_DIST) \
@@ -43,7 +35,7 @@ diff -Nbur bluez-5.42/Makefile.in bluez-5.42-patch/Makefile.in
  	$(am__tools_hcidump_SOURCES_DIST) tools/hcieventmask.c \
  	tools/hcisecfilter.c $(am__tools_hcitool_SOURCES_DIST) \
  	$(am__tools_hex2hcd_SOURCES_DIST) tools/hid2hci.c tools/hwdb.c \
-@@ -2595,6 +2602,7 @@
+@@ -2554,6 +2560,7 @@
  @TOOLS_TRUE@tools_hciconfig_LDADD = lib/libbluetooth-internal.la
  @TOOLS_TRUE@tools_hcitool_SOURCES = tools/hcitool.c src/oui.h src/oui.c
  @TOOLS_TRUE@tools_hcitool_LDADD = lib/libbluetooth-internal.la @UDEV_LIBS@
@@ -51,7 +43,7 @@ diff -Nbur bluez-5.42/Makefile.in bluez-5.42-patch/Makefile.in
  @TOOLS_TRUE@tools_hcidump_SOURCES = tools/hcidump.c \
  @TOOLS_TRUE@				tools/parser/parser.h tools/parser/parser.c \
  @TOOLS_TRUE@				tools/parser/lmp.c \
-@@ -4781,6 +4789,11 @@
+@@ -4671,6 +4678,11 @@
  tools/hcidump$(EXEEXT): $(tools_hcidump_OBJECTS) $(tools_hcidump_DEPENDENCIES) $(EXTRA_tools_hcidump_DEPENDENCIES) tools/$(am__dirstamp)
  	@rm -f tools/hcidump$(EXEEXT)
  	$(AM_V_CCLD)$(LINK) $(tools_hcidump_OBJECTS) $(tools_hcidump_LDADD) $(LIBS)
@@ -63,7 +55,7 @@ diff -Nbur bluez-5.42/Makefile.in bluez-5.42-patch/Makefile.in
  tools/hcieventmask.$(OBJEXT): tools/$(am__dirstamp) \
  	tools/$(DEPDIR)/$(am__dirstamp)
  
-@@ -5586,6 +5599,7 @@
+@@ -5459,6 +5471,7 @@
  @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hciattach_tialt.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hciconfig.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hcidump.Po@am__quote@
@@ -71,9 +63,9 @@ diff -Nbur bluez-5.42/Makefile.in bluez-5.42-patch/Makefile.in
  @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hcieventmask.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hcisecfilter.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hcitool.Po@am__quote@
-diff -Nbur bluez-5.42/Makefile.tools bluez-5.42-patch/Makefile.tools
---- bluez-5.42/Makefile.tools	2016-09-26 14:29:00.000000000 +0200
-+++ bluez-5.42-patch/Makefile.tools	2016-09-27 13:19:02.581187508 +0200
+diff -Nbur bluez-5.43/Makefile.tools bluez-5.43-patch/Makefile.tools
+--- bluez-5.43/Makefile.tools	2016-09-26 14:29:00.000000000 +0200
++++ bluez-5.43-patch/Makefile.tools	2016-11-04 12:22:39.155216528 +0100
 @@ -157,7 +157,8 @@
  bin_PROGRAMS += tools/hciattach tools/hciconfig tools/hcitool tools/hcidump \
  			tools/rfcomm tools/rctest tools/l2test tools/l2ping \
@@ -94,9 +86,9 @@ diff -Nbur bluez-5.42/Makefile.tools bluez-5.42-patch/Makefile.tools
  tools_hex2hcd_SOURCES = tools/hex2hcd.c
  
  tools_mpris_proxy_SOURCES = tools/mpris-proxy.c
-diff -Nbur bluez-5.42/tools/bluetooth_6lowpand.c bluez-5.42-patch/tools/bluetooth_6lowpand.c
---- bluez-5.42/tools/bluetooth_6lowpand.c	1970-01-01 01:00:00.000000000 +0100
-+++ bluez-5.42-patch/tools/bluetooth_6lowpand.c	2016-09-27 13:19:02.785228592 +0200
+diff -Nbur bluez-5.43/tools/bluetooth_6lowpand.c bluez-5.43-patch/tools/bluetooth_6lowpand.c
+--- bluez-5.43/tools/bluetooth_6lowpand.c	1970-01-01 01:00:00.000000000 +0100
++++ bluez-5.43-patch/tools/bluetooth_6lowpand.c	2016-11-04 12:22:39.347199967 +0100
 @@ -0,0 +1,1282 @@
 +/* Copyright (c) 2015, Nordic Semiconductor
 + * All rights reserved.
