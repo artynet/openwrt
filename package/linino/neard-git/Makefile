@@ -17,7 +17,7 @@ PKG_SOURCE_PROTO:=git
 PKG_REVISION:=421fd97857dee92e258aeea233d3cc6210a21d49
 PKG_SOURCE_VERSION=$(PKG_REVISION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://git.kernel.org/pub/scm/network/nfc/neard.git
+PKG_SOURCE_URL:=git://git.kernel.org/pub/scm/network/nfc/neard.git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
