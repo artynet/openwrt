@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libstrophe
-PKG_VERSION:=0.8.8-git
+PKG_VERSION:=0.9.1
 PKG_RELEASE=1
 
 PKG_LICENSE:=GPL-3.0
@@ -17,7 +17,7 @@ PKG_MAINTAINER:=Chih-Wei Chen <changeway@gmail.com>
 
 PKG_SOURCE_PROTO:=git
 
-PKG_REVISION:=cb79f5c10b6077b4e428ab225d2ef475606738a8
+PKG_REVISION:=0.9.1
 PKG_SOURCE_VERSION=$(PKG_REVISION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://github.com/strophe/libstrophe.git
@@ -63,7 +63,7 @@ define Build/InstallDev
 
 	$(INSTALL_DIR) $(1)/usr/lib/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libstrophe.{la,a,so*} $(1)/usr/lib/
-	
+
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/*.pc $(1)/usr/lib/pkgconfig
 endef
