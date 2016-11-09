@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liblapack
-PKG_VERSION:=3.6.0
+PKG_VERSION:=3.6.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=lapack-$(PKG_VERSION).tgz
@@ -16,9 +16,7 @@ PKG_SOURCE_URL:=http://www.netlib.org/lapack/
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/lapack-$(PKG_VERSION)
 
-PKG_BUILD_DEPENDS:=python/host
-#PKG_SOURCE_URL:=git://gitorious.org/liblapack/mainline.git
-#PKG_SOURCE_VERSION:=2e1c0fc5a8f5e41886141a6b402d00db735ccf49
+PKG_BUILD_DEPENDS:=python/host @INSTALL_GFORTRAN
 
 PKG_INSTALL:=1
 
