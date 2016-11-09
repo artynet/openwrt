@@ -21,16 +21,18 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REVISION).tar.gz
 
 PKG_INSTALL:=1
 
+PKG_BUILD_DEPENDS:=+libhiredis +jansson +libevent2 +libstrophe +libcurl +libfuse +libopenssl
+
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/wyliodrin-server
-  TITLE:=Wiliodryn Server
-  SECTION:=utils
-  DEFAULT:=m
-  CATEGORY:=Utilities
-  DEPENDS:=+libpthread +libcrypto +libc +libstdcpp +libhiredis +jansson +libevent2 +libstrophe +libcurl +libfuse +libopenssl
-  URL:=https://github.com/Wyliodrin/wyliodrin-server.git
+	TITLE:=Wiliodryn Server
+	SECTION:=utils
+	DEFAULT:=m
+	CATEGORY:=Utilities
+	DEPENDS:=+libpthread +libcrypto +libc +libstdcpp +libhiredis +jansson +libevent2 +libstrophe +libcurl +libfuse +libopenssl
+	URL:=https://github.com/Wyliodrin/wyliodrin-server.git
 endef
 
 define Package/wyliodrin-server/description
