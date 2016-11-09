@@ -1,4 +1,4 @@
-# 
+#
 # Copyright (C) 2011 David Kuehling <dvdkhlng TA gmx TOD de>
 #
 # License GPLv2 or later.  NO WARRANTY.
@@ -56,7 +56,7 @@ endef
 define Package/octave
 $(call Package/octave/Default)
   DEPENDS:= +libltdl +zlib +libpcre +libncurses +libreadline +libgfortran \
-	+octave-data +libpthread +libstdcpp
+	+octave-data +libpthread +libstdcpp +liblapack
   TITLE+= (executable)
 endef
 
@@ -87,7 +87,7 @@ TARGET_CXXFLAGS += -include stddef.h -fpermissive
 
 CONFIGURE_ARGS += --without-x --without-fftw --disable-docs --without-curl
 CONFIGURE_VARS += octlibdir=$(OCTAVE_LIB_DIR) FFLAGS="$(TARGET_CFLAGS)"
-#MAKE_FLAGS += "LD=$(TARGET_CROSS)gcc -nostdlib" 
+#MAKE_FLAGS += "LD=$(TARGET_CROSS)gcc -nostdlib"
 
 define Build/Configure
 	$(call Build/Configure/Default)
