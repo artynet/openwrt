@@ -9,18 +9,19 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libnfc
 PKG_VERSION:=1.7.1
-PKG_RELEASE:=2
+PKG_RELEASE:=1
+
 PKG_INSTALL:=1
 PKG_FIXUP:=autoreconf
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://code.google.com/p/libnfc/
+PKG_SOURCE_URL:=https://github.com/nfc-tools/libnfc
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(PKG_NAME)-$(PKG_VERSION)
 
-PKG_LICENSE:=LGPL-2.1
-PKG_MAINTAINER:=Sebastian Wendel <packages@sourceindex.de>
+PKG_LICENSE:=GPL-3.0
+PKG_LICENSE_FILES:=COPYING
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -65,10 +66,6 @@ define Package/nfc-utils/description
 
 endef
 
-define Package/nfc-utils/conffiles
-/etc/nfc/libnfc.conf
-endef
-
 TARGET_CFLAGS+=$(FPIC)
 CONFIGURE_ARGS+=--without-readline
 
@@ -96,9 +93,6 @@ define Package/nfc-utils/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/nfc-read-forum-tag3 $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/nfc-relay-picc $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/nfc-scan-device $(1)/usr/bin/
-
-	$(INSTALL_DIR) $(1)/etc/nfc
-	$(INSTALL_DATA) ./files/libnfc.conf $(1)/etc/nfc
 endef
 
 $(eval $(call BuildPackage,libnfc))
