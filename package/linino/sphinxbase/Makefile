@@ -23,7 +23,7 @@ define Package/sphinxbase
 	SECTION:=utils
 	CATEGORY:=Utilities
 	TITLE:=sphinxbase cmuspeech
-	DEPENDS:=+libc +libstdcpp +libpthread +pulseaudio-daemon
+	DEPENDS:=+libc +libstdcpp +libpthread +pulseaudio-daemon +libsamplerate
 endef
 
 define Package/sphinxbase/description
