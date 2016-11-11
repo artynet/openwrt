@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=serialport
 PKG_NAME:=node-$(PKG_NPM_NAME)
-PKG_VERSION:=4.0.5
+PKG_VERSION:=4.0.6
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NPM_NAME)-$(PKG_VERSION).tgz
@@ -52,7 +52,7 @@ endef
 
 define Package/node-serialport/install
 	$(INSTALL_DIR) $(1)/usr/lib/
-	
+
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules $(1)/usr/lib/
 endef
 
@@ -68,4 +68,3 @@ fi
 endef
 
 $(eval $(call BuildPackage,node-serialport))
-
