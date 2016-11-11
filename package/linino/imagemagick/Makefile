@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=imagemagick
-PKG_VERSION:=6.9.2
-PKG_REVISION:=5
+PKG_VERSION:=7.0.3
+PKG_REVISION:=6
 PKG_RELEASE:=1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/ImageMagick-$(PKG_VERSION)-$(PKG_REVISION)
@@ -83,6 +83,16 @@ define Package/imagemagick-tiff/description
 endef
 
 
+define Package/imagemagick-config
+  $(call Package/imagemagick/Default)
+  TITLE+= (config)
+  DEPENDS:=+imagemagick
+endef
+
+define Package/imagemagick-config/description
+  imagemagick XML configuration files
+endef
+
 CONFIGURE_ARGS += \
 	--with-modules \
 	--enable-shared \
@@ -138,13 +148,20 @@ define Package/imagemagick-tools/install
 		$(1)/usr/bin/
 endef
 
+define Package/imagemagick-config/install
+	$(INSTALL_DIR) $(1)/etc/ImageMagick-7
+	$(CP) \
+		$(PKG_INSTALL_DIR)/etc/ImageMagick-7/*.xml \
+		$(1)/etc/ImageMagick-7
+endef
+
 define BuildPlugin
   define Package/imagemagick-$(1)/install
-	$(INSTALL_DIR) $$(1)/usr/lib/ImageMagick-$(PKG_VERSION)/modules-Q16/coders
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ImageMagick-$(PKG_VERSION)/modules-Q16/coders/$(1).so \
-		$$(1)/usr/lib/ImageMagick-$(PKG_VERSION)/modules-Q16/coders
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ImageMagick-$(PKG_VERSION)/modules-Q16/coders/$(1).la \
-		$$(1)/usr/lib/ImageMagick-$(PKG_VERSION)/modules-Q16/coders
+	$(INSTALL_DIR) $$(1)/usr/lib/ImageMagick-$(PKG_VERSION)/modules-Q16HDRI/coders
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ImageMagick-$(PKG_VERSION)/modules-Q16HDRI/coders/$(1).so \
+		$$(1)/usr/lib/ImageMagick-$(PKG_VERSION)/modules-Q16HDRI/coders
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ImageMagick-$(PKG_VERSION)/modules-Q16HDRI/coders/$(1).la \
+		$$(1)/usr/lib/ImageMagick-$(PKG_VERSION)/modules-Q16HDRI/coders
   endef
 
   $$(eval $$(call BuildPackage,imagemagick-$(1)))
@@ -152,7 +169,7 @@ endef
 
 $(eval $(call BuildPackage,imagemagick))
 $(eval $(call BuildPackage,imagemagick-tools))
+$(eval $(call BuildPackage,imagemagick-config))
 $(eval $(call BuildPlugin,jpeg))
 $(eval $(call BuildPlugin,png))
 $(eval $(call BuildPlugin,tiff))
-
