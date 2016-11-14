@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=linino-conf
-PKG_VERSION:=1.0
-PKG_RELEASE:=9
+PKG_VERSION:=1.1
+PKG_RELEASE:=1
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -85,6 +85,7 @@ define Package/linino-conf/install
 	$(INSTALL_DATA) ./files/etc/linino/LeiSerialTerminal.hex $(1)/etc/linino/
 	$(INSTALL_DATA) ./files/etc/linino/YunMiniSerialTerminal.hex $(1)/etc/linino/
 	$(INSTALL_DATA) ./files/etc/linino/ChiwawaSerialTerminal.hex $(1)/etc/linino/
+	$(INSTALL_DATA) ./files/etc/linino/mips-onoff-tian.hex $(1)/etc/linino/
 
 	# /etc/linino DIR (bathos firmware)
 	$(INSTALL_DATA) ./files/etc/linino/bathos-one.hex $(1)/etc/linino
@@ -92,6 +93,7 @@ define Package/linino-conf/install
 	$(INSTALL_DATA) ./files/etc/linino/bathos-lei.hex $(1)/etc/linino/
 	$(INSTALL_DATA) ./files/etc/linino/bathos-yun-mini.hex $(1)/etc/linino/
 	$(INSTALL_DATA) ./files/etc/linino/bathos-chiwawa.hex $(1)/etc/linino/
+	$(INSTALL_DATA) ./files/etc/linino/bathos-tian.bin $(1)/etc/linino/
 	$(INSTALL_DATA) ./files/etc/linino/fuses.txt $(1)/etc/linino/
 	$(INSTALL_DATA) ./files/etc/linino/LININO_CONTRIBUTORS.txt $(1)/etc/linino/
 endef
