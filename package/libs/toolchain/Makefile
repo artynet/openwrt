@@ -79,6 +79,31 @@ define Package/libatomic/config
 	endmenu
 endef
 
+define Package/libm
+$(call Package/gcc/Default)
+  TITLE:=Libm C99 support library
+endef
+
+define Package/libm/config
+	menu "Configuration"
+		depends on EXTERNAL_TOOLCHAIN && PACKAGE_libm
+
+	config LIBM_ROOT_DIR
+		string
+		prompt "libm shared library base directory"
+		depends on EXTERNAL_TOOLCHAIN && PACKAGE_LIBM
+		default TOOLCHAIN_ROOT  if !NATIVE_TOOLCHAIN
+		default "/"  if NATIVE_TOOLCHAIN
+
+	config LIBM_FILE_SPEC
+		string
+		prompt "libm shared library files (use wildcards)"
+		depends on EXTERNAL_TOOLCHAIN && PACKAGE_LIBM
+		default "./lib/libm.so.*"
+
+	endmenu
+endef
+
 define Package/libssp
 $(call Package/gcc/Default)
   DEPENDS+=@SSP_SUPPORT
@@ -410,6 +435,15 @@ ifeq ($(CONFIG_EXTERNAL_TOOLCHAIN),)
 	$(CP) $(TOOLCHAIN_DIR)/lib/libgfortran.so.* $(1)/usr/lib/
   endef
 
+  define Package/libm/install
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) $(TOOLCHAIN_DIR)/lib/libm.so.* $(1)/usr/lib/
+	$(CP) $(TOOLCHAIN_DIR)/lib/libm.so $(1)/usr/lib/
+	$(CP) $(TOOLCHAIN_DIR)/lib/libm.a $(1)/usr/lib/
+	$(CP) $(TOOLCHAIN_DIR)/lib/libm_pic.a $(1)/usr/lib/
+	$(CP) $(TOOLCHAIN_DIR)/lib/libm-0.9.33.2.so $(1)/usr/lib/
+  endef
+
   define Package/libssp/install
 	$(INSTALL_DIR) $(1)/lib
 	$(CP) $(TOOLCHAIN_DIR)/lib/libssp.so.* $(1)/lib/
@@ -613,6 +647,15 @@ else
 	exit 0
   endef
 
+  define Package/libm/install
+	for file in $(call qstrip,$(CONFIG_LIBM_FILE_SPEC)); do \
+		dir=`dirname $$$$file` ; \
+		$(INSTALL_DIR) $(1)/$$$$dir ; \
+		$(CP) $(call qstrip,$(CONFIG_LIBM_ROOT_DIR))/$$$$file $(1)/$$$$dir/ ; \
+	done ; \
+	exit 0
+  endef
+
   define Package/ldd/install
 	for file in $(call qstrip,$(CONFIG_LDD_FILE_SPEC)); do \
 		dir=`dirname $$$$file` ; \
@@ -642,5 +685,6 @@ $(eval $(call BuildPackage,libpthread))
 $(eval $(call BuildPackage,libthread-db))
 $(eval $(call BuildPackage,librt))
 $(eval $(call BuildPackage,libgfortran))
+$(eval $(call BuildPackage,libm))
 $(eval $(call BuildPackage,ldd))
 $(eval $(call BuildPackage,ldconfig))
