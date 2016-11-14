@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=arduino-files
 PKG_VERSION:=1.7.11
-PKG_RELEASE:=4
+PKG_RELEASE:=5
 
 PKG_SOURCE_URL:=http://download.linino.org/pkg-src/
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
@@ -48,9 +48,18 @@ define Build/Compile
 endef
 
 define Package/arduino-files/install
-	$(INSTALL_DIR) $(1)/arduino
-	
-	$(CP) -av $(PKG_BUILD_DIR)/temp/* $(1)/arduino
+	$(INSTALL_DIR) $(1)/opt/arduino
+
+	$(CP) -av $(PKG_BUILD_DIR)/temp/* $(1)/opt/arduino
+endef
+
+define Package/arduino-files/preinst
+#!/bin/sh
+# check if we are on a real system
+if [ ! -d /opt/arduino ]
+then
+	mkdir -p /opt/arduino
+fi
 endef
 
 define Package/arduino-files/postrm
