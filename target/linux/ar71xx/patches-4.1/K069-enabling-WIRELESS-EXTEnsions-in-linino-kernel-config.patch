@@ -1,0 +1,31 @@
+From 02b1ec7139cc26819e9e1548c4ea0112548074a6 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Thu, 7 Jan 2016 13:06:54 +0100
+Subject: [PATCH 69/83] enabling WIRELESS EXTEnsions in linino kernel config
+
+---
+ arch/mips/configs/linino_defconfig | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/arch/mips/configs/linino_defconfig b/arch/mips/configs/linino_defconfig
+index 2230cb7..e774908 100644
+--- a/arch/mips/configs/linino_defconfig
++++ b/arch/mips/configs/linino_defconfig
+@@ -1063,9 +1063,11 @@ CONFIG_BT_HCIUART_BCSP=y
+ # CONFIG_AF_RXRPC is not set
+ CONFIG_FIB_RULES=y
+ CONFIG_WIRELESS=y
+-# CONFIG_WIRELESS_EXT is not set
+-# CONFIG_WEXT_SPY is not set
+-# CONFIG_WEXT_PRIV is not set
++CONFIG_WIRELESS_EXT=y
++CONFIG_WEXT_CORE=y
++CONFIG_WEXT_PROC=y
++CONFIG_WEXT_SPY=y
++CONFIG_WEXT_PRIV=y
+ # CONFIG_CFG80211 is not set
+ # CONFIG_LIB80211 is not set
+ # CONFIG_LIB80211_CRYPT_WEP is not set
+-- 
+2.10.1
+
