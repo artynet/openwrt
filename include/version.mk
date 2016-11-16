@@ -6,7 +6,7 @@
 #
 
 # Substituted by SDK, do not remove
-REVISION:=v0.99.0
+REVISION:=v0.9.99
 
 PKG_CONFIG_DEPENDS += \
 	CONFIG_VERSION_NUMBER \
