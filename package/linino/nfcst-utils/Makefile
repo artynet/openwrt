@@ -43,7 +43,7 @@ define Package/nfcst-utils/install
 
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/stnfcd $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/stnfcwake_test $(1)/usr/bin/
-	
+
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/stnfcd-openwrt $(1)/etc/init.d
 endef
