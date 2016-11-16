@@ -3,8 +3,8 @@ From: shikha singh <shikha.singh@st.com>
 Date: Thu, 2 Jun 2016 15:15:51 +0530
 Subject: [PATCH-NEARDAL-NCL 1/1] Fix for NCL to work on YUN
 
-Signed-off-by: shikha singh <shikha.singh@st.com
-
+Signed-off-by: shikha singh <shikha.singh@st.com>
+---
  ncl/ncl.c | 18 +++++++++---------
  1 file changed, 9 insertions(+), 9 deletions(-)
 
@@ -18,7 +18,7 @@ index 590d13b..2dc0720 100644
  	char **argv = NULL;
 +	char *cmdd = "help";
  	int argc;
-
+ 
 -	if (!g_shell_parse_argv(g_strstrip(cmd), &argc, &argv, &gerr))
 +	if(!(strcmp(cmd, cmdd))) {
 +		argc = 1;
@@ -40,3 +40,7 @@ index 590d13b..2dc0720 100644
 +		g_strfreev(argv);
  	return ret;
  }
+ 
+-- 
+1.9.1
+
