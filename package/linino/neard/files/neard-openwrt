@@ -1,7 +1,6 @@
 #!/bin/sh /etc/rc.common
 #
 # Copyright (c) 2016 Arduino Srl
-# This file is part of Arduino Ciao.
 #
 # Starts neard
 #
@@ -13,7 +12,7 @@ NAME=neard
 DAEMON=/usr/bin/$NAME
 
 # Exit gracefully if the package has been removed
-[ -x $DAEMON ] || exit 0
+# [ -x $DAEMON ] || exit 0
 
 start () {
     echo -n "Starting $NAME: "
