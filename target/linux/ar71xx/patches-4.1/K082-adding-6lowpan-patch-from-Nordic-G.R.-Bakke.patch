@@ -1,0 +1,229 @@
+From a2105ae1de117e17522d37b6dedb1f286c544160 Mon Sep 17 00:00:00 2001
+From: Glenn Ruben Bakke <glenn.ruben.bakke@nordicsemi.no>
+Date: Wed, 17 Jun 2015 07:32:23 -0700
+Subject: Bluetooth: 6lowpan: Enable delete_netdev to be scheduled when last
+ peer is deleted
+
+This patch fixes an issue with the netdev not being unregistered when
+the last peer is deleted. Removing the logical negation operator on the
+boolean solves this issue. If the last peer is removed the condition
+will be true, and the delete_netdev() is scheduled.
+
+Signed-off-by: Lukasz Duda <lukasz.duda@nordicsemi.no>
+Signed-off-by: Glenn Ruben Bakke <glenn.ruben.bakke@nordicsemi.no>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ net/bluetooth/6lowpan.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/bluetooth/6lowpan.c b/net/bluetooth/6lowpan.c
+index f3d6046..3edc731 100644
+--- a/net/bluetooth/6lowpan.c
++++ b/net/bluetooth/6lowpan.c
+@@ -977,7 +977,7 @@ static void chan_close_cb(struct l2cap_chan *chan)
+ 
+ 		ifdown(dev->netdev);
+ 
+-		if (!removed) {
++		if (removed) {
+ 			INIT_WORK(&entry->delete_netdev, delete_netdev);
+ 			schedule_work(&entry->delete_netdev);
+ 		}
+-- 
+cgit v0.12
+
+From f63666d20973b85073c4849c9d7471219adf6da9 Mon Sep 17 00:00:00 2001
+From: Glenn Ruben Bakke <glenn.ruben.bakke@nordicsemi.no>
+Date: Wed, 17 Jun 2015 07:32:24 -0700
+Subject: Bluetooth: 6lowpan: Rename ambiguous variable
+
+This patch renames the variable used to trigger scheduling of
+delete_netdev. Changed to infinitiv in order to describe the action
+to be done.
+
+Signed-off-by: Lukasz Duda <lukasz.duda@nordicsemi.no>
+Signed-off-by: Glenn Ruben Bakke <glenn.ruben.bakke@nordicsemi.no>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ net/bluetooth/6lowpan.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/net/bluetooth/6lowpan.c b/net/bluetooth/6lowpan.c
+index 3edc731..7ee591a 100644
+--- a/net/bluetooth/6lowpan.c
++++ b/net/bluetooth/6lowpan.c
+@@ -937,7 +937,7 @@ static void chan_close_cb(struct l2cap_chan *chan)
+ 	struct lowpan_dev *dev = NULL;
+ 	struct lowpan_peer *peer;
+ 	int err = -ENOENT;
+-	bool last = false, removed = true;
++	bool last = false, remove = true;
+ 
+ 	BT_DBG("chan %p conn %p", chan, chan->conn);
+ 
+@@ -948,7 +948,7 @@ static void chan_close_cb(struct l2cap_chan *chan)
+ 		/* If conn is set, then the netdev is also there and we should
+ 		 * not remove it.
+ 		 */
+-		removed = false;
++		remove = false;
+ 	}
+ 
+ 	spin_lock(&devices_lock);
+@@ -977,7 +977,7 @@ static void chan_close_cb(struct l2cap_chan *chan)
+ 
+ 		ifdown(dev->netdev);
+ 
+-		if (removed) {
++		if (remove) {
+ 			INIT_WORK(&entry->delete_netdev, delete_netdev);
+ 			schedule_work(&entry->delete_netdev);
+ 		}
+-- 
+cgit v0.12
+
+From fc84242f7a9731885ae70c0077816fa6fb19c4d5 Mon Sep 17 00:00:00 2001
+From: Glenn Ruben Bakke <glenn.ruben.bakke@nordicsemi.no>
+Date: Wed, 17 Jun 2015 07:32:25 -0700
+Subject: Bluetooth: 6lowpan: Move netdev sysfs device reference
+
+This patch moves the sysfs device used by the netdev from the device of
+the first connected peer to the hci sysfs device. Using the sysfs device
+of hci instead of the first connected device fixes this issue such that
+the sysfs group of tx-0 and bt0 kobject are still present after the last
+peer has been deleted and all sysfs entries can be removed.
+
+Signed-off-by: Lukasz Duda <lukasz.duda@nordicsemi.no>
+Signed-off-by: Glenn Ruben Bakke <glenn.ruben.bakke@nordicsemi.no>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ net/bluetooth/6lowpan.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/bluetooth/6lowpan.c b/net/bluetooth/6lowpan.c
+index 7ee591a..bc105a9 100644
+--- a/net/bluetooth/6lowpan.c
++++ b/net/bluetooth/6lowpan.c
+@@ -856,7 +856,7 @@ static int setup_netdev(struct l2cap_chan *chan, struct lowpan_dev **dev)
+ 	set_dev_addr(netdev, &chan->src, chan->src_type);
+ 
+ 	netdev->netdev_ops = &netdev_ops;
+-	SET_NETDEV_DEV(netdev, &chan->conn->hcon->dev);
++	SET_NETDEV_DEV(netdev, &chan->conn->hcon->hdev->dev);
+ 	SET_NETDEV_DEVTYPE(netdev, &bt_type);
+ 
+ 	err = register_netdev(netdev);
+-- 
+cgit v0.12
+
+From 2ad88fb2c0ff57372406eff4df8dde020bf1a18d Mon Sep 17 00:00:00 2001
+From: Glenn Ruben Bakke <glenn.ruben.bakke@nordicsemi.no>
+Date: Wed, 17 Jun 2015 07:32:26 -0700
+Subject: Bluetooth: 6lowpan: Fix double kfree of netdev priv
+
+This patch removes the kfree of the netdev priv in device_event() upon
+NETDEV_UNREGISTER event. The freeing of memory is taken care of by the
+netdev destructor.
+
+Signed-off-by: Lukasz Duda <lukasz.duda@nordicsemi.no>
+Signed-off-by: Glenn Ruben Bakke <glenn.ruben.bakke@nordicsemi.no>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ net/bluetooth/6lowpan.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/net/bluetooth/6lowpan.c b/net/bluetooth/6lowpan.c
+index bc105a9..071f9eb 100644
+--- a/net/bluetooth/6lowpan.c
++++ b/net/bluetooth/6lowpan.c
+@@ -928,7 +928,7 @@ static void delete_netdev(struct work_struct *work)
+ 
+ 	unregister_netdev(entry->netdev);
+ 
+-	/* The entry pointer is deleted in device_event() */
++	/* The entry pointer is deleted by the netdev destructor. */
+ }
+ 
+ static void chan_close_cb(struct l2cap_chan *chan)
+@@ -1418,7 +1418,6 @@ static int device_event(struct notifier_block *unused,
+ 				BT_DBG("Unregistered netdev %s %p",
+ 				       netdev->name, netdev);
+ 				list_del(&entry->list);
+-				kfree(entry);
+ 				break;
+ 			}
+ 		}
+-- 
+cgit v0.12
+
+From 89e4042861772a89fc54ce517255c3a38ba58ac1 Mon Sep 17 00:00:00 2001
+From: Glenn Ruben Bakke <glenn.ruben.bakke@nordicsemi.no>
+Date: Wed, 17 Jun 2015 07:32:27 -0700
+Subject: Bluetooth: 6lowpan: Fix module refcount
+
+This patch removes the additional module_put() in disconnect_all_peers()
+making a correct module refcount so that the module can be removed after
+disabling 6lowpan through debugfs.
+
+Signed-off-by: Lukasz Duda <lukasz.duda@nordicsemi.no>
+Signed-off-by: Glenn Ruben Bakke <glenn.ruben.bakke@nordicsemi.no>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ net/bluetooth/6lowpan.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/net/bluetooth/6lowpan.c b/net/bluetooth/6lowpan.c
+index 071f9eb..2fb7b30 100644
+--- a/net/bluetooth/6lowpan.c
++++ b/net/bluetooth/6lowpan.c
+@@ -1208,8 +1208,6 @@ static void disconnect_all_peers(void)
+ 
+ 		list_del_rcu(&peer->list);
+ 		kfree_rcu(peer, rcu);
+-
+-		module_put(THIS_MODULE);
+ 	}
+ 	spin_unlock(&devices_lock);
+ }
+-- 
+cgit v0.12
+
+From 77e867b5f133f6bb3debcfcc75ce4536d644e62e Mon Sep 17 00:00:00 2001
+From: Lukasz Duda <lukasz.duda@nordicsemi.no>
+Date: Mon, 10 Aug 2015 21:15:52 +0200
+Subject: 6lowpan: Fix extraction of flow label field
+
+The lowpan_fetch_skb function is used to fetch the first byte,
+which also increments the data pointer in skb structure,
+making subsequent array lookup of byte 0 actually being byte 1.
+
+To decompress the first byte of the Flow Label when the TF flag is
+set to 0x01, the second half of the first byte is needed.
+
+The patch fixes the extraction of the Flow Label field.
+
+Acked-by: Jukka Rissanen <jukka.rissanen@linux.intel.com>
+Signed-off-by: Lukasz Duda <lukasz.duda@nordicsemi.no>
+Signed-off-by: Glenn Ruben Bakke <glenn.ruben.bakke@nordicsemi.no>
+Signed-off-by: Alexander Aring <alex.aring@gmail.com>
+Signed-off-by: Marcel Holtmann <marcel@holtmann.org>
+---
+ net/6lowpan/iphc.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/net/6lowpan/iphc.c b/net/6lowpan/iphc.c
+index 9055d7b..74e56d7 100644
+--- a/net/6lowpan/iphc.c
++++ b/net/6lowpan/iphc.c
+@@ -284,7 +284,7 @@ lowpan_header_decompress(struct sk_buff *skb, struct net_device *dev,
+ 		if (lowpan_fetch_skb(skb, &tmp, sizeof(tmp)))
+ 			return -EINVAL;
+ 
+-		hdr.flow_lbl[0] = (skb->data[0] & 0x0F) | ((tmp >> 2) & 0x30);
++		hdr.flow_lbl[0] = (tmp & 0x0F) | ((tmp >> 2) & 0x30);
+ 		memcpy(&hdr.flow_lbl[1], &skb->data[0], 2);
+ 		skb_pull(skb, 2);
+ 		break;
+-- 
+cgit v0.12
+
