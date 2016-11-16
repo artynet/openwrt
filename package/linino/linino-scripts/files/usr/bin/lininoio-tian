@@ -1,0 +1,432 @@
+#
+# lininoio.sh : A simple LininoIO enabler/disabler script
+#
+# Copyright (C) 2016 Arduino Srl
+#
+# Author : Arturo Rinaldi
+# E-mail : arturo@arduino.org
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# v02 : bugfixing to properly disable lininoIO
+#
+# v01 : rewriting the script just for Arduino tian
+#
+
+#!/bin/sh
+
+# Check for ssh connection
+
+sshcheck () {
+
+	if [ ! `ps | grep -i [d]ropbear | wc -l` -ge 2 ]
+	then
+		echo ""
+		echo "Please connect to your board by means of ssh before running this script ! Terminating..."
+		echo ""
+
+		exit 0
+	else
+		echo ""
+		echo "WARNING ! Please be sure to run lininoio when connected by means of SSH to your board, otherwise you could damage your board !"
+		echo ""
+
+		read -p "Do you want to proceed ? [y/n] " yn_ssh
+
+		case $yn_ssh in
+			[Yy]*)
+				clear
+				;;
+			[Nn]*)
+
+				echo ""
+				echo "Terminating the script for now..."
+				echo""
+
+				exit 0
+				;;
+		esac
+	fi
+
+}
+
+statusio () {
+
+	if [ -d /sys/class/gpio/gpiochip100 ]
+	then
+		echo ""
+		echo "STATUS : ENABLED"
+		echo ""
+	else
+		echo ""
+		echo "STATUS : DISABLED"
+		echo ""
+	fi
+
+	exit 0
+}
+
+versionio () {
+
+	if [ -e /etc/linino_version ]
+	then
+			cat /etc/linino_version | sed -e /RELEASE/d | sed -e /CODENAME/d | sed -e /TARGET/d
+
+			exit 0
+	else
+			echo ""
+			echo "linino_version not on the system ! Aborting !"
+			echo ""
+
+			exit 0
+	fi
+
+}
+
+helpio () {
+
+	echo ""
+	echo "USAGE : lininoio <-f> <start/stop> - enables/disable the LininoIO features with the optional \`force\` switch"
+	echo "	lininoio -v : prints out the versioning details of the LininoIO operating system"
+	echo "	lininoio -s : shows the current status of the LininoIO features (ENABLED/DISABLED)"
+	echo "	lininoio -h : prints out this HELP"
+	echo ""
+
+	exit 0
+
+}
+
+# Asks for rebooting after the LininoIO modifications have been made
+
+reboot_io () {
+
+	if [ $1 = 'start' ]
+	then
+
+		word='enable'
+
+	elif [ $1 = 'stop' ]
+	then
+
+		word='disable'
+
+ 	fi
+
+	t=1
+
+	while [ $t != 0 ]
+	do
+
+		echo ""
+		read -p "To fully "$word" the LininoIO features you must reboot your system. Reboot now ? [y/n] " yn1
+		echo ""
+
+		case $yn1 in
+			[Yy]*)
+
+				echo ""
+				echo "Rebooting..."
+				echo ""
+
+				reboot && exit
+
+				t=0
+
+				;;
+
+			[Nn]*)
+
+				echo ""
+				echo "Terminating for now, remember to reboot your system later..."
+				echo ""
+
+				exit 0
+
+				t=0
+
+				;;
+
+			*)
+
+				echo ""
+				echo "You have to make a choice !"
+				echo ""
+
+				sleep 1
+
+				clear
+
+				;;
+		esac
+
+	done
+}
+
+# Detects if "mcuio" service is up and running or not
+
+mcuio_ok () {
+
+	if [ -d /sys/class/gpio/gpiochip100 ]
+	then
+
+		echo ""
+		echo "LininoIO is currently up and running or you simply have to reboot your board to enable it !"
+		echo ""
+
+		exit 0
+
+	fi
+
+}
+
+mcuio_ko () {
+
+	if [ ! -d /sys/class/gpio/gpiochip100 ]
+	then
+
+		echo ""
+		echo "LininoIO is currently disabled....nothing to revert ! You maybe need to reboot your board now...."
+		echo ""
+
+		exit 0
+
+	fi
+
+}
+
+# Detects if the board is supported or not
+
+boardname=$(awk '/machine/ {print tolower($4)}' /proc/cpuinfo)
+
+if [ $boardname ]
+then
+
+	case $boardname in
+			'tian')
+					FILE="mips-onoff-tian.hex"
+					PROGRAMMER="/usr/bin/flash-samd21"
+					BATHOS=bathos-$boardname.bin
+				;;
+
+			*)
+
+				echo ""
+				echo "You board is not supported ! Terminating the script..."
+				echo ""
+
+				exit 0
+
+				;;
+	esac
+
+else
+
+	echo ""
+	echo "Board not detected ! ! !"
+	echo ""
+
+	exit 0
+
+fi
+
+# First check from CLI
+
+case $1 in
+
+	'-s')
+			statusio
+			;;
+
+	'-h')
+			helpio
+			;;
+
+	'-v')
+			versionio
+			;;
+
+		'')
+			echo ""
+			echo "Invalid choice ! Please run \`lininoio -h\` to set a valid option !"
+			echo ""
+
+			exit 0
+			;;
+
+esac
+
+# Main
+
+force=$1
+
+# Shift argument if $1 is -f
+
+if [ $1 = '-f' ]
+then
+
+	shift 1
+
+fi
+
+if [ -e /etc/linino/$BATHOS ]
+then
+
+	case $1 in
+			'start')
+
+				case $force in
+					'-f')
+						;;
+					*)
+						mcuio_ok
+						;;
+				esac
+
+				# Detects active SSH connection
+
+				sshcheck
+
+				p=1
+
+				while [ $p != 0 ]
+				do
+
+					echo ""
+					read -p "Do you want to enable the LininoIO OS features ? [y/n] " yn
+					echo ""
+
+					case $yn in
+						[Yy]*)
+							# flashing baThos to samd21
+							$PROGRAMMER /etc/linino/$BATHOS
+							# enabling mcuio service
+							/etc/init.d/mcuio enable &>/dev/null
+							# setting the enable variable to yes
+							sed -i -e s/no/yes/g /etc/config/mcuiocfg
+
+							# echo "Rebooting..."
+							# reboot && exit
+
+							reboot_io $1
+
+							p=0
+
+							;;
+
+						[Nn]*)
+
+							echo ""
+							echo "Terminating the script..."
+							echo ""
+
+							exit 0
+
+							p=0
+
+							;;
+						*)
+
+							echo ""
+							echo "You have to make a choice !"
+							echo ""
+
+							;;
+					esac
+				done
+
+				;;
+
+			'stop')
+
+				case $force in
+					'-f')
+						;;
+					*)
+						mcuio_ko
+						;;
+				esac
+
+				# Detects active SSH connection
+
+				sshcheck
+
+				q=1
+
+				while [ $q != 0 ]
+				do
+
+					echo ""
+					read -p "Do you want to disable the LininoIO OS features ? [y/n] " yn
+					echo ""
+
+					case $yn in
+						[Yy]*)
+							# disabling mcuio service
+							/etc/init.d/mcuio disable &>/dev/null
+							# setting the enable variable to yes
+							sed -i -e s/yes/no/g /etc/config/mcuiocfg
+							# resetting the mcu
+							# mcu-reset
+							# waking-up the mips cpu
+							$PROGRAMMER /etc/linino/$FILE
+
+							# echo "Rebooting..."
+							# reboot && exit
+
+							reboot_io $1
+
+							q=0
+
+							;;
+
+						[Nn]*)
+
+							echo ""
+							echo "Terminating the script..."
+							echo ""
+
+							exit 0
+
+							q=0
+
+							;;
+
+						*)
+
+							echo ""
+							echo "You have to make a choice !"
+							echo ""
+
+							;;
+
+					esac
+				done
+
+				;;
+
+			*)
+				echo ""
+				echo "Invalid choice ! Please run \`lininoio -h\` to set a valid option !"
+				echo ""
+
+				exit 0
+				;;
+
+	esac
+
+else
+	echo ""
+	echo "Firmware HEX not residing on the board ! Aborting !"
+	echo ""
+fi
