@@ -1,0 +1,38 @@
+From 9d118f889e6c3062eb0027a554198df5c5869a47 Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Mon, 8 Jun 2015 08:22:07 +0200
+Subject: [PATCH 41/83] CHOWCHOW mach: swap reset and conf buttons
+
+Patch taken from:
+https://github.com/linino/linino_distro/commit/599c1bbdbaee9063faf4637dfd1f7016cdfe9e07
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ arch/mips/ath79/mach-linino-chowchow.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/mips/ath79/mach-linino-chowchow.c b/arch/mips/ath79/mach-linino-chowchow.c
+index 54c8594..d4a2313 100644
+--- a/arch/mips/ath79/mach-linino-chowchow.c
++++ b/arch/mips/ath79/mach-linino-chowchow.c
+@@ -34,7 +34,7 @@
+ #include "linux/gpio.h"
+ #include <linux/spi/spi_gpio.h>
+ 
+-#define CHOWCHOW_GPIO_MCU_RESET	0
++#define CHOWCHOW_GPIO_MCU_RESET	17
+ #define CHOWCHOW_GPIO_LED0		12
+ #define CHOWCHOW_GPIO_LED1		11
+ 
+@@ -43,7 +43,7 @@
+ #define CHOWCHOW_GPIO_UART1_RX	9
+ #define CHOWCHOW_GPIO_UART1_TX	10
+ #define CHOWCHOW_GPIO_OE2		15
+-#define CHOWCHOW_GPIO_CONF_BTN	17
++#define CHOWCHOW_GPIO_CONF_BTN	0
+ #define CHOWCHOW_GPIO_UART_POL	GPIOF_OUT_INIT_LOW
+ 
+ #define	CHOWCHOW_GPIO_SPI_SCK	4
+-- 
+2.10.1
+
