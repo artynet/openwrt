@@ -18,10 +18,10 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://thrysoee.dk/editline/
 PKG_MD5SUM:=43cdb5df3061d78b5e9d59109871b4f6
 
-PKG_FIXUP:=libtool autoreconf
-
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_INSTALL:=1
+
+PKG_FIXUP:=autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
