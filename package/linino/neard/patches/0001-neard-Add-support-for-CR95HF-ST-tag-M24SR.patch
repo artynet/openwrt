@@ -1,6 +1,6 @@
-From 6c80fcbbcfe7fe4ecf5185e91cb8dff1600544fa Mon Sep 17 00:00:00 2001
+From d508bc1821cab8f41919fd92fa2473b2a605adec Mon Sep 17 00:00:00 2001
 From: Sudeep Biswas <sudeep.biswas@st.com>
-Date: Fri, 1 Apr 2016 13:58:25 +0530
+Date: Fri, 1 Apr 2016 11:48:24 +0530
 Subject: [PATCH (linux-nfc) 1/1] neard: Add support for CR95HF & ST tag M24SR
 
 Workaround in nfctype4.c for CR95HF as CR95HF does not
