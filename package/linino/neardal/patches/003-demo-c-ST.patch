@@ -1,0 +1,22 @@
+--- a/demo/demo.c	2016-06-03 12:36:04.000000000 +0200
++++ b/demo/demo.c	2016-06-03 10:14:22.000000000 +0200
+@@ -309,6 +309,8 @@
+ 			keystroke_state=1;//
+ 			return TRUE;
+ 		}
++		//shikha patch to call neardal_destroy
++		neardal_destroy();
+ 		g_main_loop_quit( (GMainLoop*)data );
+ 		return FALSE;
+ 	}
+
+--- a/demo/demo.c	2016-07-11 17:18:32.808411100 +0200
++++ b/demo/demo.c	2016-07-11 17:18:43.732603063 +0200
+@@ -227,7 +227,6 @@
+ 	if (ec == NEARDAL_SUCCESS)
+ 	{
+ 		dump_record(record);
+-		open_uri(record);
+ 		neardal_free_record(record);
+ 		printf("---- Reading done\n");
+ 		printf("---- Waiting for tag removal\n");
