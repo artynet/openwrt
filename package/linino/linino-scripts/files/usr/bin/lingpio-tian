@@ -1,0 +1,85 @@
+#!/bin/sh
+
+#
+# v1.2
+#
+
+if [ "$1" != "export" ] && [ "$1" != "unexport" ]
+then
+	echo ""
+	echo "please launch the script with : lingpio export/unexport"
+	echo ""
+	exit 0
+else
+	case $1 in
+		'export')
+			var=1
+			keyword="enabled"
+			;;
+		'unexport')
+			var=0
+			keyword="disabled"
+			;;
+	esac
+	# echo ""
+	# echo $var
+	# echo ""
+fi
+
+###  BOARD GPIO  ###
+#GPIO	OUTPUT	board
+# 100 "A0"
+# 101 "A1"
+# 102 "A2"
+# 103 "A3"
+# 104 "A4"
+# 105 "A5"
+# 106 "D2"
+# 107 "D3"
+# 108 "D4"
+# 109 "D5"
+# 110 "D6"
+# 111 "D7"
+# 112 "D8"
+# 113 "D9"
+# 114 "D10"
+# 115 "D11"
+# 116 "D12"
+# 117 "SCK"
+
+for i in $(seq 100 117); do
+	echo $i > /sys/class/gpio/$1 2>/dev/null
+done
+
+if [ -d /sys/class/gpio/SCK/direction ]
+then
+	echo out > /sys/class/gpio/SCK/direction
+fi
+
+echo ""
+echo "GPIO $keyword"
+echo ""
+
+# enable ADC
+echo $var > /sys/bus/iio/devices/iio:device0/enable
+
+echo ""
+echo "ADC $keyword"
+echo ""
+
+#enable PWM
+# PWM n.  OUTPUT
+#   0	   D0
+#   1	   D1
+#   2	   D2
+#   3	   D3
+#   4	   D4
+#   5	   D5
+
+for i in $(seq 0 5);do
+	echo $i > /sys/class/pwm/pwmchip0/$1 2>/dev/null
+done
+
+echo ""
+echo "PWM $keyword"
+echo ""
