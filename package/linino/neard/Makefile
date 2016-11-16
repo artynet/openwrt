@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=neard
-PKG_VERSION:=0.16
-PKG_RELEASE:=3
+PKG_VERSION:=0.15
+PKG_RELEASE:=8
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/network/nfc/
-# PKG_MD5SUM:=b746ce62eeef88e8de90765e00a75a1c
+PKG_MD5SUM:=b746ce62eeef88e8de90765e00a75a1c
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
@@ -39,8 +39,8 @@ define Package/neard/description
 endef
 
 define Package/neard/conffiles
-/etc/neard/main.conf
 /etc/dbus-1/system.d/org.neard.conf
+/etc/neard/main.conf
 endef
 
 define Package/python-neard
@@ -60,7 +60,6 @@ endef
 CONFIGURE_ARGS += \
 	--disable-systemd \
 	--enable-debug \
-	--enable-tools \
 	--enable-maintainer-mode \
 	--sysconfdir=/etc \
 	--prefix=/usr
@@ -76,7 +75,6 @@ endef
 define Package/neard/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/nfc/neard $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{nciattach,nfctool} $(1)/usr/bin
 	$(INSTALL_BIN) ./files/tag-detector $(1)/usr/bin
 
 	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d
