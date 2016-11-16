@@ -1,24 +1,23 @@
 #!/bin/sh /etc/rc.common
 #
 # Copyright (c) 2016 Arduino Srl
-# This file is part of Arduino Ciao.
 #
 # Starts stnfcd
 #
 
-START=52
-STOP=52
+START=61
+STOP=61
 
 NAME=stnfcd
 DAEMON=/usr/bin/$NAME
 
 # Exit gracefully if the package has been removed
-[ -x $DAEMON ] || exit 0
-[ -e /dev/ttyUSB0 ] || exit 0
+# [ -x $DAEMON ] || exit 0
+# [ -e /dev/ttyNFC ] || exit 0
 
 start () {
     echo -n "Starting $NAME: "
-    service_start $DAEMON /dev/ttyUSB0
+    service_start $DAEMON /dev/ttyNFC
     echo "OK"
 }
 
@@ -29,5 +28,5 @@ stop () {
 }
 
 reload () {
-    service_reload $DAEMON /dev/ttyUSB0
+    service_reload $DAEMON /dev/ttyNFC
 }
