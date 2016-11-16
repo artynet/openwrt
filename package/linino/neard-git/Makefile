@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=neard-git
-PKG_VERSION:=0.15
-PKG_RELEASE:=6
+PKG_VERSION:=0.16
+PKG_RELEASE:=1
 
 PKG_FIXUP:=autoreconf
 PKG_SOURCE_PROTO:=git
 
-PKG_REVISION:=421fd97857dee92e258aeea233d3cc6210a21d49
+PKG_REVISION:=949795024f7625420e93e288c56e194cb9a3e74a
 PKG_SOURCE_VERSION=$(PKG_REVISION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=git://git.kernel.org/pub/scm/network/nfc/neard.git
@@ -84,6 +84,12 @@ define Package/neard-git/install
 
 	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d
 	$(INSTALL_DATA) $(PKG_INSTALL_DIR)/etc/dbus-1/system.d/org.neard.conf $(1)/etc/dbus-1/system.d
+
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/neard-openwrt $(1)/etc/init.d
+
+	$(INSTALL_DIR) $(1)/etc/neard
+	$(INSTALL_BIN) ./files/main.conf $(1)/etc/neard
 endef
 
 define Package/python-neard-git/install
