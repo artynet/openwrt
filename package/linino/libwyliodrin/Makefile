@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libwyliodrin
 PKG_VERSION:=2.5
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 
@@ -29,7 +29,7 @@ define Package/libwyliodrin
   SECTION:=libs
   DEFAULT:=m
   CATEGORY:=Libraries
-  DEPENDS:=+libpthread +libcrypto +libc +libstdcpp +librt +libhiredis +jansson +libevent2
+  DEPENDS:=+libpthread +libc +libstdcpp +librt +libhiredis +jansson +libevent2
   URL:=https://github.com/Wyliodrin/libwyliodrin.git
 endef
 
@@ -43,7 +43,7 @@ define Package/python-libwyliodrin
   DEFAULT:=m
   CATEGORY:=Languages
   SUBMENU:=Python
-  DEPENDS:=+libpthread +libcrypto +libc +libstdcpp +libwyliodrin +librt +python-base +python-light
+  DEPENDS:=+libpthread +libopenssl +libc +libstdcpp +libwyliodrin +librt +python-base +python-light
   URL:=https://github.com/Wyliodrin/libwyliodrin.git
 endef
 
@@ -57,7 +57,7 @@ define Package/node-libwyliodrin
   SUBMENU:=Node.js
   DEFAULT:=m
   CATEGORY:=Languages
-  DEPENDS:=+libpthread +libcrypto +libc +libstdcpp +libwyliodrin +librt +node
+  DEPENDS:=+libpthread +libopenssl +libc +libstdcpp +libwyliodrin +librt +node
   URL:=https://github.com/Wyliodrin/libwyliodrin.git
 endef
 

@@ -26,7 +26,7 @@ PKG_NODE_VERSION:=0.10.46
 include $(INCLUDE_DIR)/package.mk
 
 define Package/node-wyliodrin-app-server
-  DEPENDS:=+node +node-authenticate-pam
+  DEPENDS:=+node +node-authenticate-pam +libwyliodrin
   SUBMENU:=Node.js
   SECTION:=lang
   CATEGORY:=Languages
