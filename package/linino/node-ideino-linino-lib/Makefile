@@ -16,12 +16,10 @@ PKG_SOURCE_PROTO:=git
 
 PKG_SOURCE_URL:=https://github.com/ideino/ideino-linino-lib.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-# PKG_SOURCE_VERSION:=7f65c03d2dafe1d861fda6096c2ab7d031b7b31d
 PKG_SOURCE_VERSION:=67bc89e4586ff37f34c241cac3bffc1b366555a5
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-# PKG_SOURCE_URL:=https://github.com/ideino/ideino-linino-lib/archive/
+PKG_REVISION:=$(PKG_SOURCE_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REVISION).tar.gz
 
-# PKG_INSTALL:=1
 PKG_BUILD_DEPENDS:=node
 PKG_NODE_VERSION:=0.10.46
 
@@ -39,11 +37,6 @@ endef
 define Package/$(PKG_NAME)/description
 	Linino library for Dog Hunter boards
 endef
-
-# define Build/Prepare
-#	/bin/tar zxvf $(DL_DIR)/$(PKG_SOURCE) -C $(PKG_BUILD_DIR) --strip-components=1
-#	$(Build/Patch)
-# endef
 
 define Build/Compile
 	CC="$(TOOLCHAIN_DIR)/bin/mips-openwrt-linux-gcc" \
