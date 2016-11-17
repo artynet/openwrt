@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=neardal
 PKG_VERSION:=0.14
-PKG_RELEASE:=7
+PKG_RELEASE:=8
 
 PKG_FIXUP:=libtool autoreconf
 PKG_SOURCE_PROTO:=git
@@ -26,7 +26,7 @@ PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
-PKG_BUILD_DEPENDS:=libedit
+PKG_BUILD_DEPENDS:=libncurses +libreadline
 
 PKG_BUILD_PARALLEL:=1
 PKG_INSTALL:=1
@@ -38,7 +38,7 @@ define Package/neardal
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Exchange datas with NFC daemon (Neard)
-  DEPENDS:=+libc +libstdcpp +dbus +libedit +glib2 +neard +libncurses
+  DEPENDS:=+libc +libstdcpp +dbus +glib2 +neard +libncurses +libreadline
   URL:=https://01.org/linux-nfc
 endef
 
@@ -50,7 +50,7 @@ define Package/neardal/conffiles
 /etc/dbus-1/system.d/org.neardal.conf
 endef
 
-TARGET_LDFLAGS += -lncurses -ledit
+TARGET_LDFLAGS += -lncurses -lreadline
 
 CONFIGURE_ARGS += \
 	--disable-dependency-tracking \
