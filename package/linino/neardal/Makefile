@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=neardal
 PKG_VERSION:=0.14
-PKG_RELEASE:=8
+PKG_RELEASE:=9
 
 PKG_FIXUP:=libtool autoreconf
 PKG_SOURCE_PROTO:=git
