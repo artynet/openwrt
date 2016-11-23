@@ -1,0 +1,11 @@
+--- a/Makefile.am	2016-11-12 23:37:41.000000000 +0100
++++ b/Makefile.am	2016-11-23 12:55:32.497249456 +0100
+@@ -129,8 +129,6 @@
+
+ include $(top_srcdir)/lib/local.mk
+ include $(top_srcdir)/sed/local.mk
+-include $(top_srcdir)/doc/local.mk
+-include $(top_srcdir)/testsuite/local.mk
+
+ # Remove the generated sed.1 file, but only for a non-srcdir build.
+ # Without this, 'make distcheck's final comparison would fail.
