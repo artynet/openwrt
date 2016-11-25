@@ -1,0 +1,131 @@
+From f856ef72af686088fda58e79457ee01d8833ac7c Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Fri, 25 Nov 2016 16:48:42 +0100
+Subject: [PATCH] AR933X uart config: tweak baudrates for atmega32u4
+
+---
+ arch/mips/ath79/Kconfig      | 11 ++++++++
+ arch/mips/ath79/dev-common.c | 65 ++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 76 insertions(+)
+
+diff --git a/arch/mips/ath79/Kconfig b/arch/mips/ath79/Kconfig
+index 50dcea6..d6dfad6 100644
+--- a/arch/mips/ath79/Kconfig
++++ b/arch/mips/ath79/Kconfig
+@@ -222,6 +222,17 @@ config ATH79_DEV_DSA
+ config ATH79_DEV_ETH
+ 	def_bool n
+ 
++config ATH79_TWEAK_UART_BAUDRATES_FOR_ATMEGA32U4
++	bool "Tweak baudrates for Atmega32U4 compatibility"
++	depends on SOC_AR934X || SOC_AR933X
++	default n
++	help
++		Say 'Y' if you want baudrates 230400 and 460800 be mapped
++		to actual values 250000 and 500000. This is required if the
++		chip is connected to an AVR Atmega32U4 chip, as it does not
++		support 230400 nor 460800
++
++
+ config PCI_AR724X
+ 	def_bool n
+ 
+diff --git a/arch/mips/ath79/dev-common.c b/arch/mips/ath79/dev-common.c
+index 8767129..cd4b012 100644
+--- a/arch/mips/ath79/dev-common.c
++++ b/arch/mips/ath79/dev-common.c
+@@ -70,6 +70,38 @@ static struct resource ar933x_uart_resources[] = {
+ };
+ 
+ static struct ar933x_uart_platform_data ar933x_uart_data;
++static struct ar933x_uart_clk_params ar933x_clk_params[] = {
++	{
++		.baudrate = 115200,
++		.scale = 0x000c,
++		.step = 0x2000
++	},
++	{
++		.baudrate = 230400,
++#ifdef CONFIG_ATH79_TWEAK_UART_BAUDRATES_FOR_ATMEGA32U4
++		.scale = 0x0017,
++		.step = 0x7ae0
++#else
++		.scale = 0x0017,
++		.step = 0x713f
++#endif
++	},
++	{
++		.baudrate = 460800,
++#ifdef CONFIG_ATH79_TWEAK_UART_BAUDRATES_FOR_ATMEGA32U4
++		.scale = 0x000b,
++		.step = 0x7ae0
++#else
++		.scale = 0x000b,
++		.step = 0x713f
++#endif
++	},
++
++	{
++		.baudrate = 0,
++	}
++};
++
+ static struct platform_device ar933x_uart_device = {
+ 	.name		= "ar933x-uart",
+ 	.id		= -1,
+@@ -80,6 +112,37 @@ static struct platform_device ar933x_uart_device = {
+ 	},
+ };
+ 
++static struct ar933x_uart_clk_params ar934x_clk_params[] = {
++	{
++		.baudrate = 115200,
++		.scale = 0x0003,
++		.step = 0x05e6,
++	},
++	{
++		.baudrate = 230400,
++#ifdef CONFIG_ATH79_TWEAK_UART_BAUDRATES_FOR_ATMEGA32U4
++		.scale = 0x0017,
++		.step = 0x4ccd,
++#else
++		.scale = 0x0017,
++		.step = 0x46c7,
++#endif
++	},
++	{
++		.baudrate = 460800,
++#ifdef CONFIG_ATH79_TWEAK_UART_BAUDRATES_FOR_ATMEGA32U4
++		.scale = 0x000b,
++		.step = 0x4ccd,
++#else
++		.scale = 0x000b,
++		.step = 0x46c7,
++#endif
++	},
++	{
++		.baudrate = 0,
++	}
++};
++
+ static struct resource ar934x_uart_resources[] = {
+ 	{
+ 		.start	= AR934X_UART_HS_BASE,
+@@ -130,12 +193,14 @@ void __init ath79_register_uart(void)
+ 		platform_device_register(&ath79_uart_device);
+ 	} else if (soc_is_ar933x()) {
+ 		ar933x_uart_data.uartclk = uart_clk_rate;
++		ar93xx_uart_data.clkparams = ar933x_clk_params;
+ 		ar93xx_uart_data.fifosize = AR933X_UART_FIFO_SIZE;
+ 		platform_device_register(&ar933x_uart_device);
+ 	} else if (soc_is_ar934x()) {
+ 		ath79_uart_data[0].uartclk = uart_clk_rate;
+ 		platform_device_register(&ath79_uart_device);
+ 		ar93xx_uart_data.uartclk = uart_clk_rate;
++		ar93xx_uart_data.clkparams = ar933x_clk_params;
+ 		ar93xx_uart_data.fifosize = AR933X_UART_FIFO_SIZE;
+ 		platform_device_register(&ar934x_uart_device);
+ 	} else {
+-- 
+2.10.2
+
