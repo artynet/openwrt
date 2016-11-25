@@ -1,0 +1,113 @@
+From bbbdd47cd00cbb45d5a2b9afc64d56acbecf20cb Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Fri, 25 Nov 2016 12:25:41 +0100
+Subject: [PATCH 06/44] AR933X uart driver: make it handle AR934X high speed
+ uart too
+
+---
+ arch/mips/ath79/dev-common.c                   | 30 +++++++++++++++++++++++++-
+ arch/mips/include/asm/mach-ath79/ar71xx_regs.h |  2 ++
+ drivers/tty/serial/Kconfig                     |  6 +++---
+ 3 files changed, 34 insertions(+), 4 deletions(-)
+
+diff --git a/arch/mips/ath79/dev-common.c b/arch/mips/ath79/dev-common.c
+index ba6bdab..9a0c763 100644
+--- a/arch/mips/ath79/dev-common.c
++++ b/arch/mips/ath79/dev-common.c
+@@ -79,6 +79,30 @@ static struct platform_device ar933x_uart_device = {
+ 	},
+ };
+ 
++static struct resource ar934x_uart_resources[] = {
++	{
++		.start	= AR934X_UART_HS_BASE,
++		.end	= AR934X_UART_HS_BASE + AR71XX_UART_SIZE - 1,
++		.flags	= IORESOURCE_MEM,
++	},
++	{
++		.start	= ATH79_MISC_IRQ(6),
++		.end	= ATH79_MISC_IRQ(6),
++		.flags	= IORESOURCE_IRQ,
++	},
++};
++
++static struct platform_device ar934x_uart_device = {
++	.name		= "ar933x-uart",
++	.id		= -1,
++	.resource	= ar934x_uart_resources,
++	.num_resources	= ARRAY_SIZE(ar934x_uart_resources),
++	.dev = {
++		.platform_data	= &ar93xx_uart_data,
++ 	},
++ };
++
++
+ void __init ath79_register_uart(void)
+ {
+ 	unsigned long uart_clk_rate;
+@@ -97,7 +121,6 @@ void __init ath79_register_uart(void)
+ 	if (soc_is_ar71xx() ||
+ 	    soc_is_ar724x() ||
+ 	    soc_is_ar913x() ||
+-	    soc_is_ar934x() ||
+ 	    soc_is_qca953x() ||
+ 	    soc_is_qca955x() ||
+ 	    soc_is_qca956x() ||
+@@ -107,6 +130,11 @@ void __init ath79_register_uart(void)
+ 	} else if (soc_is_ar933x()) {
+ 		ar933x_uart_data.uartclk = uart_clk_rate;
+ 		platform_device_register(&ar933x_uart_device);
++	} else if (soc_is_ar934x()) {
++		ath79_uart_data[0].uartclk = uart_clk_rate;
++		platform_device_register(&ath79_uart_device);
++		ar93xx_uart_data.uartclk = uart_clk_rate;
++		platform_device_register(&ar934x_uart_device);
+ 	} else {
+ 		BUG();
+ 	}
+diff --git a/arch/mips/include/asm/mach-ath79/ar71xx_regs.h b/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
+index a08bb60..e192779 100644
+--- a/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
++++ b/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
+@@ -113,6 +113,8 @@
+ #define QCA953X_EHCI_SIZE	0x200
+ #define QCA953X_SRIF_BASE	(AR71XX_APB_BASE + 0x00116000)
+ #define QCA953X_SRIF_SIZE	0x1000
++#define AR934X_UART_HS_BASE	(AR71XX_APB_BASE + 0x00500000)
++#define AR934X_UART_HS_SIZE	0x14
+ 
+ #define QCA953X_PCI_CFG_BASE0	0x14000000
+ #define QCA953X_PCI_CTRL_BASE0	(AR71XX_APB_BASE + 0x000f0000)
+diff --git a/drivers/tty/serial/Kconfig b/drivers/tty/serial/Kconfig
+index 8cd3534..7d7e9f2 100644
+--- a/drivers/tty/serial/Kconfig
++++ b/drivers/tty/serial/Kconfig
+@@ -1418,7 +1418,7 @@ config SERIAL_XILINX_PS_UART_CONSOLE
+ 	  Enable a Cadence UART port to be the system console.
+ 
+ config SERIAL_AR933X
+-	tristate "AR933X serial port support"
++	tristate "AR933X serial / AR9342 high speed serial port support"
+ 	depends on HAVE_CLK && SOC_AR933X
+ 	select SERIAL_CORE
+ 	help
+@@ -1429,14 +1429,14 @@ config SERIAL_AR933X
+ 	  module will be called ar933x_uart.
+ 
+ config SERIAL_AR933X_CONSOLE
+-	bool "Console on AR933X serial port"
++	bool "Console on AR933X serial / AR934X high speed serial port"
+ 	depends on SERIAL_AR933X=y
+ 	select SERIAL_CORE_CONSOLE
+ 	help
+ 	  Enable a built-in UART port of the AR933X to be the system console.
+ 
+ config SERIAL_AR933X_NR_UARTS
+-	int "Maximum number of AR933X serial ports"
++	int "Maximum number of AR933X serial / AR934X high speed serial ports"
+ 	depends on SERIAL_AR933X
+ 	default "2"
+ 	help
+-- 
+2.10.2
+

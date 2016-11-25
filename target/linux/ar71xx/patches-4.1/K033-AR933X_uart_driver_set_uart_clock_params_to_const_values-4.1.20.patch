@@ -1,0 +1,101 @@
+From 0f0e0413e50b0ad6749798ac82cdaa95c82d46fc Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Tue, 19 May 2015 13:51:37 +0200
+Subject: [PATCH 10/44] AR933X uart driver: set uart clock params to const
+ values when needed
+
+This patch allows developers to set constant values for scale
+and step registers at any desired baudrate, instead of having it computed
+by ar933x_uart_get_scale_step. The feature is optional: when not used,
+ar933x_uart_get_scale_step function algorithm is invoked.
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ .../include/asm/mach-ath79/ar933x_uart_platform.h  |  7 +++++++
+ drivers/tty/serial/ar933x_uart.c                   | 22 ++++++++++++++++++++--
+ 2 files changed, 27 insertions(+), 2 deletions(-)
+
+diff --git a/arch/mips/include/asm/mach-ath79/ar933x_uart_platform.h b/arch/mips/include/asm/mach-ath79/ar933x_uart_platform.h
+index 9962806..c3a7a22 100644
+--- a/arch/mips/include/asm/mach-ath79/ar933x_uart_platform.h
++++ b/arch/mips/include/asm/mach-ath79/ar933x_uart_platform.h
+@@ -11,8 +11,15 @@
+ #ifndef _AR933X_UART_PLATFORM_H
+ #define _AR933X_UART_PLATFORM_H
+ 
++struct ar933x_uart_clk_params {
++	unsigned baudrate;
++	unsigned scale;
++	unsigned step;
++};
++
+ struct ar933x_uart_platform_data {
+ 	unsigned	uartclk;
++	struct ar933x_uart_clk_params *clkparams;
+ 	unsigned short fifosize;
+ };
+ 
+diff --git a/drivers/tty/serial/ar933x_uart.c b/drivers/tty/serial/ar933x_uart.c
+index c7d0f97..9c91fc8 100644
+--- a/drivers/tty/serial/ar933x_uart.c
++++ b/drivers/tty/serial/ar933x_uart.c
+@@ -50,6 +50,7 @@ struct ar933x_uart_port {
+ 	unsigned int		ier;	/* shadow Interrupt Enable Register */
+ 	unsigned int		min_baud;
+ 	unsigned int		max_baud;
++	struct ar933x_uart_clk_params *clkparams;
+ 	struct clk		*clk;
+ };
+ 
+@@ -201,14 +202,29 @@ static unsigned long ar933x_uart_get_baud(unsigned int clk,
+ 	return t;
+ }
+ 
+-static void ar933x_uart_get_scale_step(unsigned int clk,
++static void ar933x_uart_get_scale_step(struct ar933x_uart_port *up,
+ 				       unsigned int baud,
+ 				       unsigned int *scale,
+ 				       unsigned int *step)
+ {
+ 	unsigned int tscale;
+ 	long min_diff;
++	unsigned int clk = up->port.uartclk;
++	struct ar933x_uart_clk_params *clkparams = up->clkparams;
++
++	/* If constant values for scale and step are defined for this baudrate,
++	* use them */
++	while (clkparams && clkparams->baudrate) {
++		if (baud == clkparams->baudrate) {
++			*scale = clkparams->scale;
++			*step = clkparams->step;
++			return;
++		}
++		clkparams++;
++	}
+ 
++	/* If baudrate was not found by the previous loop, compute scale
++	* and step */
+ 	*scale = 0;
+ 	*step = 0;
+ 
+@@ -264,7 +280,7 @@ static void ar933x_uart_set_termios(struct uart_port *port,
+ 	new->c_cflag &= ~CMSPAR;
+ 
+ 	baud = uart_get_baud_rate(port, new, old, up->min_baud, up->max_baud);
+-	ar933x_uart_get_scale_step(port->uartclk, baud, &scale, &step);
++	ar933x_uart_get_scale_step(up, baud, &scale, &step);
+ 
+ 	/*
+ 	 * Ok, we're now changing the port state. Do it with
+@@ -721,6 +737,8 @@ static int ar933x_uart_probe(struct platform_device *pdev)
+ 	baud = ar933x_uart_get_baud(port->uartclk, 0, AR933X_UART_MAX_STEP);
+ 	up->max_baud = min_t(unsigned int, baud, AR933X_UART_MAX_BAUD);
+ 
++	up->clkparams = pdata->clkparams;
++
+ 	ar933x_uart_add_console_port(up);
+ 
+ 	ret = uart_add_one_port(&ar933x_uart_driver, &up->port);
+-- 
+2.10.2
+
