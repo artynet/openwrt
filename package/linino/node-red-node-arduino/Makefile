@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=node-red-node-arduino
 PKG_NAME:=node-red-node-arduino
-PKG_VERSION:=0.0.4
+PKG_VERSION:=0.0.12
 PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NPM_NAME)-$(PKG_VERSION).tgz
