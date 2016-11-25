@@ -1,0 +1,106 @@
+From 1e72faca804730003901b4ac6ee0780f36b012d8 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Fri, 25 Nov 2016 12:38:58 +0100
+Subject: [PATCH 08/44] AR933X uart driver: make fifosize depend on actual chip
+
+---
+ arch/mips/ath79/dev-common.c                            | 3 +++
+ arch/mips/include/asm/mach-ath79/ar933x_uart.h          | 2 ++
+ arch/mips/include/asm/mach-ath79/ar933x_uart_platform.h | 1 +
+ drivers/tty/serial/ar933x_uart.c                        | 8 +++++++-
+ 4 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/arch/mips/ath79/dev-common.c b/arch/mips/ath79/dev-common.c
+index 9a0c763..8767129 100644
+--- a/arch/mips/ath79/dev-common.c
++++ b/arch/mips/ath79/dev-common.c
+@@ -20,6 +20,7 @@
+ 
+ #include <asm/mach-ath79/ath79.h>
+ #include <asm/mach-ath79/ar71xx_regs.h>
++#include <asm/mach-ath79/ar933x_uart.h>
+ #include <asm/mach-ath79/ar933x_uart_platform.h>
+ #include "common.h"
+ #include "dev-common.h"
+@@ -129,11 +130,13 @@ void __init ath79_register_uart(void)
+ 		platform_device_register(&ath79_uart_device);
+ 	} else if (soc_is_ar933x()) {
+ 		ar933x_uart_data.uartclk = uart_clk_rate;
++		ar93xx_uart_data.fifosize = AR933X_UART_FIFO_SIZE;
+ 		platform_device_register(&ar933x_uart_device);
+ 	} else if (soc_is_ar934x()) {
+ 		ath79_uart_data[0].uartclk = uart_clk_rate;
+ 		platform_device_register(&ath79_uart_device);
+ 		ar93xx_uart_data.uartclk = uart_clk_rate;
++		ar93xx_uart_data.fifosize = AR933X_UART_FIFO_SIZE;
+ 		platform_device_register(&ar934x_uart_device);
+ 	} else {
+ 		BUG();
+diff --git a/arch/mips/include/asm/mach-ath79/ar933x_uart.h b/arch/mips/include/asm/mach-ath79/ar933x_uart.h
+index c2917b3..9359748 100644
+--- a/arch/mips/include/asm/mach-ath79/ar933x_uart.h
++++ b/arch/mips/include/asm/mach-ath79/ar933x_uart.h
+@@ -14,6 +14,8 @@
+ #define AR933X_UART_REGS_SIZE		20
+ #define AR933X_UART_FIFO_SIZE		16
+ 
++#define AR934X_UART_FIFO_SIZE		4
++
+ #define AR933X_UART_DATA_REG		0x00
+ #define AR933X_UART_CS_REG		0x04
+ #define AR933X_UART_CLOCK_REG		0x08
+diff --git a/arch/mips/include/asm/mach-ath79/ar933x_uart_platform.h b/arch/mips/include/asm/mach-ath79/ar933x_uart_platform.h
+index 6cb30f2..9962806 100644
+--- a/arch/mips/include/asm/mach-ath79/ar933x_uart_platform.h
++++ b/arch/mips/include/asm/mach-ath79/ar933x_uart_platform.h
+@@ -13,6 +13,7 @@
+ 
+ struct ar933x_uart_platform_data {
+ 	unsigned	uartclk;
++	unsigned short fifosize;
+ };
+ 
+ #endif /* _AR933X_UART_PLATFORM_H */
+diff --git a/drivers/tty/serial/ar933x_uart.c b/drivers/tty/serial/ar933x_uart.c
+index 1519d2c..5896f91 100644
+--- a/drivers/tty/serial/ar933x_uart.c
++++ b/drivers/tty/serial/ar933x_uart.c
+@@ -31,6 +31,7 @@
+ #include <asm/div64.h>
+ 
+ #include <asm/mach-ath79/ar933x_uart.h>
++#include <asm/mach-ath79/ar933x_uart_platform.h>
+ 
+ #define DRIVER_NAME "ar933x-uart"
+ 
+@@ -627,6 +628,7 @@ static struct uart_driver ar933x_uart_driver = {
+ static int ar933x_uart_probe(struct platform_device *pdev)
+ {
+ 	struct ar933x_uart_port *up;
++	struct ar933x_uart_platform_data *pdata;
+ 	struct uart_port *port;
+ 	struct resource *mem_res;
+ 	struct resource *irq_res;
+@@ -635,6 +637,10 @@ static int ar933x_uart_probe(struct platform_device *pdev)
+ 	int id;
+ 	int ret;
+ 
++	pdata = pdev->dev.platform_data;
++		if (!pdata)
++			return -EINVAL;
++
+ 	np = pdev->dev.of_node;
+ 	if (config_enabled(CONFIG_OF) && np) {
+ 		id = of_alias_get_id(np, "serial");
+@@ -694,7 +700,7 @@ static int ar933x_uart_probe(struct platform_device *pdev)
+ 	port->iotype = UPIO_MEM32;
+ 
+ 	port->regshift = 2;
+-	port->fifosize = AR933X_UART_FIFO_SIZE;
++	port->fifosize = pdata->fifosize;
+ 	port->ops = &ar933x_uart_ops;
+ 
+ 	baud = ar933x_uart_get_baud(port->uartclk, AR933X_UART_MAX_SCALE, 1);
+-- 
+2.10.2
+
