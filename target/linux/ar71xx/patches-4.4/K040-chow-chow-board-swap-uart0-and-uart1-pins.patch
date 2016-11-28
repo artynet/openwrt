@@ -1,0 +1,111 @@
+From a99adc4c64f4d473efb870de54053d02f1d2b70f Mon Sep 17 00:00:00 2001
+From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+Date: Tue, 10 Mar 2015 16:43:09 +0100
+Subject: [PATCH 40/83] chow chow board: swap uart0 and uart1 pins
+
+With this patch, high speed uart is routed to the pins 9 and 10
+(connected to the MCU on this board) whereas the low speed uart is
+connected to pins 13 and 14 (the ones available on pin header).
+
+Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
+---
+ arch/mips/ath79/mach-linino-chowchow.c | 63 +++++++++++++++++++++++++++++++---
+ 1 file changed, 59 insertions(+), 4 deletions(-)
+
+diff --git a/arch/mips/ath79/mach-linino-chowchow.c b/arch/mips/ath79/mach-linino-chowchow.c
+index 4d8524c..54c8594 100644
+--- a/arch/mips/ath79/mach-linino-chowchow.c
++++ b/arch/mips/ath79/mach-linino-chowchow.c
+@@ -38,10 +38,10 @@
+ #define CHOWCHOW_GPIO_LED0		12
+ #define CHOWCHOW_GPIO_LED1		11
+
+-#define CHOWCHOW_GPIO_UART0_RX	9
+-#define CHOWCHOW_GPIO_UART0_TX	10
+-#define CHOWCHOW_GPIO_UART1_RX	13
+-#define CHOWCHOW_GPIO_UART1_TX	14
++#define CHOWCHOW_GPIO_UART0_RX	13
++#define CHOWCHOW_GPIO_UART0_TX	14
++#define CHOWCHOW_GPIO_UART1_RX	9
++#define CHOWCHOW_GPIO_UART1_TX	10
+ #define CHOWCHOW_GPIO_OE2		15
+ #define CHOWCHOW_GPIO_CONF_BTN	17
+ #define CHOWCHOW_GPIO_UART_POL	GPIOF_OUT_INIT_LOW
+@@ -51,6 +51,9 @@
+ #define	CHOWCHOW_GPIO_SPI_MOSI	2
+ #define CHOWCHOW_GPIO_SPI_CS0	1
+
++#define AR934X_GPIO_UART1_TD_OUT	79	/* table 2.16 */
++#define AR934X_GPIO_UART0_SOUT	24	/* table 2.16 */
++
+ #define CHOWCHOW_GPIO_SPI_INTERRUPT	16
+ #define DS_PCIE_CALDATA_OFFSET	0x5000
+
+@@ -179,6 +182,9 @@ static void __init chowchow_setup(void)
+ {
+ 	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
+ 	static u8 mac[6];
++    int r;
++    void __iomem *reg;
++    unsigned v;
+
+ 	/* make lan / wan leds software controllable */
+ 	ath79_gpio_output_select(CHOWCHOW_GPIO_LED0, AR934X_GPIO_OUT_GPIO);
+@@ -192,6 +198,55 @@ static void __init chowchow_setup(void)
+ 	ath79_gpio_output_select(CHOWCHOW_GPIO_SPI_MOSI, AR934X_GPIO_OUT_GPIO);
+ 	ath79_gpio_output_select(CHOWCHOW_GPIO_MCU_RESET, AR934X_GPIO_OUT_GPIO);
+
++	/* UART1 (high-speed) configuration */
++	r = gpio_request(CHOWCHOW_GPIO_UART1_TX, NULL);
++	if (r) {
++		pr_err("gpio_request failed on gpio %d: %d\n",
++			CHOWCHOW_GPIO_UART1_TX, r);
++		return;
++	}
++	gpio_direction_output(CHOWCHOW_GPIO_UART1_TX, 0);
++	ath79_gpio_output_select(CHOWCHOW_GPIO_UART1_TX,
++				AR934X_GPIO_UART1_TD_OUT);
++	gpio_free(CHOWCHOW_GPIO_UART1_TX);
++
++	r = gpio_request(CHOWCHOW_GPIO_UART1_RX, NULL);
++	if (r) {
++		pr_err("gpio_request failed on gpio %d: %d\n",
++			CHOWCHOW_GPIO_UART1_RX, r);
++		return;
++	}
++	gpio_direction_input(CHOWCHOW_GPIO_UART1_RX);
++	gpio_free(CHOWCHOW_GPIO_UART1_TX);
++
++	/* Mux for UART1 input: UART1 multiplexing is GPIO_IN_ENABLE9, see
++	 * table 8-4 */
++	reg = ath79_gpio_base + AR934X_GPIO_IN_ENABLE9;
++	v = __raw_readl(reg);
++	v &= ~0x00ff0000;
++	v |= (CHOWCHOW_GPIO_UART1_RX << 16);
++	__raw_writel(v, reg);
++
++	/* UART0 (low-speed) configuration */
++	r = gpio_request(CHOWCHOW_GPIO_UART0_TX, NULL);
++	if (r) {
++		pr_err("gpio_request failed on gpio %d: %d\n",
++		       CHOWCHOW_GPIO_UART0_TX, r);
++		return;
++	}
++	gpio_direction_output(CHOWCHOW_GPIO_UART0_TX, 0);
++	ath79_gpio_output_select(CHOWCHOW_GPIO_UART0_TX,
++				   AR934X_GPIO_UART0_SOUT);
++	gpio_free(CHOWCHOW_GPIO_UART0_TX);
++
++	/* Mux for UART0 input: UART0 multiplexing is GPIO_IN_ENABLE1, see
++	 * table 8-4 */
++	reg = ath79_gpio_base + AR934X_GPIO_IN_ENABLE1;
++	v = __raw_readl(reg);
++	v &= ~0x0000ff00;
++	v |= (CHOWCHOW_GPIO_UART0_RX << 8);
++	__raw_writel(v, reg);
++
+ 	ath79_register_m25p80(NULL);
+
+ 	ath79_register_leds_gpio(-1, ARRAY_SIZE(chowchow_leds_gpio),
+--
+2.10.1

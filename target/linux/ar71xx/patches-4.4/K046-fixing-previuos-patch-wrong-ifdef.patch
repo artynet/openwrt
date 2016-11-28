@@ -1,0 +1,38 @@
+From 5e27c2c130e2e2e6c3b7133db9b22a7905e5a619 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Wed, 14 Oct 2015 18:28:07 +0200
+Subject: [PATCH 46/83] fixing previuos patch : wrong #ifdef
+
+---
+ arch/mips/ath79/mach-linino-chowchow.c | 11 +++++------
+ 1 file changed, 5 insertions(+), 6 deletions(-)
+
+diff --git a/arch/mips/ath79/mach-linino-chowchow.c b/arch/mips/ath79/mach-linino-chowchow.c
+index 7a4a3ef..ee02910 100644
+--- a/arch/mips/ath79/mach-linino-chowchow.c
++++ b/arch/mips/ath79/mach-linino-chowchow.c
+@@ -163,16 +163,15 @@ static void ds_register_spi(void) {
+ 	pr_info("mach-linino: enabling GPIO SPI Controller");
+ 
+ 	/* Enable level shifter on SPI signals */
+-	/* gpio_set_value(CHOWCHOW_GPIO_OE2, 1); */
++#ifdef LININO_TIAN
++	gpio_set_value(CHOWCHOW_GPIO_OE2, 0);
++#else
++	gpio_set_value(CHOWCHOW_GPIO_OE2, 1);
++#endif
+ 
+ #ifndef LININO_TIAN
+ 	/* Register SPI devices */
+ 	spi_register_board_info(linino_spi_info, ARRAY_SIZE(linino_spi_info));
+-	/* Enable level shifter on SPI signals */
+-	gpio_set_value(CHOWCHOW_GPIO_OE2, 0);
+-#else
+-	/* Enable level shifter on SPI signals */
+-	gpio_set_value(CHOWCHOW_GPIO_OE2, 1);
+ #endif
+ 	/* Register GPIO SPI controller */
+ 	platform_device_register(&linino_spi1_device);
+-- 
+2.10.1
+
