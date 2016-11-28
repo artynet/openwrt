@@ -1,0 +1,10 @@
+--- a/shellinabox/launcher.c	2016-03-02 17:50:39.003692309 +0100
++++ b/shellinabox/launcher.c	2016-03-02 17:50:59.720014318 +0100
+@@ -64,6 +64,7 @@
+ #include <sys/stat.h>
+ #include <sys/time.h>
+ #include <sys/types.h>
++#include <sys/ttydefaults.h>
+ #include <sys/wait.h>
+ #include <sys/utsname.h>
+ #include <termios.h>
