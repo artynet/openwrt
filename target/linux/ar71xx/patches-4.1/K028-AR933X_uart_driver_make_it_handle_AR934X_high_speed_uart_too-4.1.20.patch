@@ -1,20 +1,6 @@
-From bbbdd47cd00cbb45d5a2b9afc64d56acbecf20cb Mon Sep 17 00:00:00 2001
-From: Arturo Rinaldi <arty.net2@gmail.com>
-Date: Fri, 25 Nov 2016 12:25:41 +0100
-Subject: [PATCH 06/44] AR933X uart driver: make it handle AR934X high speed
- uart too
-
----
- arch/mips/ath79/dev-common.c                   | 30 +++++++++++++++++++++++++-
- arch/mips/include/asm/mach-ath79/ar71xx_regs.h |  2 ++
- drivers/tty/serial/Kconfig                     |  6 +++---
- 3 files changed, 34 insertions(+), 4 deletions(-)
-
-diff --git a/arch/mips/ath79/dev-common.c b/arch/mips/ath79/dev-common.c
-index ba6bdab..9a0c763 100644
---- a/arch/mips/ath79/dev-common.c
-+++ b/arch/mips/ath79/dev-common.c
-@@ -79,6 +79,30 @@ static struct platform_device ar933x_uart_device = {
+--- a/arch/mips/ath79/dev-common.c	2015-12-18 13:51:40.513915155 +0100
++++ b/arch/mips/ath79/dev-common.c	2015-12-18 13:55:35.247817870 +0100
+@@ -79,6 +79,30 @@
  	},
  };
  
@@ -45,15 +31,15 @@ index ba6bdab..9a0c763 100644
  void __init ath79_register_uart(void)
  {
  	unsigned long uart_clk_rate;
-@@ -97,7 +121,6 @@ void __init ath79_register_uart(void)
+@@ -97,7 +121,6 @@
  	if (soc_is_ar71xx() ||
  	    soc_is_ar724x() ||
  	    soc_is_ar913x() ||
 -	    soc_is_ar934x() ||
  	    soc_is_qca953x() ||
  	    soc_is_qca955x() ||
- 	    soc_is_qca956x() ||
-@@ -107,6 +130,11 @@ void __init ath79_register_uart(void)
+ 	    soc_is_qca956x()) {
+@@ -107,6 +130,11 @@
  	} else if (soc_is_ar933x()) {
  		ar933x_uart_data.uartclk = uart_clk_rate;
  		platform_device_register(&ar933x_uart_device);
@@ -65,10 +51,9 @@ index ba6bdab..9a0c763 100644
  	} else {
  		BUG();
  	}
-diff --git a/arch/mips/include/asm/mach-ath79/ar71xx_regs.h b/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
-index a08bb60..e192779 100644
---- a/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
-+++ b/arch/mips/include/asm/mach-ath79/ar71xx_regs.h
+
+--- a/arch/mips/include/asm/mach-ath79/ar71xx_regs.h	2015-12-18 13:51:40.481915529 +0100
++++ b/arch/mips/include/asm/mach-ath79/ar71xx_regs.h	2015-12-18 13:56:41.303189545 +0100
 @@ -113,6 +113,8 @@
  #define QCA953X_EHCI_SIZE	0x200
  #define QCA953X_SRIF_BASE	(AR71XX_APB_BASE + 0x00116000)
@@ -78,11 +63,10 @@ index a08bb60..e192779 100644
  
  #define QCA953X_PCI_CFG_BASE0	0x14000000
  #define QCA953X_PCI_CTRL_BASE0	(AR71XX_APB_BASE + 0x000f0000)
-diff --git a/drivers/tty/serial/Kconfig b/drivers/tty/serial/Kconfig
-index 8cd3534..7d7e9f2 100644
---- a/drivers/tty/serial/Kconfig
-+++ b/drivers/tty/serial/Kconfig
-@@ -1418,7 +1418,7 @@ config SERIAL_XILINX_PS_UART_CONSOLE
+
+--- a/drivers/tty/serial/Kconfig	2015-10-22 23:43:44.000000000 +0200
++++ b/drivers/tty/serial/Kconfig	2015-12-18 13:57:46.198568034 +0100
+@@ -1418,7 +1418,7 @@
  	  Enable a Cadence UART port to be the system console.
  
  config SERIAL_AR933X
@@ -91,7 +75,7 @@ index 8cd3534..7d7e9f2 100644
  	depends on HAVE_CLK && SOC_AR933X
  	select SERIAL_CORE
  	help
-@@ -1429,14 +1429,14 @@ config SERIAL_AR933X
+@@ -1429,14 +1429,14 @@
  	  module will be called ar933x_uart.
  
  config SERIAL_AR933X_CONSOLE
@@ -108,6 +92,3 @@ index 8cd3534..7d7e9f2 100644
  	depends on SERIAL_AR933X
  	default "2"
  	help
--- 
-2.10.2
-
