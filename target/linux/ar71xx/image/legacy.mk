@@ -83,13 +83,13 @@ endef
 # $(4): name suffix, e.g. "-initramfs".
 define PatchKernelLzma
 	cp $(KDIR)/vmlinux$(4) $(KDIR_TMP)/vmlinux$(4)-$(1)
-	$(STAGING_DIR_HOST)/bin/patch-cmdline $(KDIR_TMP)/vmlinux$(4)-$(1) "$(strip $(2))"
+	# $(STAGING_DIR_HOST)/bin/patch-cmdline $(KDIR_TMP)/vmlinux$(4)-$(1) "$(strip $(2))"
 	$(call CompressLzma,$(KDIR_TMP)/vmlinux$(4)-$(1),$(KDIR_TMP)/vmlinux$(4)-$(1).bin.lzma,$(3))
 endef
 
 define PatchKernelGzip
 	cp $(KDIR)/vmlinux$(3) $(KDIR_TMP)/vmlinux$(3)-$(1)
-	$(STAGING_DIR_HOST)/bin/patch-cmdline $(KDIR_TMP)/vmlinux$(3)-$(1) "$(strip $(2))"
+	# $(STAGING_DIR_HOST)/bin/patch-cmdline $(KDIR_TMP)/vmlinux$(3)-$(1) "$(strip $(2))"
 	gzip -9n -c $(KDIR_TMP)/vmlinux$(3)-$(1) > $(KDIR_TMP)/vmlinux$(3)-$(1).bin.gz
 endef
 
@@ -133,6 +133,15 @@ define MkuImageOKLI
 	$(call MkuImage,lzma,-M 0x4f4b4c49,$(KDIR)/vmlinux.bin.lzma,$(KDIR_TMP)/vmlinux-$(1).okli)
 endef
 endif
+
+define Image/Build/LininoLzma
+ $(call MkuImageLzma,$(2),$(3) $(4))
+ $(call Image/Build/Ath,$(1),$(2),$(3),$(4),$(5),$(6),$(7))
+endef
+
+define Image/Build/LininoLzma/initramfs
+ $(call MkuImageLzma/initramfs,$(2),$(3) $(4))
+endef
 
 # $(1): name of the 1st file.
 # $(2): size limit of the 1st file if it is greater than 262144, or
@@ -236,6 +245,14 @@ endef
 define Build/Clean
 	$(LOADER_MAKE) clean
 endef
+
+#
+# modifications for Linino boards
+#
+linino_mtdlayout_4M=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,2752k(rootfs),896k(kernel),64k(nvram),64k(art),3648k@0x50000(firmware)
+linino_mtdlayout_8M=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,6464k(rootfs),1280k(kernel),64k(nvram),64k(art),7744k@0x50000(firmware)
+linino_mtdlayout_16M=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,14656k(rootfs),1280k(kernel),64k(nvram),64k(art),15936k@0x50000(firmware)
+#
 
 alfa_ap120c_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,13312k(rootfs),1536k(kernel),1152k(unknown)ro,64k(art)ro;spi0.1:-(unknown)
 alfa_ap96_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,256k(u-boot-env)ro,13312k(rootfs),2048k(kernel),512k(caldata)ro,15360k@0x80000(firmware)
@@ -966,6 +983,40 @@ $(eval $(call BuildTemplate,256k,,256k))
 $(eval $(call BuildTemplate,all,,64k 128k 256k))
 
 ifeq ($(SUBTARGET),generic)
+
+# SingleProfile parameters (example with yun board):
+#
+#    Build rule          : [LininoLzma] the rule to use to build this
+#                          profile configuration
+#    profile name        : [LININO_YUN_16M_250k] it is the profile name
+#                          for this configuration. It can be an existent profile
+#                          name that you can find in
+#                          target/linux/ar71xx/generic/profiles/. It can also be
+#                          a generic name in order to use it with MultiProfile
+#                          build
+#    image name          : [linino-yun-16m-250k] string used to build the image
+#                          file's name
+#    machine name        : [linino-yun] you can find this value in the
+#                          architecture file arch/mips/ath79/mach-linino-yun.c
+#    console parameters  : ttyATH0,250000
+#    mtdparts parameters : [$$(linino_mtdlayout_16M)]
+#    TODO : 1310720,15007744
+#    TODO : RKuImage
+
+$(eval $(call SingleProfile,LininoLzma,64k,LININO_YUN,linino-yun,linino-yun,ttyATH0,115200,$$(linino_mtdlayout_16M),RKuImage))
+$(eval $(call SingleProfile,LininoLzma,64k,LININO_ONE,linino-one,linino-one,ttyATH0,115200,$$(linino_mtdlayout_16M),RKuImage))
+$(eval $(call SingleProfile,LininoLzma,64k,LININO_FREEDOG,linino-freedog,linino-freedog,ttyATH0,250000,$$(linino_mtdlayout_16M),RKuImage))
+$(eval $(call SingleProfile,LininoLzma,64k,LININO_CHIWAWA,linino-chiwawa,linino-chiwawa,ttyATH0,115200,$$(linino_mtdlayout_16M),RKuImage))
+$(eval $(call SingleProfile,LininoLzma,64k,LININO_LEI,linino-lei,linino-lei,ttyATH0,115200,$$(linino_mtdlayout_16M),RKuImage))
+$(eval $(call SingleProfile,LininoLzma,64k,LININO_TIAN,linino-tian,linino-tian,ttyATH0,115200,$$(linino_mtdlayout_16M),RKuImage))
+$(eval $(call SingleProfile,LininoLzma,64k,LININO_YUN_MINI,linino-yun-mini,linino-yun-mini,ttyATH0,115200,$$(linino_mtdlayout_16M),RKuImage))
+
+# LININO_SINGLE_PROFILES is the list of all available Linino's profiles
+LININO_SINGLE_PROFILES:=LININO_YUN LININO_ONE LININO_FREEDOG LININO_CHIWAWA LININO_LEI LININO_YUN_MINI LININO_TIAN
+LININO_AVR_PROFILES:=LININO_YUN LININO_ONE LININO_CHIWAWA LININO_LEI LININO_YUN_MINI
+LININO_YUNONECHOW_PROFILES:=LININO_YUN LININO_ONE LININO_CHOWCHOW LININO_YUN_MINI
+LININO_YUNONE_PROFILES:=LININO_YUN LININO_ONE LININO_YUN_MINI
+
 $(eval $(call SingleProfile,ALFA,64k,ALFANX,alfa-nx,ALFA-NX,ttyS0,115200,$$(alfa_mtdlayout_8M),1638400,6291456,vmlinux.gz.uImage,pb9x-2.6.31-jffs2))
 $(eval $(call SingleProfile,ALFA,64k,HORNETUB,hornet-ub,HORNET-UB,ttyATH0,115200,$$(alfa_mtdlayout_8M),1638400,6291456,kernel_image,rootfs_image))
 $(eval $(call SingleProfile,ALFA,64k,TUBE2H8M,tube2h-8M,TUBE2H,ttyATH0,115200,$$(alfa_mtdlayout_8M),1638400,6291456,kernel.image,rootfs.image))
@@ -1148,6 +1199,22 @@ $(eval $(call MultiProfile,Yun,YUN_16M YUN_8M))
 
 $(eval $(call MultiProfile,Minimal,$(SINGLE_PROFILES)))
 $(eval $(call MultiProfile,Madwifi,EAP7660D WP543))
+
+# MultiProfile parameters (example with yun board):
+#
+#    profile name        : [LININO_YUN] it is the profile name for this
+#                          configuration. It must be an existent profile name
+#                          that you can find in
+#                          target/linux/ar71xx/generic/profiles/.
+#    profile to build    : [LININO_YUN_16M LININO_YUN_16M_250k] it is the list
+#                          of SingleProfile(s) to build. Here you must write
+#                          the SingleProfile names space separated.
+
+# LININO MULTI PROFILES
+$(eval $(call MultiProfile,LININO, $(LININO_SINGLE_PROFILES)))
+$(eval $(call MultiProfile,LININO_YUNONECHOW, $(LININO_YUNONECHOW_PROFILES)))
+$(eval $(call MultiProfile,LININO_YUNONE, $(LININO_YUNONE_PROFILES)))
+$(eval $(call MultiProfile,LININO_AVR, $(LININO_AVR_PROFILES)))
 
 define LegacyDevice/OM2P
   DEVICE_TITLE := OpenMesh OM2P/OM2Pv2/OM2P-HS/OM2P-HSv2/OM2P-HSv3/OM2P-LC
