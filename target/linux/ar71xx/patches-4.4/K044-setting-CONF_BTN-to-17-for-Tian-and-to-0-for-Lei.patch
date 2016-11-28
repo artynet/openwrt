@@ -1,0 +1,33 @@
+From 11c265b5ffab65ac15d4ba941fb4af4bbe7bdda3 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Tue, 13 Oct 2015 17:00:03 +0200
+Subject: [PATCH 44/83] setting CONF_BTN to 17 for Tian and to 0 for Lei
+
+---
+ arch/mips/ath79/mach-linino-chowchow.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/arch/mips/ath79/mach-linino-chowchow.c b/arch/mips/ath79/mach-linino-chowchow.c
+index 18288ab..2e347a9 100644
+--- a/arch/mips/ath79/mach-linino-chowchow.c
++++ b/arch/mips/ath79/mach-linino-chowchow.c
+@@ -41,14 +41,15 @@
+ #ifdef LININO_TIAN
+ #define TIAN_GPIO_SWDIO			13
+ #define TIAN_GPIO_SWDCLK		14
++#define CHOWCHOW_GPIO_CONF_BTN	17
+ #else
+ #define CHOWCHOW_GPIO_UART0_RX	13
+ #define CHOWCHOW_GPIO_UART0_TX	14
++#define CHOWCHOW_GPIO_CONF_BTN	0
+ #endif
+ #define CHOWCHOW_GPIO_UART1_RX	9
+ #define CHOWCHOW_GPIO_UART1_TX	10
+ #define CHOWCHOW_GPIO_OE2		15
+-#define CHOWCHOW_GPIO_CONF_BTN	0
+ #define CHOWCHOW_GPIO_UART_POL	GPIOF_OUT_INIT_LOW
+ 
+ #define	CHOWCHOW_GPIO_SPI_SCK	4
+-- 
+2.10.1
+

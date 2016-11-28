@@ -1,0 +1,25 @@
+From 99a582f1848d3808b82ab0a87650070830d03ee6 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Tue, 3 May 2016 15:02:35 +0200
+Subject: [PATCH 74/83] setting GPIO_OE2 to 0 as default value
+
+---
+ arch/mips/ath79/mach-linino.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/mips/ath79/mach-linino.c b/arch/mips/ath79/mach-linino.c
+index 6116205..ce9c7d7 100644
+--- a/arch/mips/ath79/mach-linino.c
++++ b/arch/mips/ath79/mach-linino.c
+@@ -136,7 +136,7 @@ static void ds_register_spi(void) {
+ 	/* Enable level shifter on SPI signals */
+ 	gpio_set_value(DS_GPIO_OE, 1);
+ 	/* Enable level shifter on AVR interrupt */
+-	gpio_set_value(DS_GPIO_OE2, 1);
++	gpio_set_value(DS_GPIO_OE2, 0);
+ 	/* Register SPI devices */
+ 	spi_register_board_info(linino_spi_info, ARRAY_SIZE(linino_spi_info));
+ 	/* Register GPIO SPI controller */
+-- 
+2.10.1
+
