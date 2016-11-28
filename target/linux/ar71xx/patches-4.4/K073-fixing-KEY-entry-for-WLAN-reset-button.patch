@@ -1,0 +1,25 @@
+From fa54664eac08a3a582170602112cb84feebfe05a Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Thu, 17 Mar 2016 10:14:06 +0100
+Subject: [PATCH 73/83] fixing KEY entry for WLAN reset button
+
+---
+ arch/mips/ath79/mach-linino.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/mips/ath79/mach-linino.c b/arch/mips/ath79/mach-linino.c
+index 2707fe9..6116205 100644
+--- a/arch/mips/ath79/mach-linino.c
++++ b/arch/mips/ath79/mach-linino.c
+@@ -78,7 +78,7 @@ static struct gpio_keys_button ds_gpio_keys[] __initdata = {
+ 	{
+ 		.desc = "configuration button",
+ 		.type = EV_KEY,
+-		.code = KEY_WPS_BUTTON,
++		.code = KEY_RESTART,
+ 		.debounce_interval = DS_KEYS_DEBOUNCE_INTERVAL,
+ 		.gpio = DS_GPIO_CONF_BTN,
+ 		.active_low = 1,
+-- 
+2.10.1
+

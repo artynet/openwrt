@@ -1,0 +1,87 @@
+From 6df01bd28e7b112d6a547ff65f01ffd94dec0754 Mon Sep 17 00:00:00 2001
+From: Mimmo <mimmo@linino.org>
+Date: Mon, 20 Jul 2015 01:19:14 +0200
+Subject: [PATCH 42/83] tian board: configure gpio13 and gpio14 to manage SWD
+ signals
+
+---
+ arch/mips/ath79/Makefile               |  2 +-
+ arch/mips/ath79/mach-linino-chowchow.c | 11 ++++++++++-
+ arch/mips/ath79/mach-linino-tian.c     | 11 +++++++++++
+ 3 files changed, 22 insertions(+), 2 deletions(-)
+ create mode 100644 arch/mips/ath79/mach-linino-tian.c
+
+# diff --git a/arch/mips/ath79/Makefile b/arch/mips/ath79/Makefile
+# index 6c92c89..43f7fa1 100644
+# --- a/arch/mips/ath79/Makefile
+# +++ b/arch/mips/ath79/Makefile
+# @@ -90,7 +90,7 @@ obj-$(CONFIG_ATH79_MACH_LININO_YUN) += mach-linino-yun.o
+#  obj-$(CONFIG_ATH79_MACH_LININO_ONE) += mach-linino-yun.o
+#  obj-$(CONFIG_ATH79_MACH_LININO_FREEDOG) += mach-linino-freedog.o
+#  obj-$(CONFIG_ATH79_MACH_LININO_LEI) += mach-linino-chowchow.o
+# -obj-$(CONFIG_ATH79_MACH_LININO_TIAN) += mach-linino-chowchow.o
+# +obj-$(CONFIG_ATH79_MACH_LININO_TIAN) += mach-linino-tian.o
+#  obj-$(CONFIG_ATH79_MACH_LININO_CHIWAWA) += mach-linino-chiwawa.o
+#  obj-$(CONFIG_ATH79_MACH_LININO_YUN_MINI) += mach-linino-yun.o
+#  obj-$(CONFIG_ATH79_MACH_MC_MAC1200R)     += mach-mc-mac1200r.o
+diff --git a/arch/mips/ath79/mach-linino-chowchow.c b/arch/mips/ath79/mach-linino-chowchow.c
+index d4a2313..1f4d15f 100644
+--- a/arch/mips/ath79/mach-linino-chowchow.c
++++ b/arch/mips/ath79/mach-linino-chowchow.c
+@@ -38,8 +38,13 @@
+ #define CHOWCHOW_GPIO_LED0		12
+ #define CHOWCHOW_GPIO_LED1		11
+
++#ifdef LININO_TIAN
++#define TIAN_GPIO_SWDIO			13
++#define TIAN_GPIO_SWDCLK		14
++#else
+ #define CHOWCHOW_GPIO_UART0_RX	13
+ #define CHOWCHOW_GPIO_UART0_TX	14
++#endif
+ #define CHOWCHOW_GPIO_UART1_RX	9
+ #define CHOWCHOW_GPIO_UART1_TX	10
+ #define CHOWCHOW_GPIO_OE2		15
+@@ -227,6 +232,10 @@ static void __init chowchow_setup(void)
+ 	v |= (CHOWCHOW_GPIO_UART1_RX << 16);
+ 	__raw_writel(v, reg);
+
++#ifdef LININO_TIAN
++	ath79_gpio_output_select(TIAN_GPIO_SWDIO, AR934X_GPIO_OUT_GPIO);
++	ath79_gpio_output_select(TIAN_GPIO_SWDCLK, AR934X_GPIO_OUT_GPIO);
++#else
+ 	/* UART0 (low-speed) configuration */
+ 	r = gpio_request(CHOWCHOW_GPIO_UART0_TX, NULL);
+ 	if (r) {
+@@ -246,6 +255,7 @@ static void __init chowchow_setup(void)
+ 	v &= ~0x0000ff00;
+ 	v |= (CHOWCHOW_GPIO_UART0_RX << 8);
+ 	__raw_writel(v, reg);
++#endif
+
+ 	ath79_register_m25p80(NULL);
+
+@@ -293,4 +303,3 @@ static void __init chowchow_setup(void)
+ }
+
+ MIPS_MACHINE(ATH79_MACH_LININO_LEI, "linino-lei", "Linino Lei", chowchow_setup);
+-MIPS_MACHINE(ATH79_MACH_LININO_TIAN, "linino-tian", "Arduino Tian", chowchow_setup);
+diff --git a/arch/mips/ath79/mach-linino-tian.c b/arch/mips/ath79/mach-linino-tian.c
+new file mode 100644
+index 0000000..53753d4
+--- /dev/null
++++ b/arch/mips/ath79/mach-linino-tian.c
+@@ -0,0 +1,11 @@
++/*
++ * Copyright (c) dog hunter AG - Zug - CH
++ * General Public License version 2 (GPLv2)
++ * Author Mimmo <mimmo@linino.org>
++ */
++
++#define LININO_TIAN 1
++
++#include "mach-linino-chowchow.c"
++
++MIPS_MACHINE(ATH79_MACH_LININO_TIAN, "linino-tian", "Arduino Tian", chowchow_setup);
+--
+2.10.1
