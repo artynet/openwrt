@@ -1,0 +1,13 @@
+--- a/shellinabox/launcher.c	2016-04-30 18:29:20.067289912 +0200
++++ b/shellinabox/launcher.c	2016-04-30 18:49:36.479015732 +0200
+@@ -85,10 +85,6 @@
+ #include <util.h>
+ #endif
+ 
+-#ifdef HAVE_UTMP_H
+-#include <utmp.h>
+-#endif
+-
+ #ifdef HAVE_UTMPX_H
+ #include <utmpx.h>
+ #endif
