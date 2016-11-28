@@ -1,8 +1,7 @@
 From 98f3deb3723e18768c37225ecba32c1311ba39c2 Mon Sep 17 00:00:00 2001
 From: Aurelio Colosimo <aurelio@aureliocolosimo.it>
 Date: Tue, 19 May 2015 12:36:33 +0200
-Subject: [PATCH 27/83] Revert "MIPS: ath79: Remove ar933x_uart_platform.h
- header"
+Subject: [PATCH] Revert "MIPS: ath79: Remove ar933x_uart_platform.h header"
 
 This reverts commit 1a9db0a9ea11ebf2d83d928f4933f21bf6a808e9.
 
@@ -13,46 +12,42 @@ Signed-off-by: Aurelio Colosimo <aurelio@aureliocolosimo.it>
  2 files changed, 24 insertions(+)
  create mode 100644 arch/mips/include/asm/mach-ath79/ar933x_uart_platform.h
 
-diff --git a/arch/mips/ath79/dev-common.c b/arch/mips/ath79/dev-common.c
-index 6a732d48..ac7a002 100644
 --- a/arch/mips/ath79/dev-common.c
 +++ b/arch/mips/ath79/dev-common.c
 @@ -20,6 +20,7 @@
- 
+
  #include <asm/mach-ath79/ath79.h>
  #include <asm/mach-ath79/ar71xx_regs.h>
 +#include <asm/mach-ath79/ar933x_uart_platform.h>
  #include "common.h"
  #include "dev-common.h"
- 
+
 @@ -67,11 +68,15 @@ static struct resource ar933x_uart_resources[] = {
  	},
  };
- 
-+static struct ar933x_uart_platform_data ar933x_uart_data;
+
++static struct ar933x_uart_platform_data ar93xx_uart_data;
  static struct platform_device ar933x_uart_device = {
  	.name		= "ar933x-uart",
  	.id		= -1,
  	.resource	= ar933x_uart_resources,
  	.num_resources	= ARRAY_SIZE(ar933x_uart_resources),
 +	.dev = {
-+		.platform_data	= &ar933x_uart_data,
++		.platform_data	= &ar93xx_uart_data,
 +	},
  };
- 
+
  void __init ath79_register_uart(void)
-@@ -99,6 +104,7 @@ void __init ath79_register_uart(void)
+@@ -100,6 +105,7 @@ void __init ath79_register_uart(void)
  		ath79_uart_data[0].uartclk = uart_clk_rate;
  		platform_device_register(&ath79_uart_device);
  	} else if (soc_is_ar933x()) {
-+		ar933x_uart_data.uartclk = uart_clk_rate;
++		ar93xx_uart_data.uartclk = uart_clk_rate;
  		platform_device_register(&ar933x_uart_device);
  	} else {
  		BUG();
-diff --git a/arch/mips/include/asm/mach-ath79/ar933x_uart_platform.h b/arch/mips/include/asm/mach-ath79/ar933x_uart_platform.h
-new file mode 100644
-index 0000000..6cb30f2
---- /dev/null
+
+--- a/dev/null
 +++ b/arch/mips/include/asm/mach-ath79/ar933x_uart_platform.h
 @@ -0,0 +1,18 @@
 +/*
@@ -73,6 +68,3 @@ index 0000000..6cb30f2
 +};
 +
 +#endif /* _AR933X_UART_PLATFORM_H */
--- 
-2.10.1
-
