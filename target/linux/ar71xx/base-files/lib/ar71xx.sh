@@ -386,6 +386,27 @@ ar71xx_board_detect() {
 	*"Arduino Yun")
 		name="arduino-yun"
 		;;
+	*"Linino Chiwawa")
+		name="linino-chiwawa"
+		;;
+	*"Linino Freedog")
+		name="linino-freedog"
+		;;
+	*"Linino One")
+		name="linino-one"
+		;;
+	*"Linino Lei")
+		name="linino-lei"
+		;;
+	*"Linino Tian")
+		name="linino-tian"
+		;;
+	*"Linino Yun-Mini")
+		name="linino-yun-mini"
+		;;
+	*"Linino Yun")
+		name="linino-yun"
+		;;
 	*AP113)
 		name="ap113"
 		;;
