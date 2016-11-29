@@ -10,13 +10,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=shellinabox
 PKG_VERSION:=2.20
-PKG_RELEASE:=2
+PKG_RELEASE:=7
 
 PKG_INSTALL:=1
 
 PKG_SOURCE_PROTO:=git
 
-PKG_REVISION:=e6c25e84bc662797c7382500f136bb74874c2500
+PKG_REVISION:=v2.20
 
 PKG_SOURCE_VERSION=$(PKG_REVISION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
@@ -27,13 +27,15 @@ PKG_FIXUP:=libtool autoreconf
 
 PKG_BUILD_DEPENDS:=+libopenssl +libpam
 
+TARGET_CFLAGS += -Wno-error
+
 include $(INCLUDE_DIR)/package.mk
 
 define Package/shellinabox
   SECTION:=net
   CATEGORY:=Network
   TITLE:=Shell In A Box
-  DEPENDS:=+libopenssl +libpam +openssl-util
+  DEPENDS:=+libopenssl +libpam +openssl-util +zlib
   URL:=http://shellinabox.googlecode.com
 endef
 
@@ -42,7 +44,7 @@ define Package/shellinabox/description
 endef
 
 define Build/Configure
-	$(call Build/Configure/Default,--disable-runtime-loading)
+	$(call Build/Configure/Default,--disable-runtime-loading --disable-utmp)
 endef
 
 define Build/Compile
