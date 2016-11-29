@@ -17,7 +17,7 @@ writeinfo () {
 	echo "DISTRIB_RELEASE="\""$branchname"\""" >> $LININOFILE
 	# echo "DISTRIB_RELEASE="\""samd"\""" >> $LININOFILE
 	echo "DISTRIB_REVISION="\""$gitcommit"\""" >> $LININOFILE
-	echo "DISTRIB_CODENAME="\""chaos_calmer"\""" >> $LININOFILE
+	echo "DISTRIB_CODENAME="\""designated_driver"\""" >> $LININOFILE
 	echo "DISTRIB_TARGET="\""ar71xx/generic"\""" >> $LININOFILE
 	echo "BUILD_DATE="\""$builddate"\""" >> $LININOFILE
 	
