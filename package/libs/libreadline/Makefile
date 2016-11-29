@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=readline
-PKG_VERSION:=6.3
+PKG_VERSION:=7.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/readline
-PKG_MD5SUM:=33c8fb279e981274f485fd91da77e94a
+PKG_MD5SUM:=205b03a87fc83dab653b628c59b9fc91
 
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=COPYING
@@ -32,11 +32,11 @@ define Package/libreadline
 endef
 
 define Package/libreadline/description
-	The Readline library provides a set of functions for use by applications 
-	that allow users to edit command lines as they are typed in. Both Emacs 
-	and vi editing modes are available. The Readline library includes 
-	additional functions to maintain a list of previously-entered command 
-	lines, to recall and perhaps reedit those lines, and perform csh-like 
+	The Readline library provides a set of functions for use by applications
+	that allow users to edit command lines as they are typed in. Both Emacs
+	and vi editing modes are available. The Readline library includes
+	additional functions to maintain a list of previously-entered command
+	lines, to recall and perhaps reedit those lines, and perform csh-like
 	history expansion on previous commands.
 endef
 
@@ -60,12 +60,12 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/readline $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{history,readline}.{a,so,so.6,so.6.3} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{history,readline}.{a,so,so.7,so.7.0} $(1)/usr/lib/
 endef
 
 define Package/libreadline/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{history,readline}.{so,so.6,so.6.3} $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/lib{history,readline}.{so,so.7,so.7.0} $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libreadline))
