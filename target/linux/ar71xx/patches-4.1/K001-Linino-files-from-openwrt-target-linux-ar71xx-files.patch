@@ -319,9 +319,9 @@ index 0000000..63d4d42
 +
 +#include "mach-linino.c"
 +
-+MIPS_MACHINE(ATH79_MACH_LININO_YUN, "linino-yun", "Arduino Yun", ds_setup);
++MIPS_MACHINE(ATH79_MACH_LININO_YUN, "linino-yun", "Linino Yun", ds_setup);
 +MIPS_MACHINE(ATH79_MACH_LININO_ONE, "linino-one", "Linino One", ds_setup);
-+MIPS_MACHINE(ATH79_MACH_LININO_YUN_MINI, "linino-yun-mini", "Arduino Yun-Mini", ds_setup);
++MIPS_MACHINE(ATH79_MACH_LININO_YUN_MINI, "linino-yun-mini", "Linino Yun-Mini", ds_setup);
 diff --git a/arch/mips/ath79/mach-linino.c b/arch/mips/ath79/mach-linino.c
 new file mode 100644
 index 0000000..2707fe9
@@ -665,11 +665,11 @@ index 0000000..644435a
 +#define DS_GPIO_LED4			15
 +#define DS_GPIO_LED5			16
 +
-+#define DS_GPIO_RGB_LED_BLUE            DS_GPIO_LED0       
++#define DS_GPIO_RGB_LED_BLUE            DS_GPIO_LED0
 +#define DS_GPIO_RGB_LED_RED             DS_GPIO_LED1
 +#define DS_GPIO_RGB_LED_GREEN           DS_GPIO_LED3
 +#define DS_GPIO_LED_WLAN             	DS_GPIO_LED0
-+#define DS_GPIO_LED_USB            	DS_GPIO_LED1       
++#define DS_GPIO_LED_USB            	DS_GPIO_LED1
 +
 +#define DS_GPIO_OE			21
 +#define DS_GPIO_OE2			22
@@ -715,6 +715,5 @@ index 0000000..644435a
 +#endif
 +
 +#endif /* MACH_LININO_H_ */
--- 
+--
 2.10.1
-
