@@ -19,7 +19,7 @@ index f017782..688dd48 100644
  	select ATH79_NVRAM
 
 +config ATH79_MACH_LININO_YUN
-+	bool "Arduino YUN support"
++	bool "Linino Yun support"
 +	select SOC_AR933X
 +	select ATH79_DEV_ETH
 +	select ATH79_DEV_GPIO_BUTTONS
@@ -29,7 +29,7 @@ index f017782..688dd48 100644
 +	select ATH79_DEV_WMAC
 +	help
 +		Say 'Y' here if you want your kernel to support
-+		Arduino Yun.
++		Linino Yun.
 +
 +config ATH79_MACH_LININO_ONE
 +	bool "Linino One support"
@@ -97,7 +97,7 @@ index f017782..688dd48 100644
 +		Linino Chiwawa.
 +
 +config ATH79_MACH_LININO_YUN_MINI
-+    bool "Arduino YUN mini support"
++    bool "Linino Yun mini support"
 +    select SOC_AR933X
 +    select ATH79_DEV_ETH
 +    select ATH79_DEV_GPIO_BUTTONS
@@ -107,7 +107,7 @@ index f017782..688dd48 100644
 +    select ATH79_DEV_WMAC
 +    help
 +		Say 'Y' here if you want your kernel to support
-+		Arduino Yun mini.
++		Linino Yun mini.
 +
  endmenu
 
