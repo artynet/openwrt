@@ -1,0 +1,92 @@
+From a45aa3c08a4245dce3451e3ee76ffaf0b7c422bc Mon Sep 17 00:00:00 2001
+From: Baozhu Zuo <zuobaozhu@gmail.com>
+Date: Thu, 1 Dec 2016 02:33:12 -0800
+Subject: [PATCH] add aux_pin gpio to mt76xx_pcm
+
+Signed-off-by: Baozhu Zuo <zuobaozhu@gmail.com>
+---
+ sound/soc/mtk/mt76xx_pcm.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/sound/soc/mtk/mt76xx_pcm.c b/sound/soc/mtk/mt76xx_pcm.c
+index bfb097d..ea6780e 100644
+--- a/sound/soc/mtk/mt76xx_pcm.c
++++ b/sound/soc/mtk/mt76xx_pcm.c
+@@ -33,6 +33,7 @@
+ #include <sound/soc-dapm.h>
+ #include <sound/initval.h>
+ #include <linux/delay.h>
++#include <linux/gpio.h>
+ 
+ #include "ralink_gdma.h"
+ #include "mt76xx_i2s.h"
+@@ -72,6 +73,8 @@ static int mt76xx_platform_drv_probe(struct platform_device *pdev);
+ static int mt76xx_platform_drv_remove(struct platform_device *pdev);
+ #endif
+ 
++
++static int aux_pin = 41;
+ static const struct snd_pcm_hardware mt76xx_pcm_hwparam = {
+ #if defined(CONFIG_I2S_MMAP)
+ 	.info			= (SNDRV_PCM_INFO_INTERLEAVED |
+@@ -170,6 +173,7 @@ static int mt76xx_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+ 			rtd->bTrigger[SNDRV_PCM_STREAM_PLAYBACK] = 1;
+ 			rtd->dmaStat[SNDRV_PCM_STREAM_PLAYBACK] = 1;
+ 			gdma_unmask_handler(GDMA_I2S_TX0);
++            if (gpio_is_valid(aux_pin)) gpio_set_value(aux_pin, 0);
+ 		} else {
+ 			rtd->bTrigger[SNDRV_PCM_STREAM_CAPTURE] = 1;
+ 			rtd->dmaStat[SNDRV_PCM_STREAM_CAPTURE] = 1;
+@@ -179,6 +183,7 @@ static int mt76xx_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+ 	case SNDRV_PCM_TRIGGER_STOP:
+ 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+ 			rtd->bTrigger[SNDRV_PCM_STREAM_PLAYBACK] = 0;
++            if (gpio_is_valid(aux_pin)) gpio_set_value(aux_pin, 1);
+ 		} else {
+ 			rtd->bTrigger[SNDRV_PCM_STREAM_CAPTURE] = 0;
+ 		}
+@@ -187,6 +192,7 @@ static int mt76xx_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+ 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+ 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK){
+ 			rtd->tx_pause_en = 0;
++            if (gpio_is_valid(aux_pin)) gpio_set_value(aux_pin, 0);
+ 		} else {
+ 			rtd->rx_pause_en = 0;
+ 		}
+@@ -196,6 +202,7 @@ static int mt76xx_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+ 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+ 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK){
+ 			rtd->tx_pause_en = 1;
++            if (gpio_is_valid(aux_pin)) gpio_set_value(aux_pin, 1);
+ 		} else {
+ 			rtd->rx_pause_en = 1;
+ 		}
+@@ -507,12 +514,25 @@ static void mt76xx_pcm_free(struct snd_pcm *pcm)
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,20)
+ static int mt76xx_platform_drv_probe(struct platform_device *pdev)
+ {
++    if (gpio_is_valid(aux_pin)) {
++        if (gpio_request(aux_pin, "reset_pin")) {
++            printk("aux_pin pin not available\n");
++            aux_pin = -ENODEV;
++        } else {
++            printk("aux_pin number: %d\n", aux_pin);
++            gpio_direction_output(aux_pin, 1);
++            gpio_set_value(aux_pin, 1);
++        }    
++    } else {
++        aux_pin = -ENODEV;
++    }    
+ 	//MSG("******* %s *******\n", __func__);
+ 	return snd_soc_register_platform(&pdev->dev, &mt76xx_soc_platform);
+ }
+ 
+ static int mt76xx_platform_drv_remove(struct platform_device *pdev)
+ {
++    if (gpio_is_valid(aux_pin)) gpio_free(aux_pin);
+ 	//MSG("******* %s *******\n", __func__);
+ 	snd_soc_unregister_platform(&pdev->dev);
+ 	return 0;
+-- 
+1.9.1
+
