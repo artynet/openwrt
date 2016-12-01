@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node
-PKG_VERSION:=v0.10.46
+PKG_VERSION:=v0.10.48
 PKG_RELEASE:=6
 
 PKG_SOURCE:=node-$(PKG_VERSION).tar.gz
@@ -46,10 +46,10 @@ CPUHOST:=$(subst x86_64-linux-gnu,x64,$(subst i686-linux-gnu,x86,$(GNU_HOST_NAME
 NODEJS:=node-$(PKG_VERSION)-linux-$(CPUHOST).tar.gz
 
 ifeq ($(CPUHOST),x64)
-    MD5SUM_NODE:=cd36e700215520e02eda9f2ae4d3fba5
+    MD5SUM_NODE:=4eed9a2de77191a3c499c6550ce37f5d
 endif
 ifeq ($(CPUHOST),x86)
-    MD5SUM_NODE:=b4b9145436740fe6009449167ae780d4
+    MD5SUM_NODE:=0cb485db2eb23478f123df0ce1ab8262
 endif
 
 # Distribution URL doesn't always have the correct version
