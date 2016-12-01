@@ -1,0 +1,74 @@
+From fd8ac56c75517dac0634275f4c5f8b4ed88f9dc1 Mon Sep 17 00:00:00 2001
+From: Ben Noordhuis <info@bnoordhuis.nl>
+Date: Sat, 24 Sep 2016 10:19:51 +0200
+Subject: [PATCH] v8: fix build errors with g++ 6.1.1
+
+Shifting a negative constant value is no longer allowed unless
+the -fpermissive flag is in effect.  Fixes the following build
+errors:
+
+		../deps/v8/src/objects.h:5188:47: warning: left shift of negative value [-Wshift-negative-value]
+			 static const int kElementsKindMask = (-1 << kElementsKindShift) &
+		../deps/v8/src/objects.h:5188:44: error: left operand of shift expression '(-1 << 3)' is negative [-fpermissive]
+			 static const int kElementsKindMask = (-1 << kElementsKindShift) &
+		../deps/v8/src/objects.h:7376:39: warning: left shift of negative value [-Wshift-negative-value]
+					 (~kMaxCachedArrayIndexLength << kArrayIndexHashLengthShift) |
+		../deps/v8/src/objects.h:7376:36: error: left operand of shift expression '(-8 << 26)' is negative [-fpermissive]
+					 (~kMaxCachedArrayIndexLength << kArrayIndexHashLengthShift) |
+
+And:
+
+		../deps/v8/src/liveedit.cc:205:44: warning: left shift of negative value [-Wshift-negative-value]
+			 static const int kEmptyCellValue = -1 << kDirectionSizeBits;
+		../deps/v8/src/liveedit.cc:205:41: error: left operand of shift expression '(-1 << 2)' is negative [-fpermissive]
+			 static const int kEmptyCellValue = -1 << kDirectionSizeBits;
+
+PR-URL: https://github.com/nodejs/node-private/pull/62
+Reviewed-By: Rod Vagg <rod@vagg.org>
+---
+ src/liveedit.cc | 3 ++-
+ src/objects.h   | 7 ++++---
+ 2 files changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/src/liveedit.cc b/src/liveedit.cc
+index 2a3aafc..1d280ef 100644
+--- a/src/liveedit.cc
++++ b/src/liveedit.cc
+@@ -202,7 +202,8 @@ class Differencer {
+ 
+   static const int kDirectionSizeBits = 2;
+   static const int kDirectionMask = (1 << kDirectionSizeBits) - 1;
+-  static const int kEmptyCellValue = -1 << kDirectionSizeBits;
++  static const int kEmptyCellValue =
++      static_cast<unsigned int>(-1) << kDirectionSizeBits;
+ 
+   // This method only holds static assert statement (unfortunately you cannot
+   // place one in class scope).
+diff --git a/src/objects.h b/src/objects.h
+index 47d7757..f7a8c6d 100644
+--- a/src/objects.h
++++ b/src/objects.h
+@@ -5192,7 +5192,8 @@ class Map: public HeapObject {
+   static const int kElementsKindBitCount = 5;
+ 
+   // Derived values from bit field 2
+-  static const int kElementsKindMask = (-1 << kElementsKindShift) &
++  static const int kElementsKindMask =
++      (static_cast<unsigned int>(-1) << kElementsKindShift) &
+       ((1 << (kElementsKindShift + kElementsKindBitCount)) - 1);
+   static const int8_t kMaximumBitField2FastElementValue = static_cast<int8_t>(
+       (FAST_ELEMENTS + 1) << Map::kElementsKindShift) - 1;
+@@ -7418,8 +7419,8 @@ class String: public HeapObject {
+   STATIC_CHECK(IS_POWER_OF_TWO(kMaxCachedArrayIndexLength + 1));
+ 
+   static const int kContainsCachedArrayIndexMask =
+-      (~kMaxCachedArrayIndexLength << kArrayIndexHashLengthShift) |
+-      kIsNotArrayIndexMask;
++      (static_cast<unsigned int>(~kMaxCachedArrayIndexLength)
++          << kArrayIndexHashLengthShift) | kIsNotArrayIndexMask;
+ 
+   // Value of empty hash field indicating that the hash is not computed.
+   static const int kEmptyHashField =
+-- 
+2.10.2
+
