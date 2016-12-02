@@ -39,6 +39,7 @@ define Build/Prepare
 	/bin/tar zxvf $(DL_DIR)/$(PKG_SOURCE) -C $(PKG_BUILD_DIR) --strip-components=1
 	$(call Build/Patch)
 	(cd $(PKG_BUILD_DIR) && make dependencies)
+	(cd $(PKG_BUILD_DIR)/build/gyp && git reset --hard f7bc250ccc4d619a1cf238db87e5979f89ff36d7)
 endef
 
 define Build/InstallDev
