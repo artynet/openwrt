@@ -1,6 +1,6 @@
 --- a/Makefile	2016-05-14 03:16:45.897431121 +0200
 +++ b/Makefile	2016-05-14 03:17:39.262311308 +0200
-@@ -282,5 +282,4 @@
+@@ -290,5 +290,4 @@
  # Dependencies.
  # Remember to keep these in sync with the DEPS file.
  dependencies:

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 Dog Hunter LLC
+# Copyright (C) 2014 Arduino Srl
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,13 +9,13 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v8m-rb
 PKG_VERSION:=3.14.5
-PKG_RELEASE:=37
+PKG_RELEASE:=46
 
-# PKG_SOURCE_PROTO:=git
-# GIT_SOURCE:=https://github.com/paul99/v8m-rb.git
-
-PKG_SOURCE:=v8m-rb-dm-mipsbe-3.14.tar.gz
-PKG_SOURCE_URL:=http://download.linino.org/pkg-src/
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/v8-314/v8.git
+PKG_SOURCE_VERSION:=c4fc1955681d483f3a369238671fb83d293ac8b0
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_BUILD_PARALLEL:=3
 
@@ -25,7 +25,7 @@ define Package/v8m-rb
   SECTION:=libs
   CATEGORY:=Libraries
   TITLE:=Google v8 javascript engine
-  URL:=https://github.com/paul99/v8m-rb/tree/dm-mipsbe-3.14
+  URL:=https://github.com/v8mips/v8mips/tree/dm-mipsbe-3.14
   DEPENDS:=+libstdcpp +libc +libpthread
 endef
 
@@ -33,12 +33,11 @@ define Package/v8m-rb/description
  	Port of Google v8 javascript engine to MIPS architecture
 endef
 
-# /bin/tar zxvf $(DL_DIR)/$(PKG_SOURCE) -C $(PKG_BUILD_DIR) --strip-components=1
-
 define Build/Prepare
 	/bin/tar zxvf $(DL_DIR)/$(PKG_SOURCE) -C $(PKG_BUILD_DIR) --strip-components=1
 	$(call Build/Patch)
 	(cd $(PKG_BUILD_DIR) && make dependencies)
+	(cd $(PKG_BUILD_DIR)/build/gyp && git reset --hard f7bc250ccc4d619a1cf238db87e5979f89ff36d7)
 endef
 
 define Build/InstallDev
@@ -64,7 +63,7 @@ endef
 
 define Package/v8m-rb/install
 	$(INSTALL_DIR) $(1)/usr/lib
-	
+
 	$(CP) $(PKG_BUILD_DIR)/out/mips.release/lib.target/libv8.so $(1)/usr/lib
 endef
 
