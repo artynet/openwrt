@@ -1,0 +1,10 @@
+--- a/nfs_prot.x	2000-11-14 16:51:06.000000000 +0100
++++ b/nfs_prot.x	2016-11-25 10:07:41.559938685 +0100
+@@ -193,7 +193,6 @@
+ typedef u_int64_t	uint64;
+ typedef int64_t		int64;
+ typedef unsigned int	uint32;
+-typedef int		int32;
+ typedef string		filename3<>;
+ typedef string		nfspath3<>;
+ typedef uint64		fileid3;
