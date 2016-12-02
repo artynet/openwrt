@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=http://registry.npmjs.org/$(PKG_NPM_NAME)/-/
 # PKG_MD5SUM:=f0de658691c32002da54e97750ee7e0e
 
 PKG_BUILD_DEPENDS:=node +bluez-libs +udev +libusb-1.0
-PKG_NODE_VERSION:=0.10.46
+PKG_NODE_VERSION:=0.10.48
 
 include $(INCLUDE_DIR)/package.mk
 
