@@ -106,7 +106,6 @@
 		i2c@900 {
 			status = "okay";
 		};
-
 		uart1@d00 {
 			status = "okay";
 		};
