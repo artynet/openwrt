@@ -160,10 +160,10 @@
 			reg-shift = <2>;
 			reg-io-width = <4>;
 			no-loopback-test;
-
+			/*
 			resets = <&rstctrl 12>;
 			reset-names = "uartl";
-
+			*/
 			interrupt-parent = <&intc>;
 			interrupts = <20>;
 
