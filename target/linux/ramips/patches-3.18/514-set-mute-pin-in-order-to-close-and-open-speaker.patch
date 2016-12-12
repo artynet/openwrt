@@ -1,0 +1,103 @@
+From e3c93e0851e1352714e570ac06829971f521e1af Mon Sep 17 00:00:00 2001
+From: Baozhu Zuo <zuobaozhu@gmail.com>
+Date: Mon, 12 Dec 2016 02:43:39 -0800
+Subject: [PATCH] set mute pin, in order to close and open speaker
+
+---
+ sound/soc/mtk/mt76xx_pcm.c | 34 ++++++++++++++++++++++------------
+ 1 file changed, 22 insertions(+), 12 deletions(-)
+
+diff --git a/sound/soc/mtk/mt76xx_pcm.c b/sound/soc/mtk/mt76xx_pcm.c
+index ea6780e..ff17653 100644
+--- a/sound/soc/mtk/mt76xx_pcm.c
++++ b/sound/soc/mtk/mt76xx_pcm.c
+@@ -75,6 +75,7 @@ static int mt76xx_platform_drv_remove(struct platform_device *pdev);
+ 
+ 
+ static int aux_pin = 41;
++static int mute_pin = 12;
+ static const struct snd_pcm_hardware mt76xx_pcm_hwparam = {
+ #if defined(CONFIG_I2S_MMAP)
+ 	.info			= (SNDRV_PCM_INFO_INTERLEAVED |
+@@ -174,6 +175,7 @@ static int mt76xx_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+ 			rtd->dmaStat[SNDRV_PCM_STREAM_PLAYBACK] = 1;
+ 			gdma_unmask_handler(GDMA_I2S_TX0);
+             if (gpio_is_valid(aux_pin)) gpio_set_value(aux_pin, 0);
++            if (gpio_is_valid(aux_pin)) gpio_set_value(mute_pin, 1);
+ 		} else {
+ 			rtd->bTrigger[SNDRV_PCM_STREAM_CAPTURE] = 1;
+ 			rtd->dmaStat[SNDRV_PCM_STREAM_CAPTURE] = 1;
+@@ -184,6 +186,7 @@ static int mt76xx_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+ 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+ 			rtd->bTrigger[SNDRV_PCM_STREAM_PLAYBACK] = 0;
+             if (gpio_is_valid(aux_pin)) gpio_set_value(aux_pin, 1);
++            if (gpio_is_valid(aux_pin)) gpio_set_value(mute_pin, 0);
+ 		} else {
+ 			rtd->bTrigger[SNDRV_PCM_STREAM_CAPTURE] = 0;
+ 		}
+@@ -193,6 +196,7 @@ static int mt76xx_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+ 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK){
+ 			rtd->tx_pause_en = 0;
+             if (gpio_is_valid(aux_pin)) gpio_set_value(aux_pin, 0);
++            if (gpio_is_valid(aux_pin)) gpio_set_value(mute_pin, 1);
+ 		} else {
+ 			rtd->rx_pause_en = 0;
+ 		}
+@@ -203,6 +207,7 @@ static int mt76xx_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
+ 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK){
+ 			rtd->tx_pause_en = 1;
+             if (gpio_is_valid(aux_pin)) gpio_set_value(aux_pin, 1);
++            if (gpio_is_valid(aux_pin)) gpio_set_value(mute_pin, 0);
+ 		} else {
+ 			rtd->rx_pause_en = 1;
+ 		}
+@@ -510,22 +515,26 @@ static void mt76xx_pcm_free(struct snd_pcm *pcm)
+ 	//MSG("******* %s *******\n", __func__);
+ 	//return 0;
+ }
+-
+-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,20)
+-static int mt76xx_platform_drv_probe(struct platform_device *pdev)
++static void init_pin(int *p,const char* s,int n)
+ {
+-    if (gpio_is_valid(aux_pin)) {
+-        if (gpio_request(aux_pin, "reset_pin")) {
+-            printk("aux_pin pin not available\n");
+-            aux_pin = -ENODEV;
++    if (gpio_is_valid(*p)) {
++        if (gpio_request(*p, s)) {
++            printk("audio gpio pin not available\n");
++            *p = -ENODEV;
+         } else {
+-            printk("aux_pin number: %d\n", aux_pin);
+-            gpio_direction_output(aux_pin, 1);
+-            gpio_set_value(aux_pin, 1);
++            printk("audio gpio number: %d\n", *p);
++            gpio_direction_output(*p, 1);
++            gpio_set_value(*p, n);
+         }    
+     } else {
+-        aux_pin = -ENODEV;
+-    }    
++        *p = -ENODEV;
++    }      
++}
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,20)
++static int mt76xx_platform_drv_probe(struct platform_device *pdev)
++{
++    init_pin(&aux_pin,"aux",1);
++    init_pin(&mute_pin,"mute",0);
+ 	//MSG("******* %s *******\n", __func__);
+ 	return snd_soc_register_platform(&pdev->dev, &mt76xx_soc_platform);
+ }
+@@ -533,6 +542,7 @@ static int mt76xx_platform_drv_probe(struct platform_device *pdev)
+ static int mt76xx_platform_drv_remove(struct platform_device *pdev)
+ {
+     if (gpio_is_valid(aux_pin)) gpio_free(aux_pin);
++    if (gpio_is_valid(mute_pin)) gpio_free(mute_pin);
+ 	//MSG("******* %s *******\n", __func__);
+ 	snd_soc_unregister_platform(&pdev->dev);
+ 	return 0;
+-- 
+1.9.1
+
