@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=es6-shim
 PKG_NAME:=node-$(PKG_NPM_NAME)
-PKG_VERSION:=0.35.1
+PKG_VERSION:=0.35.2
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NPM_NAME)-$(PKG_VERSION).tgz
@@ -52,7 +52,7 @@ endef
 
 define Package/node-es6-shim/install
 	$(INSTALL_DIR) $(1)/usr/lib/
-	
+
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules $(1)/usr/lib/
 endef
 
@@ -68,4 +68,3 @@ fi
 endef
 
 $(eval $(call BuildPackage,node-es6-shim))
-
