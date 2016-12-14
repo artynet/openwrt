@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=canvas
 PKG_NAME:=node-$(PKG_NPM_NAME)
-PKG_VERSION:=1.3.12
+PKG_VERSION:=1.6.2
 PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NPM_NAME)-$(PKG_VERSION).tgz
@@ -18,6 +18,8 @@ PKG_SOURCE_URL:=http://registry.npmjs.org/$(PKG_NPM_NAME)/-/
 
 PKG_BUILD_DEPENDS:=node
 PKG_NODE_VERSION:=0.10.48
+
+PKG_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -50,12 +52,12 @@ define Build/Compile
 	npm_config_arch=$(ARCH) \
 	npm_config_nodedir=$(BUILD_DIR)/node-v$(PKG_NODE_VERSION)/ \
 	PREFIX="$(PKG_INSTALL_DIR)/usr/" \
-	$(STAGING_DIR_HOST)/bin/npm install --build-from-source -g $(PKG_BUILD_DIR)
+	$(STAGING_DIR_HOST)/bin/npm install --build-from-source --target_arch=$(ARCH) -g $(PKG_BUILD_DIR)
 endef
 
 define Package/node-canvas/install
 	$(INSTALL_DIR) $(1)/usr/lib/
-	
+
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules $(1)/usr/lib/
 endef
 
