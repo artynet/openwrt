@@ -26,7 +26,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/sed-git
   SECTION:=devel
   CATEGORY:=Development
-  DEPENDS:=+USE_EGLIBC:librt
+  DEPENDS:=+USE_EGLIBC:librt libacl
   TITLE:=sed (git)
   URL:=http://www.gnu.org/software/sed/
 endef
