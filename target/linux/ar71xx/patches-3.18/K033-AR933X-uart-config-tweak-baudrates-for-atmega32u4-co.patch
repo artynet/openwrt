@@ -18,7 +18,7 @@ diff --git a/arch/mips/ath79/Kconfig b/arch/mips/ath79/Kconfig
 index 688dd48..dd6a883 100644
 --- a/arch/mips/ath79/Kconfig
 +++ b/arch/mips/ath79/Kconfig
-@@ -1569,6 +1569,16 @@ config ATH79_ROUTERBOOT
+@@ -1580,6 +1580,16 @@ config ATH79_ROUTERBOOT
  	select LZO_DECOMPRESS
  	def_bool n
 
