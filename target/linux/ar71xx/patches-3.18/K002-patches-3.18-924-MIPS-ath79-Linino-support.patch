@@ -14,7 +14,7 @@ diff --git a/arch/mips/ath79/Kconfig b/arch/mips/ath79/Kconfig
 index f017782..688dd48 100644
 --- a/arch/mips/ath79/Kconfig
 +++ b/arch/mips/ath79/Kconfig
-@@ -1390,6 +1390,97 @@ config ATH79_MACH_QIHOO_C301
+@@ -1401,6 +1401,97 @@ config ATH79_MACH_QIHOO_C301
  	select ATH79_DEV_USB
  	select ATH79_NVRAM
 
@@ -134,7 +134,7 @@ diff --git a/arch/mips/ath79/machtypes.h b/arch/mips/ath79/machtypes.h
 index a1d3b69..522019e 100644
 --- a/arch/mips/ath79/machtypes.h
 +++ b/arch/mips/ath79/machtypes.h
-@@ -229,6 +229,13 @@ enum ath79_mach_type {
+@@ -230,6 +230,13 @@ enum ath79_mach_type {
  	ATH79_MACH_WZR_450HP2,		/* Buffalo WZR-450HP2 */
  	ATH79_MACH_ZCN_1523H_2,		/* Zcomax ZCN-1523H-2-xx */
  	ATH79_MACH_ZCN_1523H_5,		/* Zcomax ZCN-1523H-5-xx */
