@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node5
-PKG_VERSION:=v5.9.1
+PKG_VERSION:=v5.12.0
 PKG_RELEASE:=5
 
 PKG_SOURCE:=node-$(PKG_VERSION).tar.gz
