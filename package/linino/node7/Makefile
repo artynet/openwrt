@@ -25,7 +25,7 @@ HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/node-$(PKG_VERSION)
 MKTOOL=$(HOST_BUILD_DIR)/out/Release/mkpeephole
 FILE_V8_GYP:=$(PKG_BUILD_DIR)/deps/v8/src/v8.gyp
 
-PKG_BUILD_PARALLEL:=1
+PKG_BUILD_PARALLEL:=3
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=MIT
