@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=redis
-PKG_VERSION:=2.8.13
+PKG_VERSION:=2.8.24
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.redis.io/releases/
-PKG_MD5SUM:=ea92053cbb6f4eb8a4347dbaac7d7dff
+PKG_MD5SUM:=7b6eb6e4ccc050c351df8ae83c55a035
 
 PKG_INSTALL:=1
 
@@ -38,7 +38,7 @@ endef
 
 define Build/Compile
 	sed -e 's#^\(REAL_CFLAGS.* \)$$$$(ARCH)#\1#g' -i $(PKG_BUILD_DIR)/deps/hiredis/Makefile
-	sed -e 's#^\([[:space:]]*$$$$(AR)\)#\1 rcu#g' -i $(PKG_BUILD_DIR)/deps/lua/src/Makefile
+	# sed -e 's#^\([[:space:]]*$$$$(AR)\)#\1 rcu#g' -i $(PKG_BUILD_DIR)/deps/lua/src/Makefile
 	$(call Build/Compile/Default,-C $(PKG_BUILD_DIR)/deps hiredis lua linenoise PLAT=linux)
 	$(call Build/Compile/Default)
 endef
