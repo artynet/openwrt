@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pulseaudio
-PKG_VERSION:=6.0
-PKG_VERSION_DIR:=6.0
+PKG_VERSION:=9.0
+PKG_VERSION_DIR:=9.0
 PKG_RELEASE:=3
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://freedesktop.org/software/pulseaudio/releases/
-PKG_MD5SUM:=b691e83b7434c678dffacfa3a027750e
+PKG_MD5SUM:=da7162541b3a9bc20576dbd0d7d1489a
 PKG_LICENSE:=LGPL-2.1+
 PKG_LICENSE_FILES:=GPL LICENSE
 
@@ -148,7 +148,7 @@ define Package/pulseaudio-daemon/install
 	$(INSTALL_CONF) \
 		$(PKG_INSTALL_DIR)/etc/pulse/* \
 		$(1)/etc/pulse
-	
+
 	$(INSTALL_DIR) $(1)/etc/dbus-1/system.d/
 	$(INSTALL_DATA) ./files/pulseaudio.dbus $(1)/etc/dbus-1/system.d/pulseaudio.conf
 
