@@ -11,10 +11,10 @@ Index: pulseaudio-6.0/src/daemon/system.pa.in
  .else
  ], @HAVE_HAL@, 1, [dnl
  .ifexists module-hal-detect@PA_SOEXT@
-@@ -35,6 +35,19 @@
+@@ -39,6 +39,19 @@
  load-module module-detect
  .endif
- 
+
 +### Automatically load driver modules for Bluetooth hardware
 +.ifexists module-bluetooth-policy@PA_SOEXT@
 +load-module module-bluetooth-policy
@@ -31,11 +31,11 @@ Index: pulseaudio-6.0/src/daemon/system.pa.in
  ### Load several protocols
  .ifexists module-esound-protocol-unix@PA_SOEXT@
  load-module module-esound-protocol-unix
-@@ -44,6 +57,7 @@
+@@ -48,6 +61,7 @@
  ### Automatically restore the volume of streams and devices
  load-module module-stream-restore
  load-module module-device-restore
 +load-module module-card-restore
- 
+
  ### Automatically restore the default sink/source when changed by the user
  ### during runtime
