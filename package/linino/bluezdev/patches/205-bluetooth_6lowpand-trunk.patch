@@ -1,7 +1,7 @@
 diff -Nbur a/Makefile.in b/Makefile.in
---- a/Makefile.in	2016-10-28 14:58:07.000000000 +0200
-+++ b/Makefile.in	2016-11-04 12:22:39.319202383 +0100
-@@ -441,6 +441,7 @@
+--- a/Makefile.in	2017-01-04 17:27:59.554501281 +0100
++++ b/Makefile.in	2017-01-04 17:28:00.158581600 +0100
+@@ -448,6 +448,7 @@
  @CLIENT_TRUE@am__EXEEXT_1 = client/bluetoothctl$(EXEEXT)
  @MONITOR_TRUE@am__EXEEXT_2 = monitor/btmon$(EXEEXT)
  @TOOLS_TRUE@am__EXEEXT_3 = tools/hciattach$(EXEEXT) \
@@ -9,7 +9,7 @@ diff -Nbur a/Makefile.in b/Makefile.in
  @TOOLS_TRUE@	tools/hciconfig$(EXEEXT) tools/hcitool$(EXEEXT) \
  @TOOLS_TRUE@	tools/hcidump$(EXEEXT) tools/rfcomm$(EXEEXT) \
  @TOOLS_TRUE@	tools/rctest$(EXEEXT) tools/l2test$(EXEEXT) \
-@@ -1309,6 +1310,9 @@
+@@ -1323,6 +1324,9 @@
  @TOOLS_TRUE@	src/oui.$(OBJEXT)
  tools_hcitool_OBJECTS = $(am_tools_hcitool_OBJECTS)
  @TOOLS_TRUE@tools_hcitool_DEPENDENCIES = lib/libbluetooth-internal.la
@@ -19,7 +19,7 @@ diff -Nbur a/Makefile.in b/Makefile.in
  am__tools_hex2hcd_SOURCES_DIST = tools/hex2hcd.c
  @TOOLS_TRUE@am_tools_hex2hcd_OBJECTS = tools/hex2hcd.$(OBJEXT)
  tools_hex2hcd_OBJECTS = $(am_tools_hex2hcd_OBJECTS)
-@@ -1677,6 +1681,7 @@
+@@ -1702,6 +1706,7 @@
  	$(tools_create_image_SOURCES) $(tools_eddystone_SOURCES) \
  	$(tools_gap_tester_SOURCES) $(tools_gatt_service_SOURCES) \
  	$(tools_hci_tester_SOURCES) $(tools_hciattach_SOURCES) \
@@ -27,7 +27,7 @@ diff -Nbur a/Makefile.in b/Makefile.in
  	$(tools_hciconfig_SOURCES) $(tools_hcidump_SOURCES) \
  	tools/hcieventmask.c tools/hcisecfilter.c \
  	$(tools_hcitool_SOURCES) $(tools_hex2hcd_SOURCES) \
-@@ -1758,6 +1763,7 @@
+@@ -1783,6 +1788,7 @@
  	$(am__tools_hci_tester_SOURCES_DIST) \
  	$(am__tools_hciattach_SOURCES_DIST) \
  	$(am__tools_hciconfig_SOURCES_DIST) \
@@ -35,7 +35,7 @@ diff -Nbur a/Makefile.in b/Makefile.in
  	$(am__tools_hcidump_SOURCES_DIST) tools/hcieventmask.c \
  	tools/hcisecfilter.c $(am__tools_hcitool_SOURCES_DIST) \
  	$(am__tools_hex2hcd_SOURCES_DIST) tools/hid2hci.c tools/hwdb.c \
-@@ -2585,6 +2591,7 @@
+@@ -2615,6 +2621,7 @@
  @TOOLS_TRUE@tools_hciconfig_LDADD = lib/libbluetooth-internal.la
  @TOOLS_TRUE@tools_hcitool_SOURCES = tools/hcitool.c src/oui.h src/oui.c
  @TOOLS_TRUE@tools_hcitool_LDADD = lib/libbluetooth-internal.la @UDEV_LIBS@
@@ -43,7 +43,7 @@ diff -Nbur a/Makefile.in b/Makefile.in
  @TOOLS_TRUE@tools_hcidump_SOURCES = tools/hcidump.c \
  @TOOLS_TRUE@				tools/parser/parser.h tools/parser/parser.c \
  @TOOLS_TRUE@				tools/parser/lmp.c \
-@@ -4699,6 +4706,11 @@
+@@ -4749,6 +4756,11 @@
  tools/hcidump$(EXEEXT): $(tools_hcidump_OBJECTS) $(tools_hcidump_DEPENDENCIES) $(EXTRA_tools_hcidump_DEPENDENCIES) tools/$(am__dirstamp)
  	@rm -f tools/hcidump$(EXEEXT)
  	$(AM_V_CCLD)$(LINK) $(tools_hcidump_OBJECTS) $(tools_hcidump_LDADD) $(LIBS)
@@ -55,7 +55,7 @@ diff -Nbur a/Makefile.in b/Makefile.in
  tools/hcieventmask.$(OBJEXT): tools/$(am__dirstamp) \
  	tools/$(DEPDIR)/$(am__dirstamp)
 
-@@ -5486,6 +5498,7 @@
+@@ -5549,6 +5561,7 @@
  @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hciattach_tialt.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hciconfig.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hcidump.Po@am__quote@
@@ -64,8 +64,8 @@ diff -Nbur a/Makefile.in b/Makefile.in
  @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hcisecfilter.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hcitool.Po@am__quote@
 diff -Nbur a/Makefile.tools b/Makefile.tools
---- a/Makefile.tools	2016-09-26 14:29:00.000000000 +0200
-+++ b/Makefile.tools	2016-11-04 12:22:39.155216528 +0100
+--- a/Makefile.tools	2017-01-04 17:01:33.000000000 +0100
++++ b/Makefile.tools	2017-01-04 17:27:59.982558181 +0100
 @@ -157,7 +157,8 @@
  bin_PROGRAMS += tools/hciattach tools/hciconfig tools/hcitool tools/hcidump \
  			tools/rfcomm tools/rctest tools/l2test tools/l2ping \
@@ -88,7 +88,7 @@ diff -Nbur a/Makefile.tools b/Makefile.tools
  tools_mpris_proxy_SOURCES = tools/mpris-proxy.c
 diff -Nbur a/tools/bluetooth_6lowpand.c b/tools/bluetooth_6lowpand.c
 --- a/tools/bluetooth_6lowpand.c	1970-01-01 01:00:00.000000000 +0100
-+++ b/tools/bluetooth_6lowpand.c	2016-11-04 12:22:39.347199967 +0100
++++ b/tools/bluetooth_6lowpand.c	2017-01-04 17:28:00.162582133 +0100
 @@ -0,0 +1,1282 @@
 +/* Copyright (c) 2015, Nordic Semiconductor
 + * All rights reserved.
