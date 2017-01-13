@@ -1,0 +1,25 @@
+From 0d264eb3149d322dc49dc13ac4c45e2e4b5e2d7a Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Wed, 1 Jun 2016 11:32:24 +0200
+Subject: [PATCH 2/3] adding cfg file for arduino PRIMO
+
+---
+ tcl/board/arduino_primo.cfg | 6 ++++++
+ 1 file changed, 6 insertions(+)
+ create mode 100644 tcl/board/arduino_primo.cfg
+
+diff --git a/tcl/board/arduino_primo.cfg b/tcl/board/arduino_primo.cfg
+new file mode 100644
+index 00000000..845bc5f0
+--- /dev/null
++++ b/tcl/board/arduino_primo.cfg
+@@ -0,0 +1,6 @@
++#
++# Arduino Primo board (nRF52832)
++#
++
++source [find interface/cmsis-dap.cfg]
++source [find target/nrf52.cfg]
+-- 
+2.11.0
+
