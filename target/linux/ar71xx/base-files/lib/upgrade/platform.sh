@@ -181,6 +181,13 @@ platform_check_image() {
 	alfa-ap96 | \
 	alfa-nx | \
 	arduino-yun | \
+	linino-yun | \
+	linino-yun-mini | \
+	linino-tian | \
+	linino-lei | \
+	linino-one | \
+	linino-freedog | \
+	linino-chiwawa | \
         anonabox-pro | \
 	ap113 | \
 	ap121 | \
