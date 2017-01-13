@@ -1,0 +1,23 @@
+From 4f61a232696963504819dc4297532f3c3905a8e1 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Wed, 1 Jun 2016 11:31:41 +0200
+Subject: [PATCH 3/3] updating gitignore file
+
+---
+ .gitignore | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/.gitignore b/.gitignore
+index f1021b26..b565d02b 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -99,3 +99,6 @@ TAGS
+ 
+ # ctags tag files
+ tags
++
++# OSX files
++.DS_Store
+-- 
+2.11.0
+
