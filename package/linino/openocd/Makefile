@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openocd
 PKG_VERSION:=0.9.0
-PKG_RELEASE:=3
+PKG_RELEASE:=4
 
 PKG_SOURCE_URL:=@SF/openocd
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
