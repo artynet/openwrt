@@ -8,16 +8,16 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=openocd-dev
-PKG_VERSION:=0.10.x
+PKG_VERSION:=0.10.0
 PKG_RELEASE:=2
 
 PKG_SOURCE_PROTO:=git
 
-PKG_REVISION:=c404ff5d3a2ec568daa106455845dd403b08dab4
+PKG_REVISION:=646566e006acd58fb9ac405511d3ecca79f26d55
 
 PKG_SOURCE_VERSION=$(PKG_REVISION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=https://github.com/arduino-org/openocd-official-mirror.git
+PKG_SOURCE_URL:=http://repo.or.cz/openocd.git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REVISION).tar.gz
 
 PKG_LICENSE:=GPL-2.0
