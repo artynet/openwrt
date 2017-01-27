@@ -8,7 +8,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cmake-37
-PKG_VERSION:=3.7.0
+PKG_VERSION:=3.7.1
 PKG_RELEASE:=2
 
 PKG_SOURCE_SUBDIR:=cmake-$(PKG_VERSION)
