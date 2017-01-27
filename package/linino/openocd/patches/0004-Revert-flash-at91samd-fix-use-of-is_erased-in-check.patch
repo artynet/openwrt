@@ -1,0 +1,26 @@
+From d4b767947e867989e461a45626c17108dcb73f61 Mon Sep 17 00:00:00 2001
+From: Cristian Maglie <c.maglie@bug.st>
+Date: Mon, 16 Mar 2015 22:56:05 +0100
+Subject: [PATCH 4/9] Revert "flash: at91samd: fix use of is_erased in check"
+
+This reverts commit 08607aefc0da2394bcce067989812081f742f5e2.
+---
+ src/flash/nor/at91samd.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/flash/nor/at91samd.c b/src/flash/nor/at91samd.c
+index ddca1375..f26096c0 100644
+--- a/src/flash/nor/at91samd.c
++++ b/src/flash/nor/at91samd.c
+@@ -606,7 +606,7 @@ static int samd_erase(struct flash_bank *bank, int first, int last)
+ 			return ERROR_FLASH_OPERATION_FAILED;
+ 		}
+ 
+-		if (bank->sectors[s].is_erased != 1) {
++		if (!bank->sectors[s].is_erased) {
+ 			/* For each row in that sector */
+ 			for (int r = s * rows_in_sector; r < (s + 1) * rows_in_sector; r++) {
+ 				res = samd_erase_row(bank->target, r * chip->page_size * 4);
+-- 
+2.11.0
+
