@@ -1,0 +1,49 @@
+From 688b0b6cc2968fff1823cd47d245354af28dcaef Mon Sep 17 00:00:00 2001
+From: Martino Facchin <m.facchin@arduino.cc>
+Date: Thu, 12 Jan 2017 15:52:12 +0100
+Subject: [PATCH 9/9] Add "at91samd restore" command
+
+Applies safe fuse values to bricked SAMD21
+---
+ src/flash/nor/at91samd.c | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/src/flash/nor/at91samd.c b/src/flash/nor/at91samd.c
+index 0f72698b..797434de 100644
+--- a/src/flash/nor/at91samd.c
++++ b/src/flash/nor/at91samd.c
+@@ -940,6 +940,18 @@ COMMAND_HANDLER(samd_handle_eeprom_command)
+ 	return res;
+ }
+ 
++COMMAND_HANDLER(samd_handle_restore_safe_command)
++{
++	uint32_t user_row_0_dfl = 0xD9FEC7FF;
++	uint32_t user_row_1_dfl = 0xFFFFFE5D;
++	int res = ERROR_OK;
++
++	struct target *target = get_current_target(CMD_CTX);
++	res = samd_modify_user_row(target, user_row_0_dfl, 0, 31);
++	res |= samd_modify_user_row(target, user_row_1_dfl, 32, 63);
++	return res;
++}
++
+ COMMAND_HANDLER(samd_handle_bootloader_command)
+ {
+ 	int res = ERROR_OK;
+@@ -1047,6 +1059,12 @@ static const struct command_registration at91samd_exec_command_handlers[] = {
+ 			"Changes are stored immediately but take affect after the MCU is"
+ 			"reset.",
+ 	},
++	{
++		.name = "restore",
++		.handler = samd_handle_restore_safe_command,
++		.mode = COMMAND_EXEC,
++		.help = "Restores safe USER ROW (FUSES) values",
++	},
+ 	COMMAND_REGISTRATION_DONE
+ };
+ 
+-- 
+2.11.0
+
