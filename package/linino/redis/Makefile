@@ -39,6 +39,8 @@ endef
 define Build/Compile
 	sed -e 's#^\(REAL_CFLAGS.* \)$$$$(ARCH)#\1#g' -i $(PKG_BUILD_DIR)/deps/hiredis/Makefile
 	# sed -e 's#^\([[:space:]]*$$$$(AR)\)#\1 rcu#g' -i $(PKG_BUILD_DIR)/deps/lua/src/Makefile
+	# sed -i '/enable-cc-silence/ s|$$$$| --host=$(REAL_GNU_TARGET_NAME) --target=$(REAL_GNU_TARGET_NAME)|' \
+		$(PKG_BUILD_DIR)/deps/Makefile
 	$(call Build/Compile/Default,-C $(PKG_BUILD_DIR)/deps hiredis lua linenoise PLAT=linux)
 	$(call Build/Compile/Default)
 endef
