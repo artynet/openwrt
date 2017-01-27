@@ -8,18 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=packet-forwarder
-PKG_VERSION:=2.1.0
+PKG_VERSION:=2.2.1
 PKG_RELEASE:=6
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/Lora-net/packet_forwarder.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=3e2bfb67c09fe9190ffb2334cfe87bc986cf5218
+PKG_SOURCE_VERSION:=v2.2.1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_BUILD_DEPENS:=+lora-gateway
+
+LORA_VERSION:=3.1.0
 
 # PKG_INSTALL:=1
 
@@ -52,32 +54,32 @@ define Build/Compile
 	$(MAKE) CROSS_COMPILE=$(REAL_GNU_TARGET_NAME)- \
 		LIBS="-lloragw -lrt -lpthread -lm -lmpsse" \
 		CFLAGS+="-I$(PKG_BUILD_DIR)/basic_pkt_fwd/inc" \
-		LGW_PATH=$(BUILD_DIR)/lora-gateway-3.1.0/libloragw -C $(PKG_BUILD_DIR)/basic_pkt_fwd
+		LGW_PATH=$(BUILD_DIR)/lora-gateway-$(LORA_VERSION)/libloragw -C $(PKG_BUILD_DIR)/basic_pkt_fwd
 	#
 	$(MAKE) CROSS_COMPILE=$(REAL_GNU_TARGET_NAME)- \
 		LIBS="-lloragw -lrt -lpthread -lm -lmpsse" \
 		CFLAGS+="-I$(PKG_BUILD_DIR)/beacon_pkt_fwd/inc" \
-		LGW_PATH=$(BUILD_DIR)/lora-gateway-3.1.0/libloragw -C $(PKG_BUILD_DIR)/beacon_pkt_fwd
+		LGW_PATH=$(BUILD_DIR)/lora-gateway-$(LORA_VERSION)/libloragw -C $(PKG_BUILD_DIR)/beacon_pkt_fwd
 	#
 	$(MAKE) CROSS_COMPILE=$(REAL_GNU_TARGET_NAME)- \
 		LIBS="-lloragw -lrt -lpthread -lm -lmpsse" \
 		CFLAGS+="-I$(PKG_BUILD_DIR)/gps_pkt_fwd/inc" \
-		LGW_PATH=$(BUILD_DIR)/lora-gateway-3.1.0/libloragw -C $(PKG_BUILD_DIR)/gps_pkt_fwd
+		LGW_PATH=$(BUILD_DIR)/lora-gateway-$(LORA_VERSION)/libloragw -C $(PKG_BUILD_DIR)/gps_pkt_fwd
 	#
 	$(MAKE) CROSS_COMPILE=$(REAL_GNU_TARGET_NAME)- \
 		LIBS="-lloragw -lrt -lpthread -lm -lmpsse" \
 		CFLAGS+="-I$(PKG_BUILD_DIR)/util_ack/inc" \
-		LGW_PATH=$(BUILD_DIR)/lora-gateway-3.1.0/libloragw -C $(PKG_BUILD_DIR)/util_ack
+		LGW_PATH=$(BUILD_DIR)/lora-gateway-$(LORA_VERSION)/libloragw -C $(PKG_BUILD_DIR)/util_ack
 	#
 	$(MAKE) CROSS_COMPILE=$(REAL_GNU_TARGET_NAME)- \
 		LIBS="-lloragw -lrt -lpthread -lm -lmpsse" \
 		CFLAGS+="-I$(PKG_BUILD_DIR)/util_sink/inc" \
-		LGW_PATH=$(BUILD_DIR)/lora-gateway-3.1.0/libloragw -C $(PKG_BUILD_DIR)/util_sink
+		LGW_PATH=$(BUILD_DIR)/lora-gateway-$(LORA_VERSION)/libloragw -C $(PKG_BUILD_DIR)/util_sink
 	#
 	$(MAKE) CROSS_COMPILE=$(REAL_GNU_TARGET_NAME)- \
 		LIBS="-lloragw -lrt -lpthread -lm -lmpsse" \
 		CFLAGS+="-I$(PKG_BUILD_DIR)/util_tx_test/inc" \
-		LGW_PATH=$(BUILD_DIR)/lora-gateway-3.1.0/libloragw -C $(PKG_BUILD_DIR)/util_tx_test
+		LGW_PATH=$(BUILD_DIR)/lora-gateway-$(LORA_VERSION)/libloragw -C $(PKG_BUILD_DIR)/util_tx_test
 endef
 
 define Package/packet-forwarder/install
