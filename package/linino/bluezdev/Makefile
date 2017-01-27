@@ -13,7 +13,7 @@ PKG_RELEASE:=7
 
 PKG_SOURCE_PROTO:=git
 
-PKG_REVISION:=7c35bf902ba4e391530468fb84272a076e5419d5
+PKG_REVISION:=848423c1146f3dba71f9d961db0b2ba6199e91a6
 PKG_SOURCE_VERSION=$(PKG_REVISION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=http://git.kernel.org/pub/scm/bluetooth/bluez.git
@@ -80,7 +80,7 @@ $(call Package/bluezdev/Default)
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= utilities
-  DEPENDS:=+bluezdev-libs +libpthread +librt +glib2 +libncurses +libreadline $(INTL_DEPENDS) $(ICONV_DEPENDS)
+  DEPENDS:=+bluezdev-libs +libpthread +librt +glib2 +libncurses +libreadline $(INTL_DEPENDS) $(ICONV_DEPENDS) +libdbus
 endef
 
 define Package/bluezdev-daemon
@@ -122,6 +122,7 @@ CONFIGURE_ARGS += \
 	--disable-systemd \
 	--disable-test \
 	--disable-udev \
+	--enable-deprecated
 
 TARGET_CPPFLAGS += \
 	-D_GNU_SOURCE
@@ -149,6 +150,7 @@ define Package/bluezdev-utils/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/bccmd $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/bluemoon $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/btattach $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/btmon $(1)/usr/bin/
 	$(CP) $(PKG_BUILD_DIR)/tools/btmgmt $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/ciptool $(1)/usr/bin/
@@ -159,6 +161,7 @@ define Package/bluezdev-utils/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/hex2hcd $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/l2ping $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/l2test $(1)/usr/bin/
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/mpris-proxy $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/rctest $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/rfcomm $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/sdptool $(1)/usr/bin/
