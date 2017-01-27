@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node7
-PKG_VERSION:=v7.3.0
+PKG_VERSION:=v7.4.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
-PKG_MD5SUM:=f7e8924c13c74576f6c0688bcf1bbfde
+# PKG_MD5SUM:=f7e8924c13c74576f6c0688bcf1bbfde
 
 PKG_BUILD_DEPENDS:=python/host +node7/host
 PKG_INSTALL:=1
