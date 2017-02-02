@@ -37,7 +37,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/node7
   SECTION:=lang
   CATEGORY:=Languages
-  SUBMENU:=Node.js
+  SUBMENU:=Node.js-v7
   TITLE:=Node.js is a platform built on Chrome's JavaScript runtime
   URL:=http://nodejs.org/
   DEPENDS:=+libstdcpp +libopenssl +zlib +USE_UCLIBC:libpthread +USE_UCLIBC:librt +NODEJS_ICU:icu
