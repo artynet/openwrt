@@ -13,7 +13,7 @@ PKG_RELEASE:=7
 
 PKG_SOURCE_PROTO:=git
 
-PKG_REVISION:=848423c1146f3dba71f9d961db0b2ba6199e91a6
+PKG_REVISION:=028a319166ea0e006f370d254b0e89436fa48010
 PKG_SOURCE_VERSION=$(PKG_REVISION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=http://git.kernel.org/pub/scm/bluetooth/bluez.git
@@ -126,15 +126,6 @@ CONFIGURE_ARGS += \
 
 TARGET_CPPFLAGS += \
 	-D_GNU_SOURCE
-
-# define Build/InstallDev
-# 	$(INSTALL_DIR) $(1)/usr/include
-# 	$(CP) $(PKG_INSTALL_DIR)/usr/include/bluetooth $(1)/usr/include/
-# 	$(INSTALL_DIR) $(1)/usr/lib
-# 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libbluetooth.{a,so*} $(1)/usr/lib/
-# 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
-# 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/pkgconfig/bluezdev.pc $(1)/usr/lib/pkgconfig/
-# endef
 
 define Package/bluezdev-examples/install
 	$(INSTALL_DIR) $(1)/usr/bin/bluezdev
