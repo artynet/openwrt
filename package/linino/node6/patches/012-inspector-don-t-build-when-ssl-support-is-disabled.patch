@@ -12,7 +12,7 @@ diff --git a/node.gyp b/node.gyp
 index 8a8bd00..fdccd60 100644
 --- a/node.gyp
 +++ b/node.gyp
-@@ -302,7 +302,7 @@
+@@ -307,7 +307,7 @@
              'deps/v8/src/third_party/vtune/v8vtune.gyp:v8_vtune'
            ],
          }],
@@ -21,15 +21,14 @@ index 8a8bd00..fdccd60 100644
            'defines': [
              'HAVE_INSPECTOR=1',
              'V8_INSPECTOR_USE_STL=1',
-@@ -828,7 +828,7 @@
+@@ -884,7 +884,7 @@
        ],
- 
+
        'conditions': [
 -        ['v8_inspector=="true"', {
 +        ['v8_inspector=="true" and node_use_openssl =="true"', {
            'sources': [
              'src/inspector_socket.cc',
              'test/cctest/test_inspector_socket.cc'
--- 
+--
 2.7.4
-
