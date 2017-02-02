@@ -31,7 +31,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/node4
   SECTION:=lang
   CATEGORY:=Languages
-  SUBMENU:=Node.js
+  SUBMENU:=Node.js-v4
   TITLE:=Node.js is a platform built on Chrome's JavaScript runtime
   URL:=http://nodejs.org/
   DEPENDS:=+libpthread +librt +libstdcpp +libopenssl +libuv
