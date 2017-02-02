@@ -1,6 +1,6 @@
 --- a/deps/v8/src/log-utils.h	2015-10-29 13:22:04.000000000 +0100
 +++ b/deps/v8/src/log-utils.h	2015-11-14 19:03:17.770283994 +0100
-@@ -12,6 +12,8 @@
+@@ -8,6 +8,8 @@
  #include "src/allocation.h"
  #include "src/base/platform/mutex.h"
  #include "src/flags.h"
