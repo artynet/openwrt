@@ -1,0 +1,24 @@
+From b65d23e2f480f31762acb5866cef4461447076de Mon Sep 17 00:00:00 2001
+From: Martino Facchin <m.facchin@arduino.cc>
+Date: Thu, 24 Mar 2016 11:14:10 +0100
+Subject: [PATCH 02/10] change dfu timeout to 1 second
+
+---
+ src/dfu.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/dfu-util-0.9/src/dfu.c b/dfu-util-0.9/src/dfu.c
+index 14d7673..4d2f743 100644
+--- a/src/dfu.c
++++ b/src/dfu.c
+@@ -30,7 +30,7 @@
+ #include "dfu.h"
+ #include "quirks.h"
+
+-static int dfu_timeout = 5000;  /* 5 seconds - default */
++static int dfu_timeout = 1000;  /* 1 second - default */
+
+ /*
+  *  DFU_DETACH Request (DFU Spec 1.0, Section 5.1)
+--
+2.11.0
