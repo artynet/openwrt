@@ -1,0 +1,102 @@
+From c0564442aa0c65fb30b9e7b507c3353e73e6f31f Mon Sep 17 00:00:00 2001
+From: Martino Facchin <m.facchin@arduino.cc>
+Date: Mon, 22 Aug 2016 15:05:18 +0200
+Subject: [PATCH 06/10] Add -K switch for upload offset
+
+---
+ src/dfu_load.c |   9 +++++++--
+ src/dfu_load.h |   2 +-
+ src/main.c     |   8 ++++++--
+ distrib/linux64/dfu-util    | Bin 460088 -> 477424 bytes
+ 4 files changed, 14 insertions(+), 5 deletions(-)
+
+diff --git a/src/dfu_load.c b/src/dfu_load.c
+index 64f7009..32855c4 100644
+--- a/src/dfu_load.c
++++ b/src/dfu_load.c
+@@ -41,7 +41,7 @@
+ #include "quirks.h"
+
+ int dfuload_do_upload(struct dfu_if *dif, int xfer_size,
+-    int expected_size, int fd)
++    int expected_size, int start_position, int fd)
+ {
+ 	int total_bytes = 0;
+ 	unsigned short transaction = 0;
+@@ -55,6 +55,11 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size,
+
+ 	while (1) {
+ 		int rc;
++
++		if (start_position > 0) {
++			transaction = start_position/xfer_size;
++		}
++
+ 		rc = dfu_upload(dif->dev_handle, dif->interface,
+ 		    xfer_size, transaction++, buf);
+ 		if (rc < 0) {
+@@ -69,7 +74,7 @@ int dfuload_do_upload(struct dfu_if *dif, int xfer_size,
+ 		if (total_bytes < 0)
+ 			errx(EX_SOFTWARE, "Received too many bytes (wraparound)");
+
+-		if (rc < xfer_size) {
++		if (rc < xfer_size || start_position > 0) {
+ 			/* last block, return */
+ 			ret = total_bytes;
+ 			break;
+diff --git a/src/dfu_load.h b/src/dfu_load.h
+index be23e9b..8c8f48e 100644
+--- a/src/dfu_load.h
++++ b/src/dfu_load.h
+@@ -1,7 +1,7 @@
+ #ifndef DFU_LOAD_H
+ #define DFU_LOAD_H
+
+-int dfuload_do_upload(struct dfu_if *dif, int xfer_size, int expected_size, int fd);
++int dfuload_do_upload(struct dfu_if *dif, int xfer_size, int expected_size, int start_position, int fd);
+ int dfuload_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file);
+
+ #endif /* DFU_LOAD_H */
+diff --git a/src/main.c b/src/main.c
+index 3f57e25..071b76d 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -226,6 +226,7 @@ static struct option opts[] = {
+ int main(int argc, char **argv)
+ {
+ 	int expected_size = 0;
++	int start_position = 0;
+ 	unsigned int transfer_size = 0;
+ 	enum mode mode = MODE_NONE;
+ 	struct dfu_status status;
+@@ -248,7 +249,7 @@ int main(int argc, char **argv)
+
+ 	while (1) {
+ 		int c, option_index = 0;
+-		c = getopt_long(argc, argv, "hVvleE:d:p:c:i:a:S:t:U:D:Rs:Z:", opts,
++		c = getopt_long(argc, argv, "hVvleE:d:p:c:i:a:S:t:U:D:Rs:Z:K:", opts,
+ 				&option_index);
+ 		if (c == -1)
+ 			break;
+@@ -307,6 +308,9 @@ int main(int argc, char **argv)
+ 		case 'Z':
+ 			expected_size = parse_number("upload-size", optarg);
+ 			break;
++		case 'K':
++			start_position = parse_number("start-position", optarg);
++			break;
+ 		case 'D':
+ 			mode = MODE_DOWNLOAD;
+ 			file.name = optarg;
+@@ -623,7 +627,7 @@ status_again:
+ 			exit(1);
+ 		} else {
+ 		    if (dfuload_do_upload(dfu_root, transfer_size,
+-			expected_size, fd) < 0) {
++			expected_size, start_position, fd) < 0) {
+ 			exit(1);
+ 		    }
+ 		}
+
+--
+2.11.0

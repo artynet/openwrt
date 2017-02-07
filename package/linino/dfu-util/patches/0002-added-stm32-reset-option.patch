@@ -1,0 +1,106 @@
+From f4083625dc66ff3e0a720fcd021ea7c7578f7ec6 Mon Sep 17 00:00:00 2001
+From: Dave Camarillo <dave.camarillo@gmail.com>
+Date: Wed, 22 Oct 2014 17:08:32 -0700
+Subject: [PATCH 1/4] added stm32 reset option
+
+---
+ src/dfu_util.h |  3 ++-
+ src/dfuse.h    |  3 +++
+ src/main.c     | 35 +++++++++++++++++++++++++++++++++++
+ 3 files changed, 40 insertions(+), 1 deletion(-)
+
+diff --git a/src/dfu_util.h b/src/dfu_util.h
+index c4e0375..d636393 100644
+--- a/src/dfu_util.h
++++ b/src/dfu_util.h
+@@ -11,7 +11,8 @@ enum mode {
+ 	MODE_LIST,
+ 	MODE_DETACH,
+ 	MODE_UPLOAD,
+-	MODE_DOWNLOAD
++	MODE_DOWNLOAD,
++	MODE_RESET_STM32
+ };
+
+ extern struct dfu_if *dfu_root;
+diff --git a/src/dfuse.h b/src/dfuse.h
+index ed1108c..ac094c0 100644
+--- a/src/dfuse.h
++++ b/src/dfuse.h
+@@ -32,4 +32,7 @@ int dfuse_do_upload(struct dfu_if *dif, int xfer_size, int fd,
+ int dfuse_do_dnload(struct dfu_if *dif, int xfer_size, struct dfu_file *file,
+ 		    const char *dfuse_options);
+
++int dfuse_download(struct dfu_if *dif, const unsigned short length,
++		   unsigned char *data, unsigned short transaction);
++
+ #endif /* DFUSE_H */
+diff --git a/src/main.c b/src/main.c
+index 06ca189..a473a61 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -182,6 +182,7 @@ static void help(void)
+ 		"  -Z --upload-size <bytes>\tSpecify the expected upload size in bytes\n"
+ 		"  -D --download <file>\t\tWrite firmware from <file> into device\n"
+ 		"  -R --reset\t\t\tIssue USB Reset signalling once we're finished\n"
++		"  -r --reset-stm32\t\tFollow STM32 DFU reset procedures to start firmware\n"
+ 		"  -s --dfuse-address <address>\tST DfuSe mode, specify target address for\n"
+ 		"\t\t\t\traw file download or upload. Not applicable for\n"
+ 		"\t\t\t\tDfuSe file (.dfu) downloads\n"
+@@ -220,6 +221,7 @@ static struct option opts[] = {
+ 	{ "download", 1, 0, 'D' },
+ 	{ "reset", 0, 0, 'R' },
+ 	{ "dfuse-address", 1, 0, 's' },
++	{ "reset-stm32", 0, 0, 'r' },
+ 	{ 0, 0, 0, 0 }
+ };
+
+@@ -318,6 +320,9 @@ int main(int argc, char **argv)
+ 		case 'R':
+ 			final_reset = 1;
+ 			break;
++		case 'r':
++			mode = MODE_RESET_STM32;
++			break;
+ 		case 's':
+ 			dfuse_options z= optarg;
+ 			break;
+@@ -659,6 +664,36 @@ status_again:
+ 			warnx("can't detach");
+ 		}
+ 		break;
++	case MODE_RESET_STM32:
++		//ST Application Note 3156 Documents how to reset an STM32 out of DFU mode and into firmware mode
++		//Basicly, send the target vector reset address, then a zero-length download command, then by a get status command.
++
++		printf("Resetting STM32, starting firmware at address 0x08000000...\n");
++		int set_ret = dfuse_special_command(dfu_root, 0x08000000, SET_ADDRESS);
++		if( set_ret < 0 ) {
++			printf("Error: Unable to set start address for reseting\n");
++			exit(1);
++		}
++
++		int dret = dfuse_download(dfu_root, 0, NULL, 2);
++
++		if( dret < 0 ) {
++			printf("Error: Unable to initiate zero-length download\n");
++			exit(1);
++		}
++		struct dfu_status dest_status;
++		int rr = dfu_get_status( dfu_root, &dest_status );
++		if( rr < 0 ) {
++			printf("Error: Unable to get status: %d\n", rr);
++			exit(1);
++		}
++
++		if( dest_status.bState != STATE_DFU_MANIFEST) {
++			printf("Error: Expected STM32 to be in dfuMANIFEST state after get-status command!\n");
++		} else {
++			printf("Successfully reset STM32\n");
++		}
++		break;
+ 	default:
+ 		errx(EX_IOERR, "Unsupported mode: %u", mode);
+ 		break;
+--
+2.11.0
