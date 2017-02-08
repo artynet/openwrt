@@ -1,0 +1,36 @@
+diff --git a/arch/mips/ath79/mach-linino-lei.c b/arch/mips/ath79/mach-linino-lei.c
+index a1c5b46..882bde6 100644
+--- a/arch/mips/ath79/mach-linino-lei.c
++++ b/arch/mips/ath79/mach-linino-lei.c
+@@ -30,7 +30,6 @@
+ #include "dev-usb.h"
+ #include "dev-wmac.h"
+ #include "machtypes.h"
+-#include "gpio.h"
+ #include "linux/gpio.h"
+ #include <linux/spi/spi_gpio.h>
+ 
+diff --git a/arch/mips/ath79/mach-linino-tian.c b/arch/mips/ath79/mach-linino-tian.c
+index f6a637b..e9f4c70 100644
+--- a/arch/mips/ath79/mach-linino-tian.c
++++ b/arch/mips/ath79/mach-linino-tian.c
+@@ -30,7 +30,6 @@
+ #include "dev-usb.h"
+ #include "dev-wmac.h"
+ #include "machtypes.h"
+-#include "gpio.h"
+ #include "linux/gpio.h"
+ #include <linux/spi/spi_gpio.h>
+ 
+diff --git a/arch/mips/ath79/mach-linino.c b/arch/mips/ath79/mach-linino.c
+index ce9c7d7..b11daa0 100644
+--- a/arch/mips/ath79/mach-linino.c
++++ b/arch/mips/ath79/mach-linino.c
+@@ -20,7 +20,6 @@
+ #include <asm/mach-ath79/ath79.h>
+ #include <asm/mach-ath79/mach-linino.h>
+ #include "common.h"
+-#include "gpio.h"
+ #include "linux/gpio.h"
+ #include <linux/platform_device.h>
+ #include <linux/spi/spi_gpio.h>
