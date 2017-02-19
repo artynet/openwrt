@@ -8,18 +8,18 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libArcus
-PKG_VERSION:=16.06.22
+PKG_VERSION:=2.3.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/Ultimaker/libArcus.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=c33e01da61d412bf9d3f025bc5e1701b8cb1d6d5
+PKG_SOURCE_VERSION:=2.3.1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 
 PKG_INSTALL:=1
 
-PKG_BUILD_DEPENDS:=python3/host +libprotobuf
+PKG_BUILD_DEPENDS:=python3/host libprotobuf
 PKG_USE_MIPS16:=0 # MIPS16 prevents protobuf's usage of the 'sync' asm-opcode
 
 include $(INCLUDE_DIR)/package.mk
