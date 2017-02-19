@@ -8,14 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=protobuf
-PKG_VERSION:=16.06.22
+PKG_VERSION:=3.1.0
 PKG_RELEASE:=1
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/Ultimaker/protobuf.git
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=78eaa23e454300ed4ddef7648cdab540c8428b1d
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-cpp-$(PKG_VERSION).tar.gz
+PKG_SOURCE_URL:=https://github.com/google/protobuf/releases/download/v$(PKG_VERSION)
+PKG_MD5SUM:=bd5e3eed635a8d32e2b99658633815ef
 
 PKG_LICENSE:=BSD-3-Clause
 PKG_LICENSE_FILES:=LICENSE
@@ -58,17 +56,7 @@ define Package/libprotobuf/description
  of its internal RPC protocols and file formats.
 endef
 
-CONFIGURE_ARGS += --with-protoc=$(STAGING_DIR)/host/bin/protoc
-
-define Host/Prepare
-	$(Host/Prepare/Default)
-	(cd $(HOST_BUILD_DIR) && ./autogen.sh)
-endef
-
-define Build/Prepare
-	$(Build/Prepare/Default)
-	(cd $(PKG_BUILD_DIR) && ./autogen.sh)
-endef
+CONFIGURE_ARGS += --with-protoc=$(STAGING_DIR_HOSTPKG)/bin/protoc
 
 define Build/InstallDev
 	$(INSTALL_DIR) \
