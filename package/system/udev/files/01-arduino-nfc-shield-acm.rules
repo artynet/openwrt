@@ -1,1 +1,0 @@
-KERNEL=="ttyACM[0-9]*",  SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", SYMLINK+="ttyNFC"
