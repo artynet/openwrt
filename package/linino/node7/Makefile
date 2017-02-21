@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node7
-PKG_VERSION:=v7.4.0
+PKG_VERSION:=v7.5.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
-# PKG_MD5SUM:=f7e8924c13c74576f6c0688bcf1bbfde
+PKG_MD5SUM:=83e4b9a291a18a7ca1be29aadcabd561
 
-PKG_BUILD_DEPENDS:=python/host +node7/host
+PKG_BUILD_DEPENDS:=python/host node7/host
 PKG_INSTALL:=1
 PKG_USE_MIPS16:=0
 
@@ -104,14 +104,14 @@ HOST_CONFIGURE_ARGS:= \
 
 HOST_CONFIGURE_CMD:=python ./configure
 
-define Host/Install
- 	# NOOP
-endef
-
 define Build/Prepare
         $(Build/Prepare/Default)
 		# using sed
-		sed "s#<(mkpeephole_exec)#$(MKTOOL)#g" -i $(FILE_V8_GYP)
+		$(SED) "s#<(mkpeephole_exec)#$(MKTOOL)#g" -i $(FILE_V8_GYP)
+endef
+
+define Host/Install
+ 	# NOOP
 endef
 
 define Package/node7/install
