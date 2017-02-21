@@ -9,7 +9,7 @@
      logstream: process.stderr,
      long: false,
      maxsockets: 50,
-@@ -199,7 +199,7 @@
+@@ -201,7 +201,7 @@
      shell: osenv.shell(),
      shrinkwrap: true,
      'sign-git-tag': false,
