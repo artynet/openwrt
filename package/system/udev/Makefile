@@ -135,7 +135,7 @@ define Package/udev/install
 			60-persistent-storage.rules \
 			80-drivers.rules \
 			95-udev-late.rules) \
-			./files/01-arduino-nfc-shield-acm.rules \
+			./files/81-arduino-nfc-shield-acm.rules \
 			./files/11-media-by-label-auto-mount-alt.rules \
 			./files/10-samd.rules \
 		$(1)/lib/udev/rules.d
