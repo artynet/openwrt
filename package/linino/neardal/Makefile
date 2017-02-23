@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=neardal
 PKG_VERSION:=0.14
-PKG_RELEASE:=9
+PKG_RELEASE:=12
 
 PKG_FIXUP:=libtool autoreconf
 PKG_SOURCE_PROTO:=git
@@ -54,10 +54,12 @@ TARGET_LDFLAGS += -lncurses -lreadline
 
 CONFIGURE_ARGS += \
 	--disable-dependency-tracking \
+	--sysconfdir=/etc \
 	--prefix=/usr \
 	--enable-debug \
 	--enable-trace \
-	--disable-c99
+	--disable-c99 \
+	--disable-pedantic
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/neardal
@@ -79,7 +81,7 @@ define Package/neardal/install
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ncl $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/demo/.libs/demo $(1)/usr/bin/ncl-demo
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/lib/ncldemo $(1)/usr/bin/
 endef
 
 $(eval $(call BuildPackage,neardal))
