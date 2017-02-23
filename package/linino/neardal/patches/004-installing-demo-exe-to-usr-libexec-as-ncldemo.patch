@@ -1,0 +1,28 @@
+From 3d6038ee9b4fe514b9bfcd79e1d090cfc9e691c9 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Thu, 16 Feb 2017 17:38:57 +0100
+Subject: [PATCH 1/3] installing demo exe to /usr/libexec as ncldemo
+
+---
+ demo/Makefile.am | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/demo/Makefile.am b/demo/Makefile.am
+index 1497fed..1f63b84 100644
+--- a/demo/Makefile.am
++++ b/demo/Makefile.am
+@@ -1,8 +1,8 @@
+ AM_CPPFLAGS = @gio_CFLAGS@ -I$(top_builddir)/lib -I$(top_srcdir)/lib
+ 
+-noinst_PROGRAMS=demo
++libexec_PROGRAMS=ncldemo
+ 
+-demo_SOURCES = \
++ncldemo_SOURCES = \
+ 	$(srcdir)/demo.c
+ 
+-demo_LDADD = @gio_LIBS@ -L$(top_builddir)/lib -lneardal -lpthread
++ncldemo_LDADD = @gio_LIBS@ -L$(top_builddir)/lib -lneardal -lpthread
+-- 
+2.11.0
+

@@ -1,0 +1,26 @@
+From f306b2b6ead0339f8b91eb4a65b675d82dcd5f4c Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Wed, 22 Feb 2017 13:30:01 +0100
+Subject: [PATCH 2/3] removing neardal_destroy() patch since you just need to
+ set the sysconfir to /etc
+
+---
+ demo/demo.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/demo/demo.c b/demo/demo.c
+index fcc5e95..40a0267 100644
+--- a/demo/demo.c
++++ b/demo/demo.c
+@@ -309,7 +309,7 @@ static gboolean wait_lost (gpointer data)
+ 			return TRUE;
+ 		}
+ 		//shikha patch to call neardal_destroy
+-		neardal_destroy();
++		// neardal_destroy();
+ 		g_main_loop_quit( (GMainLoop*)data );
+ 		return FALSE;
+ 	}
+-- 
+2.11.0
+
