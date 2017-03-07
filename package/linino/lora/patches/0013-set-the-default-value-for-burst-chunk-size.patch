@@ -1,7 +1,7 @@
-From a158cafecf77a869720377629db5fc8f0d64ce56 Mon Sep 17 00:00:00 2001
+From 6547206e7f04673ca3cdb651475ffa2e3b961e78 Mon Sep 17 00:00:00 2001
 From: mimmoLinino <mimmo@linino.org>
 Date: Fri, 3 Feb 2017 11:40:21 +0100
-Subject: [PATCH] set the default value for burst chunk size
+Subject: [PATCH 13/19] set the default value for burst chunk size
 
 ---
  libloragw/inc/loragw_spi.h | 2 +-
