@@ -16,3 +16,4 @@ src-git targets https://github.com/openwrt/targets.git
 #src-svn lxde svn://svn.openwrt.org/openwrt/feeds/lxde
 #src-link custom /usr/src/openwrt/custom-feed
 src-git other https://github.com/artynet/openwrt-old-feeds.git;master
+src-git alljoyn https://git.allseenalliance.org/gerrit/core/openwrt_feed.git;16.04-stable
