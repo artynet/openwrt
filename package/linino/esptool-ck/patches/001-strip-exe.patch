@@ -1,0 +1,13 @@
+diff --git a/Makefile b/Makefile
+index 336a8e3..bd417b1 100644
+--- a/Makefile
++++ b/Makefile
+@@ -77,7 +77,7 @@ dist: $(TARGET) $(DIST_DIR)
+ 
+ $(TARGET): $(OBJECTS)
+ 	$(CC) $^ -o $@ $(LDFLAGS)
+-	strip $(TARGET)
++	$(STRIP) $(TARGET)
+ 
+ $(BUILD_DIR):
+ 	@mkdir -p $@
