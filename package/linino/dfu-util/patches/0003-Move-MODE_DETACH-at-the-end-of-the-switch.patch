@@ -1,0 +1,40 @@
+From 8c2bdb4aabeed20803f286d16f670fcdb25d4ec0 Mon Sep 17 00:00:00 2001
+From: Martino Facchin <m.facchin@arduino.cc>
+Date: Thu, 16 Feb 2017 16:17:51 +0100
+Subject: [PATCH 1/3] Move MODE_DETACH at the end of the switch
+
+This is needed to permit fallthrough on DOWNLOAD+RESET mode
+---
+ dfu-util-0.9/src/main.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/dfu-util-0.9/src/main.c b/dfu-util-0.9/src/main.c
+index fcbff7f..a814c7d 100644
+--- a/src/main.c
++++ b/src/main.c
+@@ -659,11 +659,6 @@ status_again:
+ 				exit(1);
+ 	 	}
+ 		break;
+-	case MODE_DETACH:
+-		if (dfu_detach(dfu_root->dev_handle, dfu_root->interface, 1000) < 0) {
+-			warnx("can't detach");
+-		}
+-		break;
+ 	case MODE_RESET_STM32:
+ 		//ST Application Note 3156 Documents how to reset an STM32 out of DFU mode and into firmware mode
+ 		//Basicly, send the target vector reset address, then a zero-length download command, then by a get status command.
+@@ -694,6 +689,11 @@ status_again:
+ 			printf("Successfully reset STM32\n");
+ 		}
+ 		break;
++	case MODE_DETACH:
++		if (dfu_detach(dfu_root->dev_handle, dfu_root->interface, 1000) < 0) {
++			warnx("can't detach");
++		}
++		break;
+ 	default:
+ 		errx(EX_IOERR, "Unsupported mode: %u", mode);
+ 		break;
+--
+2.11.0
