@@ -1,7 +1,7 @@
-From c34c09096fcc73e0f83ac98a02ca66b9d487d6f2 Mon Sep 17 00:00:00 2001
+From e72d9bcada30c63c5715ce0382fe45b707724da3 Mon Sep 17 00:00:00 2001
 From: mimmoLinino <mimmo@linino.org>
 Date: Fri, 2 Dec 2016 18:05:01 +0100
-Subject: [PATCH 03/13] Reducded temporarly the chunk size
+Subject: [PATCH 03/19] Reducded temporarly the chunk size
 
 ---
  libloragw/inc/loragw_spi.h | 2 +-
