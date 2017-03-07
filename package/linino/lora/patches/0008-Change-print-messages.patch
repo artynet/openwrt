@@ -1,7 +1,7 @@
-From 5343b2effefcd15ebf52b0ea308f367b436b7ed1 Mon Sep 17 00:00:00 2001
-From: mimmoLinino <mimmo@linino.org>
-Date: Wed, 21 Dec 2016 16:39:23 +0100
-Subject: [PATCH 08/13] Change print messages
+From 520ff43eee0a633c8c5522f491daa107939abdb6 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Fri, 3 Feb 2017 13:59:25 +0100
+Subject: [PATCH 08/19] Change print messages
 
 ---
  libloragw/Makefile               |  18 ++---
@@ -85,12 +85,12 @@ index 2c2345a..20afb9a 100644
  #define LGW_SPI_MUX_MODE0   0x0     /* No FPGA */
  #define LGW_SPI_MUX_MODE1   0x1     /* FPGA, with spi mux header */
 diff --git a/libloragw/src/loragw_reg.c b/libloragw/src/loragw_reg.c
-index 99a658e..c2a7aad 100644
+index 501f8e4..aeba05b 100644
 --- a/libloragw/src/loragw_reg.c
 +++ b/libloragw/src/loragw_reg.c
-@@ -506,6 +506,7 @@ int lgw_connect(void) {
-         lgw_spi_close(lgw_spi_target);
+@@ -509,6 +509,7 @@ int lgw_connect(bool spi_only, uint32_t tx_notch_freq) {
      }
+ 
      /* open the SPI link */
 +    printf("INFO: lgw_connect 0x%x", lgw_spi_target);
      spi_stat = lgw_spi_open(&lgw_spi_target);
