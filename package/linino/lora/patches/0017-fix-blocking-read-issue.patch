@@ -1,7 +1,7 @@
-From c35a3aeb005e3e2f7488f267a4fd6b8d62a774fe Mon Sep 17 00:00:00 2001
+From 0e72b281c86c26bee250d780540936c6ceeebeec Mon Sep 17 00:00:00 2001
 From: mimmoLinino <mimmo@linino.org>
 Date: Fri, 3 Mar 2017 12:49:55 +0100
-Subject: [PATCH 15/19] fix blocking read issue
+Subject: [PATCH 17/21] fix blocking read issue
 
 ---
  libloragw/Makefile               |   2 +-
