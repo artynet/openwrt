@@ -1,7 +1,7 @@
-From a2fdf974afb506f8c0ec36fc526b4a003513e7ac Mon Sep 17 00:00:00 2001
+From 6c912221496643351be879aa15e771c36294b24c Mon Sep 17 00:00:00 2001
 From: mimmoLinino <mimmo@linino.org>
 Date: Fri, 3 Mar 2017 16:39:04 +0100
-Subject: [PATCH 18/19] fix debug function used
+Subject: [PATCH 20/21] fix debug function used
 
 ---
  libloragw/src/loragw_spi-stm32.c | 2 +-
