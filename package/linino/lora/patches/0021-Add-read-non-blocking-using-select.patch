@@ -1,7 +1,7 @@
-From 961c503e20eee5a1d4e2854d130f64eac50a4964 Mon Sep 17 00:00:00 2001
+From c25ceacbd29f3d054613dbd5cbd76b167e316499 Mon Sep 17 00:00:00 2001
 From: mimmoLinino <mimmo@linino.org>
 Date: Fri, 3 Mar 2017 17:25:20 +0100
-Subject: [PATCH 19/19] Add read non blocking using select
+Subject: [PATCH 21/21] Add read non blocking using select
 
 ---
  libloragw/src/loragw_spi-stm32.c | 90 +++++++++++++++++++++++++++++++---------
