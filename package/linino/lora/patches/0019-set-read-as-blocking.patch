@@ -1,7 +1,7 @@
-From a7b804bc50f31cdd16928e909ae4bacb4ba12de0 Mon Sep 17 00:00:00 2001
+From 2e1d9a68999404b1d9ba9a9a7632dc00a3388f15 Mon Sep 17 00:00:00 2001
 From: mimmoLinino <mimmo@linino.org>
 Date: Fri, 3 Mar 2017 16:01:35 +0100
-Subject: [PATCH 17/19] set read as blocking
+Subject: [PATCH 19/21] set read as blocking
 
 ---
  libloragw/src/loragw_spi-stm32.c | 56 ++++++++++++++--------------------------

@@ -1,7 +1,7 @@
-From 9d80c6cc30edfc5d4b74b83f627f64dce1d097cc Mon Sep 17 00:00:00 2001
+From f417a5a28ec911841b7a07a72c44bbf0e65854eb Mon Sep 17 00:00:00 2001
 From: mimmoLinino <mimmo@linino.org>
 Date: Fri, 3 Mar 2017 13:21:13 +0100
-Subject: [PATCH 16/19] Add libpthread to linker
+Subject: [PATCH 18/21] Add libpthread to linker
 
 ---
  util_lbt_test/Makefile      | 2 +-
