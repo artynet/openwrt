@@ -1,7 +1,7 @@
-From c597d4755b59ea9add8974898955215de09fa92e Mon Sep 17 00:00:00 2001
+From b9ca504e6658238afcf7030e21b18eb257566ff0 Mon Sep 17 00:00:00 2001
 From: mimmoLinino <mimmo@linino.org>
 Date: Tue, 28 Feb 2017 15:47:35 +0100
-Subject: [PATCH 14/19] Added reset radio when application starts.
+Subject: [PATCH 16/21] Added reset radio when application starts.
 
 ---
  libloragw/inc/loragw_spi.h       |  2 +-
