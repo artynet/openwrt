@@ -1,0 +1,37 @@
+From 97b83398293fe4b654cdc5cb4a45c1371c6feaaa Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Thu, 9 Mar 2017 11:26:59 +0100
+Subject: [PATCH 1/2] Work around to resolve the segmentation error with
+ get_records of ncl
+
+---
+ lib/neardal.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/lib/neardal.c b/lib/neardal.c
+index 6ff6274..2c4b35c 100644
+--- a/lib/neardal.c
++++ b/lib/neardal.c
+@@ -961,7 +961,7 @@ errorCode_t neardal_get_records(char *tag, char ***array, int *len)
+ 
+ 	for (*len = i = 0; i < data_len; i++) {
+ 		char *name = neardal_g_variant_get(data[i], "Name", "&s");
+-		if (g_str_has_prefix(name, prefix) == FALSE)
++		if ((name == NULL) || (g_str_has_prefix(name, prefix) == FALSE))
+ 			continue;
+ 		*array = (char **) neardal_arrayv_append((void **) *array,
+ 								g_strdup(name));
+@@ -1031,8 +1031,8 @@ errorCode_t neardal_agent_set_NDEF_cb(char *tagType
+ 			len--;
+ 		}
+ 	}
+-	agent.objPath = g_strdup_printf("%s/%s/%d", 
+-					AGENT_PREFIX, 
++	agent.objPath = g_strdup_printf("%s/%s/%d",
++					AGENT_PREFIX,
+ 					agent.tagType,
+ 					agent.pid);
+ 	if (agent.objPath == NULL)
+-- 
+2.11.0
+
