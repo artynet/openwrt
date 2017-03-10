@@ -7,7 +7,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=node6
+PKG_NAME:=node
 PKG_VERSION:=v6.10.0
 PKG_RELEASE:=1
 
@@ -29,22 +29,22 @@ PKG_LICENSE_FILES:=LICENSE
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/node6
+define Package/node
   SECTION:=lang
   CATEGORY:=Languages
-  SUBMENU:=Node.js-v6
+  SUBMENU:=Node.js
   TITLE:=Node.js is a platform built on Chrome's JavaScript runtime
   URL:=http://nodejs.org/
   DEPENDS:=+libstdcpp +libopenssl +zlib +USE_UCLIBC:libpthread +USE_UCLIBC:librt +NODEJS_ICU:icu
 endef
 
-define Package/node6/description
+define Package/node/description
   Node.js® is a JavaScript runtime built on Chrome's V8 JavaScript engine. Node.js uses
   an event-driven, non-blocking I/O model that makes it lightweight and efficient. Node.js'
    package ecosystem, npm, is the largest ecosystem of open source libraries in the world.
 endef
 
-define Package/node6/config
+define Package/node/config
 	menu "Module Selection"
 
 	config NODEJS_ICU
@@ -89,7 +89,7 @@ CONFIGURE_ARGS+= \
 endif
 endif
 
-define Package/node6/install
+define Package/node/install
 	mkdir -p $(1)/usr/bin $(1)/usr/lib/node_modules/npm/{bin,lib,node_modules}
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/{node,npm} $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/{package.json,LICENSE,cli.js} $(1)/usr/lib/node_modules/npm
@@ -98,4 +98,4 @@ define Package/node6/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/npm/node_modules/* $(1)/usr/lib/node_modules/npm/node_modules/
 endef
 
-$(eval $(call BuildPackage,node6))
+$(eval $(call BuildPackage,node))
