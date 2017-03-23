@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
-PKG_VERSION:=19.2
+PKG_VERSION:=19.3
 PKG_RELEASE:=1
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.erlang.org/download/ \
 	http://erlang.mirror.su.se/
-# PKG_MD5SUM:=346dd0136bf1cc28cebc140e505206bb
+PKG_MD5SUM:=a8c259ec47bf84e77510673e1b76b6db
 
 PKG_LICENSE:=ErlPL-1.1
 PKG_LICENSE_FILES:=EPLICENCE
@@ -45,7 +45,7 @@ endef
 define Package/erlang
 $(call Package/erlang/Default)
   DEPENDS+= +libncurses +librt +zlib
-  PROVIDES:= erlang-erts=8.2 erlang-kernel=5.1.1 erlang-sasl=3.0.2 erlang-stdlib=3.2
+  PROVIDES:= erlang-erts=8.3 erlang-kernel=5.2 erlang-sasl=3.0.3 erlang-stdlib=3.3
 endef
 
 define Package/erlang/description
@@ -74,7 +74,7 @@ endef
 define Package/erlang-compiler
 $(call Package/erlang/Default)
   TITLE:=Byte code compiler
-  VERSION:=7.0.3
+  VERSION:=7.0.4
   DEPENDS+= +erlang +erlang-hipe
 endef
 
@@ -89,7 +89,7 @@ endef
 define Package/erlang-crypto
 $(call Package/erlang/Default)
   TITLE:=Cryptography support
-  VERSION:=3.7.2
+  VERSION:=3.7.3
   DEPENDS+= +erlang +libopenssl
 endef
 
@@ -104,7 +104,7 @@ endef
 define Package/erlang-hipe
 $(call Package/erlang/Default)
   TITLE:=High Performance Erlang
-  VERSION:=3.15.3
+  VERSION:=3.15.4
   DEPENDS+= +erlang
 endef
 
@@ -119,7 +119,7 @@ endef
 define Package/erlang-inets
 $(call Package/erlang/Default)
   TITLE:=Internet clients and servers
-  VERSION:=6.3.4
+  VERSION:=6.3.6
   DEPENDS+= +erlang
 endef
 
@@ -152,7 +152,7 @@ endef
 define Package/erlang-runtime-tools
 $(call Package/erlang/Default)
   TITLE:=Low-profile debugging/tracing tools
-  VERSION:=1.11
+  VERSION:=1.11.1
   DEPENDS+= +erlang
 endef
 
@@ -167,7 +167,7 @@ endef
 define Package/erlang-snmp
 $(call Package/erlang/Default)
   TITLE:=Simple Network Management Protocol (SNMP) support
-  VERSION:=5.2.4
+  VERSION:=5.2.5
   DEPENDS+= +erlang +erlang-asn1
 endef
 
@@ -183,7 +183,7 @@ endef
 define Package/erlang-ssh
 $(call Package/erlang/Default)
   TITLE:=Secure Shell (SSH) support
-  VERSION:=4.4
+  VERSION:=4.4.1
   DEPENDS+= +erlang +erlang-crypto
 endef
 
@@ -198,7 +198,7 @@ endef
 define Package/erlang-ssl
 $(call Package/erlang/Default)
   TITLE:=Secure Sockets Layer (SSL) support
-  VERSION:=8.1
+  VERSION:=8.1.1
   DEPENDS+= +erlang +erlang-crypto
 endef
 
