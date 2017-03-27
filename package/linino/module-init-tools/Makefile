@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=module-init-tools
 PKG_VERSION:=3.16
-PKG_RELEASE:=6
+PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@KERNEL/linux/utils/kernel/module-init-tools/
@@ -72,8 +72,7 @@ endef
 define Package/module-init-tools/postrm
 #!/bin/sh
 for x in insmod rmmod lsmod modprobe depmod modinfo; do
-  [ -L "$${IPKG_INSTROOT}/usr/sbin/$$x" ] && rm -f "$${IPKG_INSTROOT}/usr/sbin/$$x"
-  ln -sf ../../sbin/kmodloader /usr/sbin/$$x
+  [ ! -L "$${IPKG_INSTROOT}/usr/sbin/$$x" ] && ln -sf ../../sbin/kmodloader /usr/sbin/$$x
 done
 
 for x in rmmod modprobe depmod; do
