@@ -11,7 +11,7 @@ diff --git a/arch/mips/ath79/Kconfig b/arch/mips/ath79/Kconfig
 index dd6a883..b7dd04d 100644
 --- a/arch/mips/ath79/Kconfig
 +++ b/arch/mips/ath79/Kconfig
-@@ -1430,7 +1430,7 @@ config ATH79_MACH_LININO_FREEDOG
+@@ -1441,7 +1441,7 @@ config ATH79_MACH_LININO_FREEDOG
  	 	Linino Freedog.
 
  config ATH79_MACH_LININO_LEI
@@ -20,7 +20,7 @@ index dd6a883..b7dd04d 100644
  	select SOC_AR934X
  	select ATH79_DEV_ETH
  	select ATH79_DEV_GPIO_BUTTONS
-@@ -1440,10 +1440,10 @@ config ATH79_MACH_LININO_LEI
+@@ -1451,10 +1451,10 @@ config ATH79_MACH_LININO_LEI
  	select ATH79_DEV_WMAC
  	help
  		Say 'Y' here if you want your kernel to support
@@ -33,7 +33,7 @@ index dd6a883..b7dd04d 100644
  	select SOC_AR934X
  	select ATH79_DEV_ETH
  	select ATH79_DEV_GPIO_BUTTONS
-@@ -1453,10 +1453,10 @@ config ATH79_MACH_LININO_TIAN
+@@ -1464,10 +1464,10 @@ config ATH79_MACH_LININO_TIAN
  	select ATH79_DEV_WMAC
  	help
  		Say 'Y' here if you want your kernel to support
@@ -46,7 +46,7 @@ index dd6a883..b7dd04d 100644
      select SOC_AR933X
      select ATH79_DEV_ETH
      select ATH79_DEV_GPIO_BUTTONS
-@@ -1466,7 +1466,7 @@ config ATH79_MACH_LININO_CHIWAWA
+@@ -1477,7 +1477,7 @@ config ATH79_MACH_LININO_CHIWAWA
      select ATH79_DEV_WMAC
      help
  		Say 'Y' here if you want your kernel to support
