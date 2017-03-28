@@ -1,0 +1,16 @@
+diff --git a/Makefile b/Makefile
+index 17ce64e..9dca71f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -389,8 +389,10 @@ linino-tian_config		    : 	unconfig linino-wasp_config
+ 	@echo '#define CONFIG_LININO_TIAN 1' >>include/config.h
+ 	@echo '#define CONFIG_BAUDRATE 115200' >>include/config.h
+ 
++linino-tian-v4_config		    : 	unconfig linino-wasp_config
++	@echo '#define CONFIG_LININO_TIAN 1' >>include/config.h
++	@echo '#define CONFIG_BAUDRATE 115200' >>include/config.h
+ 
+-	
+ #########################################################################
+ #########################################################################
+ #########################################################################

@@ -9,10 +9,10 @@ include $(INCLUDE_DIR)/kernel.mk
 
 PKG_NAME:=u-boot
 PKG_VERSION:=linino
-PKG_RELEASE:=5
+PKG_RELEASE:=6
 PKG_MD5SUM:=
 
-PKG_REVISION:=38b01aaf6db07997e7e18e3133f6e0a654ade922
+PKG_REVISION:=5c288330dba73c796ac340645b7a7d0a8c442835
 
 PKG_SOURCE_PROTO:=git
 
@@ -63,7 +63,11 @@ define uboot/linino-tian
   TITLE:=U-boot for Linino project
 endef
 
-UBOOTS:=linino-yun linino-one linino-freedog linino-lei linino-chiwawa linino-yun-mini linino-tian
+define uboot/linino-tian-v4
+  TITLE:=U-boot for Linino project
+endef
+
+UBOOTS:=linino-yun linino-one linino-freedog linino-lei linino-chiwawa linino-yun-mini linino-tian linino-tian-v4
 
 define Package/uboot/template
 define Package/uboot-ar71xx-$(1)
@@ -112,7 +116,7 @@ endif
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	$(CP) ./files/* $(PKG_BUILD_DIR)	
+	$(CP) ./files/* $(PKG_BUILD_DIR)
 	$(CP) ./$(CAL_DATA) $(BIN_DIR)/linino-caldata.bin && touch $(BIN_DIR)/linino-caldata.bin
 endef
 
