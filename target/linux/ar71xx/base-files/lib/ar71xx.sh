@@ -995,6 +995,9 @@ ar71xx_board_detect() {
 	*"Arduino Tian")
 		name="linino-tian"
 		;;
+	*"Arduino Tian v4")
+		name="linino-tian-v4"
+		;;
 	*"Arduino Yun-Mini")
 		name="linino-yun-mini"
 		;;
