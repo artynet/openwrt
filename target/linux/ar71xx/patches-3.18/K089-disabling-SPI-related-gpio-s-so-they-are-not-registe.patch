@@ -1,0 +1,34 @@
+From b9e6d22427a9f3c344a64ce001a13d89ff5ac9b9 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Mon, 9 Jan 2017 16:00:02 +0100
+Subject: [PATCH 4/4] disabling SPI related gpio(s) so they are not registered
+
+---
+ arch/mips/ath79/mach-linino-tian.c | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/arch/mips/ath79/mach-linino-tian.c b/arch/mips/ath79/mach-linino-tian.c
+index 52617b46b50..ffaf5fe686c 100644
+--- a/arch/mips/ath79/mach-linino-tian.c
++++ b/arch/mips/ath79/mach-linino-tian.c
+@@ -49,9 +49,6 @@
+ #define CHOWCHOW_GPIO_OE2		15
+ #define CHOWCHOW_GPIO_UART_POL	GPIOF_OUT_INIT_LOW
+ 
+-#define	CHOWCHOW_GPIO_SPI_SCK	4
+-#define CHOWCHOW_GPIO_SPI_CS0	1
+-
+ #define AR934X_GPIO_UART1_TD_OUT	79	/* table 2.16 */
+ #define AR934X_GPIO_UART0_SOUT	24	/* table 2.16 */
+ 
+@@ -157,7 +154,6 @@ static void __init chowchow_setup(void)
+ 	/* enable reset button */
+ 	ath79_gpio_output_select(CHOWCHOW_GPIO_CONF_BTN, AR934X_GPIO_OUT_GPIO);
+ 	ath79_gpio_function_enable(AR934X_GPIO_FUNC_JTAG_DISABLE);
+-	ath79_gpio_output_select(CHOWCHOW_GPIO_SPI_SCK, AR934X_GPIO_OUT_GPIO);
+ 	ath79_gpio_output_select(CHOWCHOW_GPIO_MCU_RESET, AR934X_GPIO_OUT_GPIO);
+ 
+ 	/* UART1 (high-speed) configuration */
+-- 
+2.11.0
+
