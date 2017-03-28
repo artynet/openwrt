@@ -139,6 +139,19 @@ endef
 
 $(eval $(call Profile,LININO_TIAN))
 
+# Linino Tian v4
+
+define Profile/LININO_TIAN_V4
+	NAME:=Linino Tian v4
+	PACKAGES:=kmod-usb-core kmod-usb2 luci-webpanel-linino linino-scripts linino-conf
+endef
+
+define Profile/LININO_TIAN_V4/Description
+	Package set optimized for the Linino Tian v4 based on Atheros AR9342.
+endef
+
+$(eval $(call Profile,LININO_TIAN_V4))
+
 # Linino Chiwawa
 
 define Profile/LININO_CHIWAWA
