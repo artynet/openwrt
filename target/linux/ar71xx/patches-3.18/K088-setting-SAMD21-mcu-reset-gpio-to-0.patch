@@ -1,0 +1,25 @@
+From 8d430444880698ec2f11243c8527e5bde710bdac Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Mon, 9 Jan 2017 14:52:49 +0100
+Subject: [PATCH 3/4] setting SAMD21 mcu reset gpio to 0
+
+---
+ arch/mips/ath79/mach-linino-tian.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/mips/ath79/mach-linino-tian.c b/arch/mips/ath79/mach-linino-tian.c
+index cace484a371..52617b46b50 100644
+--- a/arch/mips/ath79/mach-linino-tian.c
++++ b/arch/mips/ath79/mach-linino-tian.c
+@@ -34,7 +34,7 @@
+ #include "linux/gpio.h"
+ #include <linux/spi/spi_gpio.h>
+ 
+-#define CHOWCHOW_GPIO_MCU_RESET	17
++#define CHOWCHOW_GPIO_MCU_RESET	0
+ 
+ #define TIAN_GPIO_SWDIO			13
+ #define TIAN_GPIO_SWDCLK		14
+-- 
+2.11.0
+

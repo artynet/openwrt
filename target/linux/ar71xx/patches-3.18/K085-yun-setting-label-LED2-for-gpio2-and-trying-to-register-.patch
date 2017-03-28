@@ -1,0 +1,51 @@
+From 3d215951dd8d517bc964c00aedbbcc857341f92c Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Fri, 24 Mar 2017 15:33:27 +0100
+Subject: [PATCH] setting label LED2 for gpio2 and trying to register gpio6 as
+ a regular one
+
+---
+ arch/mips/ath79/mach-linino.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/arch/mips/ath79/mach-linino.c b/arch/mips/ath79/mach-linino.c
+index ce9c7d7d86d..0540354a956 100644
+--- a/arch/mips/ath79/mach-linino.c
++++ b/arch/mips/ath79/mach-linino.c
+@@ -25,6 +25,9 @@
+ #include <linux/platform_device.h>
+ #include <linux/spi/spi_gpio.h>
+ 
++#define YUN_GPIO_LED2		2
++#define YUN_GPIO_GPIO6		6
++
+ /* * * * * * * * * * * * * * * * * * * LED * * * * * * * * * * * * * * * * * */
+ 
+ static struct gpio_led ds_leds_gpio[] __initdata = {
+@@ -55,6 +58,11 @@ static struct gpio_led ds_leds_gpio[] __initdata = {
+ 		.gpio = DS_GPIO_LED_WLAN,
+ 		.active_low = 0,
+ 	},
++	{
++		.name = "LED2",
++		.gpio = YUN_GPIO_LED2,
++		.active_low = 0,
++	},
+ #endif
+ #if defined(LININO_CHIWAWA)
+ 	{
+@@ -294,4 +302,11 @@ static void __init ds_setup(void)
+ 
+ 	/* Register Software SPI controller */
+ 	ds_register_spi();
++
++    /* registering GPIO6 for yun */
++    #if defined(LININO_YUN)
++        gpio_request_one(YUN_GPIO_GPIO6,
++            GPIOF_OUT_INIT_LOW | GPIOF_EXPORT_DIR_FIXED,
++            "GPIO6");
++    #endif
+ }
+-- 
+2.11.0
+
