@@ -1,0 +1,193 @@
+--- a/arch/mips/ath79/mach-linino-tian.c	2017-03-24 17:16:07.929804783 +0100
++++ b/arch/mips/ath79/mach-linino-tian.c	2017-03-24 17:14:15.632176949 +0100
+@@ -35,28 +35,21 @@
+ #include <linux/spi/spi_gpio.h>
+ 
+ #define CHOWCHOW_GPIO_MCU_RESET	17
+-#define CHOWCHOW_GPIO_LED0		11
+-#define CHOWCHOW_GPIO_LED1		12
+ 
+-#define LININO_TIAN 1
+-
+-#ifdef LININO_TIAN
+ #define TIAN_GPIO_SWDIO			13
+ #define TIAN_GPIO_SWDCLK		14
+ #define CHOWCHOW_GPIO_CONF_BTN	17
+-#else
+-#define CHOWCHOW_GPIO_UART0_RX	13
+-#define CHOWCHOW_GPIO_UART0_TX	14
+-#define CHOWCHOW_GPIO_CONF_BTN	0
+-#endif
++#define CHOWCHOW_GPIO_LED0		11
++#define CHOWCHOW_GPIO_LED1		12
++#define CHOWCHOW_GPIO_LED2		2
++#define CHOWCHOW_GPIO_LED3		3
++
+ #define CHOWCHOW_GPIO_UART1_RX	9
+ #define CHOWCHOW_GPIO_UART1_TX	10
+ #define CHOWCHOW_GPIO_OE2		15
+ #define CHOWCHOW_GPIO_UART_POL	GPIOF_OUT_INIT_LOW
+ 
+ #define	CHOWCHOW_GPIO_SPI_SCK	4
+-#define	CHOWCHOW_GPIO_SPI_MISO	3
+-#define	CHOWCHOW_GPIO_SPI_MOSI	2
+ #define CHOWCHOW_GPIO_SPI_CS0	1
+ 
+ #define AR934X_GPIO_UART1_TD_OUT	79	/* table 2.16 */
+@@ -65,6 +58,8 @@
+ #define CHOWCHOW_GPIO_SPI_INTERRUPT	16
+ #define DS_PCIE_CALDATA_OFFSET	0x5000
+ 
++/* * * * * * * * * * * * * * * * * * * LED * * * * * * * * * * * * * * * * * */
++
+ static struct gpio_led chowchow_leds_gpio[] __initdata = {
+ 	{
+ 		.name		= "usb",
+@@ -74,6 +69,15 @@
+ 		.name		= "wlan",
+ 		.gpio		= CHOWCHOW_GPIO_LED1,
+ 		.active_low	= 1,
++	},
++	{
++		.name		= "LED0",
++		.gpio		= CHOWCHOW_GPIO_LED2,
++		.active_low	= 1,
++	}, {
++		.name		= "GP0",
++		.gpio		= CHOWCHOW_GPIO_LED3,
++		.active_low	= 1,
+ 	}
+ };
+ 
+@@ -115,49 +119,6 @@
+ 	},
+ };
+ 
+-/* * * * * * * * * * * * * * * * * * * SPI * * * * * * * * * * * * * * * * * */
+-
+-/*
+- * The SPI bus between the main processor and the MCU is available only in the
+- * following board: YUN, FREEDOG
+- */
+-
+-static struct spi_gpio_platform_data spi_bus1 = {
+-	.sck = CHOWCHOW_GPIO_SPI_SCK,
+-	.mosi = CHOWCHOW_GPIO_SPI_MOSI,
+-	.miso = CHOWCHOW_GPIO_SPI_MISO,
+-	.num_chipselect = LININO_N_SPI_CHIP_SELECT,
+-};
+-
+-static struct platform_device linino_spi1_device = {
+-	.name	= "spi_gpio",
+-	.id	= 1,
+-	.dev.platform_data = &spi_bus1,
+-};
+-
+-#ifndef LININO_TIAN
+-/* SPI devices on Linino */
+-static struct spi_board_info linino_spi_info[] = {
+-	/*{
+-		.bus_num		= 1,
+-		.chip_select		= 0,
+-		.max_speed_hz		= 10000000,
+-		.mode			= 0,
+-		.modalias		= "spidev",
+-		.controller_data	= (void *) SPI_CHIP_SELECT,
+-	},*/
+-	{
+-		.bus_num		= 1,
+-		.chip_select		= 0,
+-		.max_speed_hz		= 10000000, /* unused but required */
+-		.mode			= 0,
+-		.modalias		= "atmega32u4",
+-		.controller_data	= (void *) CHOWCHOW_GPIO_SPI_CS0,
+-		.platform_data		= (void *) CHOWCHOW_GPIO_SPI_INTERRUPT,
+-	},
+-};
+-#endif
+-
+ /**
+  * Enable the software SPI controller emulated by GPIO signals
+  */
+@@ -165,18 +126,7 @@
+ 	pr_info("mach-linino: enabling GPIO SPI Controller");
+ 
+ 	/* Enable level shifter on SPI signals */
+-#ifdef LININO_TIAN
+ 	gpio_set_value(CHOWCHOW_GPIO_OE2, 0);
+-#else
+-	gpio_set_value(CHOWCHOW_GPIO_OE2, 1);
+-#endif
+-
+-#ifndef LININO_TIAN
+-	/* Register SPI devices */
+-	spi_register_board_info(linino_spi_info, ARRAY_SIZE(linino_spi_info));
+-#endif
+-	/* Register GPIO SPI controller */
+-	platform_device_register(&linino_spi1_device);
+ }
+ 
+ /*
+@@ -195,7 +145,7 @@
+ }
+ 
+ 
+-static void __init tian_setup(void)
++static void __init chowchow_setup(void)
+ {
+ 	u8 *art = (u8 *) KSEG1ADDR(0x1fff0000);
+ 	static u8 mac[6];
+@@ -206,13 +156,13 @@
+ 	/* make lan / wan leds software controllable */
+ 	ath79_gpio_output_select(CHOWCHOW_GPIO_LED0, AR934X_GPIO_OUT_GPIO);
+ 	ath79_gpio_output_select(CHOWCHOW_GPIO_LED1, AR934X_GPIO_OUT_GPIO);
++	ath79_gpio_output_select(CHOWCHOW_GPIO_LED2, AR934X_GPIO_OUT_GPIO);
++	ath79_gpio_output_select(CHOWCHOW_GPIO_LED3, AR934X_GPIO_OUT_GPIO);
+ 
+ 	/* enable reset button */
+ 	ath79_gpio_output_select(CHOWCHOW_GPIO_CONF_BTN, AR934X_GPIO_OUT_GPIO);
+ 	ath79_gpio_function_enable(AR934X_GPIO_FUNC_JTAG_DISABLE);
+ 	ath79_gpio_output_select(CHOWCHOW_GPIO_SPI_SCK, AR934X_GPIO_OUT_GPIO);
+-	ath79_gpio_output_select(CHOWCHOW_GPIO_SPI_MISO, AR934X_GPIO_OUT_GPIO);
+-	ath79_gpio_output_select(CHOWCHOW_GPIO_SPI_MOSI, AR934X_GPIO_OUT_GPIO);
+ 	ath79_gpio_output_select(CHOWCHOW_GPIO_MCU_RESET, AR934X_GPIO_OUT_GPIO);
+ 
+ 	/* UART1 (high-speed) configuration */
+@@ -244,30 +194,9 @@
+ 	v |= (CHOWCHOW_GPIO_UART1_RX << 16);
+ 	__raw_writel(v, reg);
+ 
+-#ifdef LININO_TIAN
++	/*custom gpios for Tian*/
+ 	ath79_gpio_output_select(TIAN_GPIO_SWDIO, AR934X_GPIO_OUT_GPIO);
+ 	ath79_gpio_output_select(TIAN_GPIO_SWDCLK, AR934X_GPIO_OUT_GPIO);
+-#else
+-	/* UART0 (low-speed) configuration */
+-	r = gpio_request(CHOWCHOW_GPIO_UART0_TX, NULL);
+-	if (r) {
+-		pr_err("gpio_request failed on gpio %d: %d\n",
+-		       CHOWCHOW_GPIO_UART0_TX, r);
+-		return;
+-	}
+-	gpio_direction_output(CHOWCHOW_GPIO_UART0_TX, 0);
+-	ath79_gpio_output_select(CHOWCHOW_GPIO_UART0_TX,
+-				   AR934X_GPIO_UART0_SOUT);
+-	gpio_free(CHOWCHOW_GPIO_UART0_TX);
+-
+-	/* Mux for UART0 input: UART0 multiplexing is GPIO_IN_ENABLE1, see
+-	 * table 8-4 */
+-	reg = ath79_gpio_base + AR934X_GPIO_IN_ENABLE1;
+-	v = __raw_readl(reg);
+-	v &= ~0x0000ff00;
+-	v |= (CHOWCHOW_GPIO_UART0_RX << 8);
+-	__raw_writel(v, reg);
+-#endif
+ 
+ 	ath79_register_m25p80(NULL);
+ 
+@@ -316,4 +245,4 @@
+ 	ds_register_spi();
+ }
+ 
+-MIPS_MACHINE(ATH79_MACH_LININO_TIAN, "linino-tian", "Arduino Tian", tian_setup);
++MIPS_MACHINE(ATH79_MACH_LININO_TIAN, "linino-tian", "Arduino Tian", chowchow_setup);
