@@ -194,6 +194,7 @@ platform_check_image() {
 	linino-chiwawa | \
 	linino-lei | \
 	linino-tian | \
+	linino-tian-v4 | \
 	linino-one | \
 	linino-freedog | \
 	linino-yun)
