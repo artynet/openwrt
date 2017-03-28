@@ -1,0 +1,61 @@
+From b1247f02c34e4c7da652002f865fe46ac261a6ca Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Mon, 9 Jan 2017 12:12:01 +0100
+Subject: [PATCH 2/4] setting label LED2 for gpio2 and trying to register gpio3
+ as a regular one
+
+---
+ arch/mips/ath79/mach-linino-tian.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/arch/mips/ath79/mach-linino-tian.c b/arch/mips/ath79/mach-linino-tian.c
+index 8b753f1b0fc..cace484a371 100644
+--- a/arch/mips/ath79/mach-linino-tian.c
++++ b/arch/mips/ath79/mach-linino-tian.c
+@@ -42,7 +42,7 @@
+ #define CHOWCHOW_GPIO_LED0		11
+ #define CHOWCHOW_GPIO_LED1		12
+ #define CHOWCHOW_GPIO_LED2		2
+-#define CHOWCHOW_GPIO_LED3		3
++#define CHOWCHOW_GPIO_GPIO3		3
+ 
+ #define CHOWCHOW_GPIO_UART1_RX	9
+ #define CHOWCHOW_GPIO_UART1_TX	10
+@@ -71,13 +71,9 @@ static struct gpio_led chowchow_leds_gpio[] __initdata = {
+ 		.active_low	= 1,
+ 	},
+ 	{
+-		.name		= "LED0",
++		.name		= "LED2",
+ 		.gpio		= CHOWCHOW_GPIO_LED2,
+ 		.active_low	= 1,
+-	}, {
+-		.name		= "GP0",
+-		.gpio		= CHOWCHOW_GPIO_LED3,
+-		.active_low	= 1,
+ 	}
+ };
+ 
+@@ -157,7 +153,6 @@ static void __init chowchow_setup(void)
+ 	ath79_gpio_output_select(CHOWCHOW_GPIO_LED0, AR934X_GPIO_OUT_GPIO);
+ 	ath79_gpio_output_select(CHOWCHOW_GPIO_LED1, AR934X_GPIO_OUT_GPIO);
+ 	ath79_gpio_output_select(CHOWCHOW_GPIO_LED2, AR934X_GPIO_OUT_GPIO);
+-	ath79_gpio_output_select(CHOWCHOW_GPIO_LED3, AR934X_GPIO_OUT_GPIO);
+ 
+ 	/* enable reset button */
+ 	ath79_gpio_output_select(CHOWCHOW_GPIO_CONF_BTN, AR934X_GPIO_OUT_GPIO);
+@@ -243,6 +238,11 @@ static void __init chowchow_setup(void)
+ 
+ 	/* Register Software SPI controller */
+ 	ds_register_spi();
++
++	/* registering GPIO3 */
++	gpio_request_one(CHOWCHOW_GPIO_GPIO3,
++		GPIOF_OUT_INIT_LOW | GPIOF_EXPORT_DIR_FIXED,
++		"GPIO3");
+ }
+ 
+ MIPS_MACHINE(ATH79_MACH_LININO_TIAN, "linino-tian", "Arduino Tian", chowchow_setup);
+-- 
+2.11.0
+
