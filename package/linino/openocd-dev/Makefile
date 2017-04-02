@@ -30,6 +30,7 @@ PKG_INSTALL:=1
 PKG_FIXUP:=libtool autoreconf
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/openocd-dev
   SECTION:=utils
