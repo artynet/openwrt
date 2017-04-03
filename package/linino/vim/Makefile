@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
-PKG_VERSION:=8.0.0347
+PKG_VERSION:=8.0.0540
 PKG_RELEASE:=4
 VIMVER:=80
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.vim.org/pub/vim/unix/
-PKG_MD5SUM:=82b610607afc36c97378ca2c0bfc5e07
+PKG_MD5SUM:=21b49bf690cfc23fd96b14fc7e7cf0ea
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_BUILD_PARALLEL:=1
