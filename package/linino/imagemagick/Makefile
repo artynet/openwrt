@@ -18,6 +18,8 @@ PKG_SOURCE_URL:=ftp://ftp.fifi.org/pub/ImageMagick/ \
 	http://sources.buildroot.net/
 # PKG_MD5SUM:=eeddb978615122c73a9e0df703fd6d12
 
+PKG_USE_MIPS16:=0
+
 PKG_FIXUP:=autoreconf
 PKG_REMOVE_FILES:=aclocal.m4 m4/libtool.m4
 PKG_BUILD_PARALLEL:=1
