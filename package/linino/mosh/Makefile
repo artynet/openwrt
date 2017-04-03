@@ -15,6 +15,8 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://mosh.mit.edu/
 # PKG_MD5SUM:=c2d918f4d91fdc32546e2e089f9281b2
 
+PKG_USE_MIPS16:=0
+
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
