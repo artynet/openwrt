@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=canvas
 PKG_NAME:=node-$(PKG_NPM_NAME)
-PKG_VERSION:=1.6.2
+PKG_VERSION:=1.6.5
 PKG_RELEASE:=5
 
 PKG_SOURCE:=$(PKG_NPM_NAME)-$(PKG_VERSION).tgz
@@ -19,9 +19,10 @@ PKG_SOURCE_URL:=http://registry.npmjs.org/$(PKG_NPM_NAME)/-/
 PKG_BUILD_DEPENDS:=node
 PKG_NODE_VERSION:=6.10.1
 
-PKG_MIPS16:=0
+PKG_USE_MIPS16:=0
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/node-canvas
   DEPENDS:=+node +cairo +giflib +pixman +fontconfig +libjpeg +pango
@@ -42,7 +43,7 @@ define Build/Prepare
 endef
 
 EXTRA_CXXFLAGS += -I$(STAGING_DIR)/usr/include/cairo/ -I$(STAGING_DIR)/usr/include/glib-2.0
-EXTRA_LDFLAGS += -lfreetype -lfontconfig -lcairo -lpng -lgif
+EXTRA_LDFLAGS += -lfreetype -lfontconfig -lcairo -lpng -lgif $(INTL_LDFLAGS)
 
 define Build/Compile
 	$(MAKE_FLAGS) \
