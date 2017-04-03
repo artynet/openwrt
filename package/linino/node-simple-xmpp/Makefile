@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=simple-xmpp
 PKG_NAME:=node-$(PKG_NPM_NAME)
-PKG_VERSION:=0.1.92
+PKG_VERSION:=1.3.0
 PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NPM_NAME)-$(PKG_VERSION).tgz
