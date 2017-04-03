@@ -21,6 +21,8 @@ PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_BUILD_DEPENS:=+lora-gateway-legacy
 
+PKG_USE_MIPS16:=0
+
 LORA_VERSION:=legacy-3.1.0
 
 # PKG_INSTALL:=1
@@ -37,7 +39,7 @@ define Package/packet-forwarder-legacy
 $(call Package/packet-forwarder-legacy/Default)
 	SECTION:=utils
 	CATEGORY:=Utilities
-	DEPENDS:=+libmpsse +libftdi +lora-gateway
+	DEPENDS:=+libmpsse +libftdi +lora-gateway-legacy
 	SUBMENU:=LoRa
 	DEFAULT:=m
 endef
