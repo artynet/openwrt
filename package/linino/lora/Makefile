@@ -31,8 +31,8 @@ endef
 
 define Package/lora-gateway
 $(call Package/lora-gateway/Default)
-	SECTION:=utils
-	CATEGORY:=Utilities
+	SECTION:=net
+	CATEGORY:=Network
 	DEPENDS:=+libc +librt
 	SUBMENU:=LoRa
 endef
