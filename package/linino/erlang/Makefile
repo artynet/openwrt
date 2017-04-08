@@ -224,6 +224,31 @@ $(call Package/erlang/Default/description)
  syntax trees.
 endef
 
+define Package/erlang-public-key
+$(call Package/erlang/Default)
+  TITLE:=API module for public-key infrastructure
+  VERSION:=14.1
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-public-key/description
+$(call Package/erlang/Default/description)
+ .
+Provides functions to handle public-key infrastructure.
+endef
+
+define Package/erlang-erts
+$(call Package/erlang/Default)
+  TITLE:=Erlang Run-Time System Application (ERTS)
+  VERSION:=8.3
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-erts/description
+$(call Package/erlang/Default/description)
+ .
+Erlang Run-Time System Application (ERTS).
+endef
 
 # Host
 
@@ -333,3 +358,5 @@ $(eval $(call BuildModule,snmp,snmp))
 $(eval $(call BuildModule,ssh,ssh))
 $(eval $(call BuildModule,ssl,ssl))
 $(eval $(call BuildModule,syntax-tools,syntax_tools))
+$(eval $(call BuildModule,public-key,public_key))
+$(eval $(call BuildModule,erts,erts))
