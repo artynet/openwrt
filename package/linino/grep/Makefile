@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=grep
 PKG_VERSION:=3.0
-PKG_RELEASE:=2
+PKG_RELEASE:=4
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@GNU/grep
@@ -41,19 +41,23 @@ prints the matching lines.
 endef
 
 define Package/grep/install
-	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/src/grep $(1)/usr/bin/grep
+	$(INSTALL_DIR) $(1)/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/{grep,egrep,fgrep} $(1)/bin
 endef
 
-define Package/grep/postinst
+define Package/grep/preinst
 #!/bin/sh
-[ -L "$${IPKG_INSTROOT}/bin/grep" ] && rm -f "$${IPKG_INSTROOT}/bin/grep"
+for x in grep egrep fgrep; do
+  [ -L "$${IPKG_INSTROOT}/bin/$$x" ] && rm -f "$${IPKG_INSTROOT}/bin/$$x"
+done
 exit 0
 endef
 
-define Package/grep/prerm
-$${IPKG_INSTROOT}/bin/busybox grep -h 2>&1 | grep -q BusyBox && \
-ln -sf busybox $${IPKG_INSTROOT}/bin/grep
+define Package/grep/postrm
+#!/bin/sh
+for x in grep egrep fgrep; do
+  /bin/busybox $$x -h 2>&1 | grep -q BusyBox && ln -sf ../../bin/busybox /bin/$$x
+done
 exit 0
 endef
 
