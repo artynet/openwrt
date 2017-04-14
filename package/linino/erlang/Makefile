@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
 PKG_VERSION:=19.3
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.erlang.org/download/ \
@@ -55,6 +55,17 @@ $(call Package/erlang/Default/description)
  modules (erts, kernel, sasl & stdlib).
 endef
 
+define Package/erlang-full
+$(call Package/erlang/Default)
+  DEPENDS+= +libncurses +librt +zlib +libopenssl
+endef
+
+define Package/erlang-full/description
+$(call Package/erlang/Default/description)
+ .
+ This package contains the runtime implementation and the full set of
+ modules.
+endef
 
 define Package/erlang-asn1
 $(call Package/erlang/Default)
@@ -237,19 +248,6 @@ $(call Package/erlang/Default/description)
 Provides functions to handle public-key infrastructure.
 endef
 
-define Package/erlang-erts
-$(call Package/erlang/Default)
-  TITLE:=Erlang Run-Time System Application (ERTS)
-  VERSION:=8.3
-  DEPENDS+= +erlang
-endef
-
-define Package/erlang-erts/description
-$(call Package/erlang/Default/description)
- .
-Erlang Run-Time System Application (ERTS).
-endef
-
 # Host
 
 HOST_CONFIGURE_ARGS += \
@@ -323,6 +321,14 @@ define Package/erlang/install
 	done
 endef
 
+define Package/erlang-full/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin
+
+	$(INSTALL_DIR) $(1)/usr/lib
+	$(CP) -R $(PKG_INSTALL_DIR)/usr/lib/erlang $(1)/usr/lib
+endef
+
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_BUILD_DIR)/lib/erl_interface/obj/*/*.a $(1)/usr/lib/
@@ -344,9 +350,19 @@ define BuildModule
 
 endef
 
+define Package/erlang-full/postrm
+#!/bin/sh
+# check if we are on real system
+if [ -d "$${IPKG_INSTROOT}/usr/lib/erlang" ]; then
+        echo "Removing files...."
+        rm -rf $${IPKG_INSTROOT}/usr/lib/erlang
+fi
+exit 0
+endef
 
 $(eval $(call HostBuild))
 $(eval $(call BuildPackage,erlang))
+$(eval $(call BuildPackage,erlang-full))
 $(eval $(call BuildModule,asn1,asn1))
 $(eval $(call BuildModule,compiler,compiler))
 $(eval $(call BuildModule,crypto,crypto))
@@ -359,4 +375,3 @@ $(eval $(call BuildModule,ssh,ssh))
 $(eval $(call BuildModule,ssl,ssl))
 $(eval $(call BuildModule,syntax-tools,syntax_tools))
 $(eval $(call BuildModule,public-key,public_key))
-$(eval $(call BuildModule,erts,erts))
