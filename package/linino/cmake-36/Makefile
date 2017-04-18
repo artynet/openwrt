@@ -7,22 +7,22 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=cmake-362
-PKG_VERSION:=3.6.2
+PKG_NAME:=cmake-36
+PKG_VERSION:=3.6.3
 PKG_RELEASE:=2
 
 PKG_SOURCE_SUBDIR:=cmake-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://cmake.org/files/v3.6/
 PKG_SOURCE:=cmake-$(PKG_VERSION).tar.gz
 
-PKG_MD5SUM:=139d7affdd4e8ab1edfc9f4322d69e43
+PKG_MD5SUM:=b62fc10072cd906160865b9e74ce228f
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/cmake-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
-define Package/cmake-362
+define Package/cmake-36
   TITLE:=The CMake suite of tools
   SECTION:=devel
   DEFAULT:=m
@@ -31,7 +31,7 @@ define Package/cmake-362
   URL:=https://cmake.org
 endef
 
-define Package/cmake-362/description
+define Package/cmake-36/description
 	CMake is an open-source, cross-platform family of tools designed to build, test and package software.
 endef
 
@@ -45,7 +45,7 @@ CMAKE_OPTIONS = \
 	-DCTEST_USE_XMLRPC=OFF \
 	-DBUILD_CursesDialog=OFF
 
-define Package/cmake-362/install
+define Package/cmake-36/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/*  $(1)/usr/bin
 
@@ -56,4 +56,4 @@ define Package/cmake-362/install
 	$(CP) -R $(PKG_INSTALL_DIR)/usr/share/cmake-3.6 $(1)/usr/share
 endef
 
-$(eval $(call BuildPackage,cmake-362))
+$(eval $(call BuildPackage,cmake-36))
