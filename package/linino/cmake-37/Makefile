@@ -15,7 +15,7 @@ PKG_SOURCE_SUBDIR:=cmake-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://cmake.org/files/v3.7/
 PKG_SOURCE:=cmake-$(PKG_VERSION).tar.gz
 
-# PKG_MD5SUM:=139d7affdd4e8ab1edfc9f4322d69e43
+PKG_MD5SUM:=79bd7e65cd81ea3aa2619484ad6ff25a
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/cmake-$(PKG_VERSION)
 
