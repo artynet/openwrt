@@ -1,72 +1,8 @@
-diff -Nbur a/Makefile.in b/Makefile.in
---- a/Makefile.in	2017-01-27 18:44:15.916943364 +0100
-+++ b/Makefile.in	2017-01-27 18:44:16.520858464 +0100
-@@ -449,6 +449,7 @@
- @CLIENT_TRUE@am__EXEEXT_1 = client/bluetoothctl$(EXEEXT)
- @MONITOR_TRUE@am__EXEEXT_2 = monitor/btmon$(EXEEXT)
- @TOOLS_TRUE@am__EXEEXT_3 = tools/rctest$(EXEEXT) tools/l2test$(EXEEXT) \
-+@TOOLS_TRUE@	tools/bluetooth_6lowpand$(EXEEXT) \
- @TOOLS_TRUE@	tools/l2ping$(EXEEXT) tools/bccmd$(EXEEXT) \
- @TOOLS_TRUE@	tools/bluemoon$(EXEEXT) tools/hex2hcd$(EXEEXT) \
- @TOOLS_TRUE@	tools/mpris-proxy$(EXEEXT) tools/btattach$(EXEEXT)
-@@ -1317,6 +1318,9 @@
- @TOOLS_TRUE@am_tools_ibeacon_OBJECTS = tools/ibeacon.$(OBJEXT)
- tools_ibeacon_OBJECTS = $(am_tools_ibeacon_OBJECTS)
- @TOOLS_TRUE@tools_ibeacon_DEPENDENCIES = src/libshared-mainloop.la
-+tools_bluetooth_6lowpand_SOURCES = tools/bluetooth_6lowpand.c
-+tools_bluetooth_6lowpand_OBJECTS = tools/bluetooth_6lowpand.$(OBJEXT)
-+@TOOLS_TRUE@tools_bluetooth_6lowpand_DEPENDENCIES = lib/libbluetooth-internal.la
- am__tools_l2cap_tester_SOURCES_DIST = tools/l2cap-tester.c \
- 	monitor/bt.h emulator/hciemu.h emulator/hciemu.c \
- 	emulator/btdev.h emulator/btdev.c emulator/bthost.h \
-@@ -1673,6 +1677,7 @@
- 	$(tools_create_image_SOURCES) $(tools_eddystone_SOURCES) \
- 	$(tools_gap_tester_SOURCES) $(tools_gatt_service_SOURCES) \
- 	$(tools_hci_tester_SOURCES) $(tools_hciattach_SOURCES) \
-+	$(tools_bluetooth_6lowpand_SOURCES) \
- 	$(tools_hciconfig_SOURCES) $(tools_hcidump_SOURCES) \
- 	tools/hcieventmask.c tools/hcisecfilter.c \
- 	$(tools_hcitool_SOURCES) $(tools_hex2hcd_SOURCES) \
-@@ -1754,6 +1759,7 @@
- 	$(am__tools_hci_tester_SOURCES_DIST) \
- 	$(am__tools_hciattach_SOURCES_DIST) \
- 	$(am__tools_hciconfig_SOURCES_DIST) \
-+	$(am__tools_bluetooth_6lowpand_SOURCES_DIST) \
- 	$(am__tools_hcidump_SOURCES_DIST) tools/hcieventmask.c \
- 	tools/hcisecfilter.c $(am__tools_hcitool_SOURCES_DIST) \
- 	$(am__tools_hex2hcd_SOURCES_DIST) tools/hid2hci.c tools/hwdb.c \
-@@ -2648,6 +2654,7 @@
- @DEPRECATED_TRUE@@TOOLS_TRUE@tools_hciconfig_LDADD = lib/libbluetooth-internal.la
- @DEPRECATED_TRUE@@TOOLS_TRUE@tools_hcitool_SOURCES = tools/hcitool.c src/oui.h src/oui.c
- @DEPRECATED_TRUE@@TOOLS_TRUE@tools_hcitool_LDADD = lib/libbluetooth-internal.la @UDEV_LIBS@
-+@TOOLS_TRUE@tools_bluetooth_6lowpand_LDADD = lib/libbluetooth-internal.la src/libshared-mainloop.la
- @DEPRECATED_TRUE@@TOOLS_TRUE@tools_hcidump_SOURCES = tools/hcidump.c \
- @DEPRECATED_TRUE@@TOOLS_TRUE@				tools/parser/parser.h tools/parser/parser.c \
- @DEPRECATED_TRUE@@TOOLS_TRUE@				tools/parser/lmp.c \
-@@ -4715,6 +4722,11 @@
- tools/hcidump$(EXEEXT): $(tools_hcidump_OBJECTS) $(tools_hcidump_DEPENDENCIES) $(EXTRA_tools_hcidump_DEPENDENCIES) tools/$(am__dirstamp)
- 	@rm -f tools/hcidump$(EXEEXT)
- 	$(AM_V_CCLD)$(LINK) $(tools_hcidump_OBJECTS) $(tools_hcidump_LDADD) $(LIBS)
-+tools/bluetooth_6lowpand.$(OBJEXT): tools/$(am__dirstamp) \
-+	tools/$(DEPDIR)/$(am__dirstamp)
-+tools/bluetooth_6lowpand$(EXEEXT): $(tools_bluetooth_6lowpand_OBJECTS) $(tools_bluetooth_6lowpand_DEPENDENCIES) $(EXTRA_tools_bluetooth_6lowpand_DEPENDENCIES) tools/$(am__dirstamp)
-+	@rm -f tools/bluetooth_6lowpand$(EXEEXT)
-+	$(AM_V_CCLD)$(LINK) $(tools_bluetooth_6lowpand_OBJECTS) $(tools_bluetooth_6lowpand_LDADD) $(LIBS)
- tools/hcieventmask.$(OBJEXT): tools/$(am__dirstamp) \
- 	tools/$(DEPDIR)/$(am__dirstamp)
- 
-@@ -5515,6 +5527,7 @@
- @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hciattach_tialt.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hciconfig.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hcidump.Po@am__quote@
-+@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/bluetooth_6lowpand.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hcieventmask.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hcisecfilter.Po@am__quote@
- @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hcitool.Po@am__quote@
-diff -Nbur a/Makefile.tools b/Makefile.tools
---- a/Makefile.tools	2017-01-27 13:52:30.000000000 +0100
-+++ b/Makefile.tools	2017-01-27 18:44:16.352882078 +0100
-@@ -156,6 +156,7 @@
+diff --git a/Makefile.tools b/Makefile.tools
+index 73b2eef8f..7eb7637c9 100644
+--- a/Makefile.tools
++++ b/Makefile.tools
+@@ -156,6 +156,7 @@ endif
  if TOOLS
  bin_PROGRAMS += tools/rctest tools/l2test tools/l2ping tools/bccmd \
  			tools/bluemoon tools/hex2hcd tools/mpris-proxy \
@@ -74,7 +10,7 @@ diff -Nbur a/Makefile.tools b/Makefile.tools
  			tools/btattach
  
  noinst_PROGRAMS += tools/bdaddr tools/avinfo tools/avtest \
-@@ -254,6 +255,9 @@
+@@ -254,6 +255,9 @@ tools_bccmd_LDADD = lib/libbluetooth-internal.la
  tools_bluemoon_SOURCES = tools/bluemoon.c monitor/bt.h
  tools_bluemoon_LDADD = src/libshared-mainloop.la
  
@@ -84,9 +20,11 @@ diff -Nbur a/Makefile.tools b/Makefile.tools
  tools_hex2hcd_SOURCES = tools/hex2hcd.c
  
  tools_mpris_proxy_SOURCES = tools/mpris-proxy.c
-diff -Nbur a/tools/bluetooth_6lowpand.c b/tools/bluetooth_6lowpand.c
---- a/tools/bluetooth_6lowpand.c	1970-01-01 01:00:00.000000000 +0100
-+++ b/tools/bluetooth_6lowpand.c	2017-01-27 18:44:16.524857901 +0100
+diff --git a/tools/bluetooth_6lowpand.c b/tools/bluetooth_6lowpand.c
+new file mode 100644
+index 000000000..b232f86ef
+--- /dev/null
++++ b/tools/bluetooth_6lowpand.c
 @@ -0,0 +1,1282 @@
 +/* Copyright (c) 2015, Nordic Semiconductor
 + * All rights reserved.
