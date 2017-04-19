@@ -13,13 +13,13 @@ PKG_RELEASE:=7
 
 PKG_SOURCE_PROTO:=git
 
-PKG_REVISION:=028a319166ea0e006f370d254b0e89436fa48010
+PKG_REVISION:=677a3456afa886e759582a96e1b9d47992b17c52
 PKG_SOURCE_VERSION=$(PKG_REVISION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=http://git.kernel.org/pub/scm/bluetooth/bluez.git
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REVISION).tar.gz
 
-# PKG_FIXUP:=libtool autoreconf
+PKG_FIXUP:=libtool autoreconf
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
@@ -60,12 +60,12 @@ define Package/bluezdev-6lowpan-daemon/description
  	Nordic BLE 6lowpan daemon (Trunk)
 endef
 
-define Build/Prepare
-	$(PKG_UNPACK)
- 	# bootstrapping and patching
-	(cd $(PKG_BUILD_DIR);./bootstrap)
-	$(Build/Patch)
-endef
+# define Build/Prepare
+# 	$(PKG_UNPACK)
+#  	# bootstrapping and patching
+# 	(cd $(PKG_BUILD_DIR);./bootstrap)
+# 	$(Build/Patch)
+# endef
 
 define Package/bluezdev-libs
 $(call Package/bluezdev/Default)
