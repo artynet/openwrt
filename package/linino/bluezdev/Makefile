@@ -60,13 +60,6 @@ define Package/bluezdev-6lowpan-daemon/description
  	Nordic BLE 6lowpan daemon (Trunk)
 endef
 
-# define Build/Prepare
-# 	$(PKG_UNPACK)
-#  	# bootstrapping and patching
-# 	(cd $(PKG_BUILD_DIR);./bootstrap)
-# 	$(Build/Patch)
-# endef
-
 define Package/bluezdev-libs
 $(call Package/bluezdev/Default)
   SECTION:=libs
