@@ -19,7 +19,7 @@ PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=GPL-3.0
 PKG_LICENSE_FILES:=LICENSE
 
-PKG_BUILD_DEPENDS:=swig/host
+PKG_BUILD_DEPENDS:=swig/host tcl
 
 include $(INCLUDE_DIR)/host-build.mk
 include $(INCLUDE_DIR)/package.mk
