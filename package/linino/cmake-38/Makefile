@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cmake-38
-PKG_VERSION:=3.8.0
+PKG_VERSION:=3.8.1
 PKG_RELEASE:=1
 
 PKG_SOURCE_SUBDIR:=cmake-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://cmake.org/files/v3.8/
 PKG_SOURCE:=cmake-$(PKG_VERSION).tar.gz
 
-PKG_MD5SUM:=f28cba717ba38ad82a488daed8f45b5b
+PKG_MD5SUM:=e8ef820ddf7a650845252bca846696e7
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/cmake-$(PKG_VERSION)
 
