@@ -1,0 +1,17 @@
+--- a/ext/bigdecimal/bigdecimal.h	2016-12-10 08:49:15.000000000 +0100
++++ b/ext/bigdecimal/bigdecimal.h	2017-05-04 20:33:35.142236937 +0200
+@@ -90,14 +90,6 @@
+ }
+ #endif
+ 
+-#ifndef HAVE_FINITE
+-static int
+-finite(double)
+-{
+-    return !isnan(n) && !isinf(n);
+-}
+-#endif
+-
+ #ifndef isfinite
+ # ifndef HAVE_ISFINITE
+ #  define HAVE_ISFINITE 1
