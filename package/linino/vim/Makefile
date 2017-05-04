@@ -8,13 +8,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=vim
-PKG_VERSION:=8.0.0540
+PKG_VERSION:=8.0.0596
 PKG_RELEASE:=4
 VIMVER:=80
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=ftp://ftp.vim.org/pub/vim/unix/
-PKG_MD5SUM:=21b49bf690cfc23fd96b14fc7e7cf0ea
+PKG_MD5SUM:=9cc3c36f3072f60dbc7ebde226c8db09
 PKG_MAINTAINER:=Marko Ratkaj <marko.ratkaj@sartura.hr>
 
 PKG_BUILD_PARALLEL:=1
@@ -123,7 +123,8 @@ CONFIGURE_VARS += \
 	vim_cv_terminfo=yes \
 	vim_cv_toupper_broken=no \
 	vim_cv_tty_group=root \
-	vim_cv_tty_mode=0620
+	vim_cv_tty_mode=0620 \
+	vim_cv_tgent=zero
 
 ifneq ($(CONFIG_PACKAGE_vim),)
 define Build/Compile/vim
