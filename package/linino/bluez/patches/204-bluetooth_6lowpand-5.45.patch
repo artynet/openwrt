@@ -1,6 +1,6 @@
-diff -Nbur bluez-5.44/Makefile.in bluez-5.44-patch/Makefile.in
---- bluez-5.44/Makefile.in	2017-02-25 17:04:39.000000000 +0100
-+++ bluez-5.44-patch/Makefile.in	2017-04-19 23:37:39.004315577 +0200
+diff -Nbur a/Makefile.in b/Makefile.in
+--- a/Makefile.in	2017-05-04 23:07:25.000000000 +0200
++++ b/Makefile.in	2017-05-07 01:36:44.755135622 +0200
 @@ -445,6 +445,7 @@
  @CLIENT_TRUE@am__EXEEXT_1 = client/bluetoothctl$(EXEEXT)
  @MONITOR_TRUE@am__EXEEXT_2 = monitor/btmon$(EXEEXT)
@@ -63,9 +63,9 @@ diff -Nbur bluez-5.44/Makefile.in bluez-5.44-patch/Makefile.in
  @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hcieventmask.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hcisecfilter.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/hcitool.Po@am__quote@
-diff -Nbur bluez-5.44/Makefile.tools bluez-5.44-patch/Makefile.tools
---- bluez-5.44/Makefile.tools	2017-02-25 17:03:51.000000000 +0100
-+++ bluez-5.44-patch/Makefile.tools	2017-04-19 23:37:38.860315572 +0200
+diff -Nbur a/Makefile.tools b/Makefile.tools
+--- a/Makefile.tools	2017-02-25 17:03:51.000000000 +0100
++++ b/Makefile.tools	2017-05-07 01:36:44.640135618 +0200
 @@ -156,6 +156,7 @@
  if TOOLS
  bin_PROGRAMS += tools/rctest tools/l2test tools/l2ping tools/bccmd \
@@ -84,9 +84,9 @@ diff -Nbur bluez-5.44/Makefile.tools bluez-5.44-patch/Makefile.tools
  tools_hex2hcd_SOURCES = tools/hex2hcd.c
  
  tools_mpris_proxy_SOURCES = tools/mpris-proxy.c
-diff -Nbur bluez-5.44/tools/bluetooth_6lowpand.c bluez-5.44-patch/tools/bluetooth_6lowpand.c
---- bluez-5.44/tools/bluetooth_6lowpand.c	1970-01-01 01:00:00.000000000 +0100
-+++ bluez-5.44-patch/tools/bluetooth_6lowpand.c	2017-04-19 23:37:39.047315578 +0200
+diff -Nbur a/tools/bluetooth_6lowpand.c b/tools/bluetooth_6lowpand.c
+--- a/tools/bluetooth_6lowpand.c	1970-01-01 01:00:00.000000000 +0100
++++ b/tools/bluetooth_6lowpand.c	2017-05-07 01:36:44.758135622 +0200
 @@ -0,0 +1,1282 @@
 +/* Copyright (c) 2015, Nordic Semiconductor
 + * All rights reserved.
