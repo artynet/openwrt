@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluez
-PKG_VERSION:=5.44
+PKG_VERSION:=5.45
 PKG_RELEASE:=7
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=@KERNEL/linux/bluetooth/
-PKG_MD5SUM:=94273617129ced06612fcb9f5273d14c
+PKG_MD5SUM:=20d936917afc7e1ffa091f5213081c55
 
 PKG_LICENSE:=GPL-2.0+
 PKG_LICENSE_FILES:=COPYING
@@ -93,7 +93,6 @@ endef
 
 CONFIGURE_ARGS += \
 	--enable-static \
-	--enable-shared \
 	--enable-client \
 	--enable-datafiles \
 	--enable-experimental \
