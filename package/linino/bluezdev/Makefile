@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 
-PKG_REVISION:=e9c76b0d76beb48f7876c111a0d95eb848f4dfbe
+PKG_REVISION:=5ee722e3ea55c630ac1e540a934fc6258a0de72f
 PKG_SOURCE_VERSION=$(PKG_REVISION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=http://git.kernel.org/pub/scm/bluetooth/bluez.git
@@ -99,7 +99,6 @@ endef
 
 CONFIGURE_ARGS += \
 	--enable-static \
-	--enable-shared \
 	--enable-client \
 	--enable-datafiles \
 	--enable-experimental \
