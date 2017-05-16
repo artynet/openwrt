@@ -7,7 +7,7 @@
 
 include $(TOPDIR)/rules.mk
 
-PKG_NAME:=arduino-files
+PKG_NAME:=arduino-files-18
 PKG_VERSION:=1.8.2
 PKG_RELEASE:=1
 
@@ -19,14 +19,14 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/arduino-$(PKG_VERSION)
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/arduino-files
+define Package/arduino-files-18
 	SECTION:=devel
 	CATEGORY:=Development
-	TITLE:=Configuration Files for Arduino IDE
+	TITLE:=Configuration Files for Arduino IDE v1.8.x
 	DEPENDS:=+libc +libstdcpp
 endef
 
-define Package/arduino-files/description
+define Package/arduino-files-18/description
 	Configuration Files for Arduino IDE
 endef
 
@@ -43,28 +43,28 @@ define Build/Compile
 	# NOOP
 endef
 
-define Package/arduino-files/install
-	$(INSTALL_DIR) $(1)/opt/arduino
+define Package/arduino-files-18/install
+	$(INSTALL_DIR) $(1)/opt/arduino-18
 
-	$(CP) -r $(PKG_BUILD_DIR)/{hardware,libraries,examples} $(1)/opt/arduino
+	$(CP) -r $(PKG_BUILD_DIR)/{hardware,libraries,examples} $(1)/opt/arduino-18
 endef
 
-define Package/arduino-files/preinst
+define Package/arduino-files-18/preinst
 #!/bin/sh
 # check if we are on a real system
-if [ ! -d /opt/arduino ]
+if [ ! -d /opt/arduino-18 ]
 then
-	mkdir -p /opt/arduino
+	mkdir -p /opt/arduino-18
 fi
 endef
 
-define Package/arduino-files/postrm
+define Package/arduino-files-18/postrm
 #!/bin/sh
 # check if we are on a real system
-if [ -d /opt/arduino ]
+if [ -d /opt/arduino-18 ]
 then
-	rm -rvf /opt/arduino
+	rm -rvf /opt/arduino-18
 fi
 endef
 
-$(eval $(call BuildPackage,arduino-files))
+$(eval $(call BuildPackage,arduino-files-18))
