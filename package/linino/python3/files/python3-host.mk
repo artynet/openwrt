@@ -50,7 +50,7 @@ define Build/Compile/HostPy3RunHost
 		LDSHARED="$(HOSTCC) -shared" \
 		CFLAGS="$(HOST_CFLAGS)" \
 		CPPFLAGS="$(HOST_CPPFLAGS) -I$(HOST_PYTHON3_INC_DIR)" \
-		LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON3_VERSION) -Wl$(comma)-rpath=$(STAGING_DIR_HOST)/usr/lib" \
+		LDFLAGS="$(HOST_LDFLAGS) -lpython$(PYTHON3_VERSION) -Wl$(comma)-rpath=$(STAGING_DIR_HOST)/lib" \
 		_PYTHON_HOST_PLATFORM=linux2 \
 		$(3) \
 		, \
