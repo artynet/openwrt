@@ -42,9 +42,43 @@ define Package/lora-gateway/description
 	a Semtech LoRa multi-channel RF receiver (a.k.a. concentrator).
 endef
 
-# TARGET_CFLAGS += $(FPIC) -O2 -Wall -Wextra -std=c99 -Iinc -I. -lm
+define Package/lora-gateway/config
+	menu "LoRa Tweaks"
 
-TARGET_CFLAGS:=$(FPIC) -O2 -Wall -Wextra -Iinc -I. -lm
+	config LORA_DEBUG
+		bool "enable LoRa components debug"
+		default y
+
+	endmenu
+endef
+
+TARGET_CFLAGS += $(FPIC) -O2 -Wall -Wextra -std=gnu99 -Iinc -I. -lm
+
+LORA_MAKEOPTS= $(MAKE_FLAGS) \
+	$(MAKE_VARS) \
+	-C $(PKG_BUILD_DIR)
+
+# ifeq ($(CONFIG_LORA_DEBUG),y)
+# 	$(SED) "s/0/1/g" $(PKG_BUILD_DIR)/libloragw/library.cfg
+# endif
+
+ifeq ($(CONFIG_LORA_DEBUG),y)
+  define Build/Compile/loradebug
+	$(SED) 's/0/1/g' $(PKG_BUILD_DIR)/libloragw/library.cfg
+	$(MAKE) $(LORA_MAKEOPTS)
+  endef
+endif
+
+ifeq ($(CONFIG_LORA_DEBUG),)
+  define Build/Compile/loranodebug
+	$(MAKE) $(LORA_MAKEOPTS)
+  endef
+endif
+
+define Build/Compile
+	$(call Build/Compile/loradebug)
+	$(call Build/Compile/loranodebug)
+endef
 
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include/lora-gateway
