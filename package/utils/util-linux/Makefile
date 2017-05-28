@@ -370,12 +370,12 @@ endef
 define Package/swap-utils
 $(call Package/util-linux/Default)
   TITLE:=swap space management utilities
-  DEPENDS+= +libblkid
+  DEPENDS+= +libblkid +libmount +libsmartcols
   SUBMENU:=disc
 endef
 
 define Package/swap-utils/description
- contains: mkswap, swaplabel
+ contains: mkswap, swaplabel, swapon, swapoff
 endef
 
 define Package/uuidd
@@ -581,6 +581,8 @@ define Package/swap-utils/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/.libs/mkswap $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/.libs/swaplabel $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/.libs/swapon $(1)/usr/sbin/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/.libs/swapoff $(1)/usr/sbin/
 endef
 
 define Package/uuidd/install
