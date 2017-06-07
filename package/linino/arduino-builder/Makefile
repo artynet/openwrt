@@ -11,7 +11,7 @@ PKG_NAME:=arduino-builder
 PKG_VERSION:=1.3.25
 PKG_RELEASE:=2
 
-PKG_SOURCE_URL:=http://download.linino.org/src/
+PKG_SOURCE_URL:=http://download.linino.org/pkg-src/
 PKG_SOURCE:=arduino-builder-$(PKG_VERSION)-linux_mips.tar.bz2
 PKG_MD5SUM:=44e571707079f52e823e19aad92f32e0
 
