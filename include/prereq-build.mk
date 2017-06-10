@@ -144,7 +144,7 @@ $(eval $(call SetupHostCommand,python,Please install Python 2.x, \
 $(eval $(call SetupHostCommand,svn,Please install the Subversion client, \
 	svn --version | grep Subversion))
 
-$(eval $(call SetupHostCommand,git,Please install Git (git-core) >= 1.6.5, \
+$(eval $(call SetupHostCommand,git,Please install Git (git-core) >= 1.7.12.2, \
 	git --exec-path | xargs -I % -- grep -q -- --recursive %/git-submodule))
 
 $(eval $(call SetupHostCommand,file,Please install the 'file' package, \
