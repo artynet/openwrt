@@ -1,5 +1,5 @@
 diff --git a/Makefile.tools b/Makefile.tools
-index 55d392e45..c547f2d9d 100644
+index c0482fb5f..3a86058fd 100644
 --- a/Makefile.tools
 +++ b/Makefile.tools
 @@ -10,7 +10,7 @@ client_bluetoothctl_SOURCES = client/main.c \
@@ -11,7 +11,7 @@ index 55d392e45..c547f2d9d 100644
  endif
  
  if MONITOR
-@@ -354,7 +354,7 @@ noinst_PROGRAMS += tools/btmgmt tools/obex-client-tool tools/obex-server-tool \
+@@ -357,7 +357,7 @@ noinst_PROGRAMS += tools/btmgmt tools/obex-client-tool tools/obex-server-tool \
  tools_obex_client_tool_SOURCES = $(gobex_sources) $(btio_sources) \
  						tools/obex-client-tool.c
  tools_obex_client_tool_LDADD = lib/libbluetooth-internal.la \
@@ -20,7 +20,7 @@ index 55d392e45..c547f2d9d 100644
  
  tools_obex_server_tool_SOURCES = $(gobex_sources) $(btio_sources) \
  						tools/obex-server-tool.c
-@@ -363,16 +363,16 @@ tools_obex_server_tool_LDADD = lib/libbluetooth-internal.la @GLIB_LIBS@
+@@ -366,16 +366,16 @@ tools_obex_server_tool_LDADD = lib/libbluetooth-internal.la @GLIB_LIBS@
  tools_bluetooth_player_SOURCES = tools/bluetooth-player.c \
  				client/display.h client/display.c
  tools_bluetooth_player_LDADD = gdbus/libgdbus-internal.la \
@@ -40,7 +40,7 @@ index 55d392e45..c547f2d9d 100644
  if DEPRECATED
  noinst_PROGRAMS += attrib/gatttool
  
-@@ -382,7 +382,7 @@ attrib_gatttool_SOURCES = attrib/gatttool.c attrib/att.c attrib/gatt.c \
+@@ -385,7 +385,7 @@ attrib_gatttool_SOURCES = attrib/gatttool.c attrib/att.c attrib/gatt.c \
  				attrib/utils.c src/log.c client/display.c \
  				client/display.h
  attrib_gatttool_LDADD = lib/libbluetooth-internal.la \
