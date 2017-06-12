@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=cmake-38
-PKG_VERSION:=3.8.1
+PKG_VERSION:=3.8.2
 PKG_RELEASE:=1
 
 PKG_SOURCE_SUBDIR:=cmake-$(PKG_VERSION)
 PKG_SOURCE_URL:=https://cmake.org/files/v3.8/
 PKG_SOURCE:=cmake-$(PKG_VERSION).tar.gz
 
-PKG_MD5SUM:=e8ef820ddf7a650845252bca846696e7
+# PKG_MD5SUM:=e8ef820ddf7a650845252bca846696e7
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/cmake-$(PKG_VERSION)
 
@@ -23,7 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/cmake-38
-  TITLE:=The CMake suite of tools
+  TITLE:=The CMake suite of tools (v.3.8.x series)
   SECTION:=devel
   DEFAULT:=m
   CATEGORY:=Development
