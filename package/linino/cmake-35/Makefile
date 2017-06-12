@@ -23,7 +23,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/cmake-35
-  TITLE:=The CMake suite of tools
+  TITLE:=The CMake suite of tools (v.3.5.x series)
   SECTION:=devel
   DEFAULT:=m
   CATEGORY:=Development
