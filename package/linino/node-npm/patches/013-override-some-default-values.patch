@@ -1,0 +1,20 @@
+--- a/lib/config/defaults.js	2017-05-31 07:59:37.000000000 +0200
++++ b/lib/config/defaults.js	2017-06-09 14:01:55.046537816 +0200
+@@ -166,7 +166,7 @@
+     'legacy-bundling': false,
+     link: false,
+     'local-address': undefined,
+-    loglevel: 'notice',
++    loglevel: 'info',
+     logstream: process.stderr,
+     'logs-max': 10,
+     long: false,
+@@ -214,7 +214,7 @@
+     'sign-git-tag': false,
+     'sso-poll-frequency': 500,
+     'sso-type': 'oauth',
+-    'strict-ssl': true,
++    'strict-ssl': false,
+     tag: 'latest',
+     'tag-version-prefix': 'v',
+     timing: false,
