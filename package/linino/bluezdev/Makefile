@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=bluezdev
-PKG_VERSION:=5.45
+PKG_VERSION:=5.46
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 
-PKG_REVISION:=5ee722e3ea55c630ac1e540a934fc6258a0de72f
+PKG_REVISION:=ffc08888573c26628b304fae1d6614a1dec1c412
 PKG_SOURCE_VERSION=$(PKG_REVISION)
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
 PKG_SOURCE_URL:=http://git.kernel.org/pub/scm/bluetooth/bluez.git
@@ -148,6 +148,7 @@ define Package/bluezdev-utils/install
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/rctest $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/rfcomm $(1)/usr/bin/
 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/sdptool $(1)/usr/bin/
+	$(CP) $(PKG_BUILD_DIR)/tools/advtest $(1)/usr/bin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/attrib/gatttool $(1)/usr/bin/
 endef
 
