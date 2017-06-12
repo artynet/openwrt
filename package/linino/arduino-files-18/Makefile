@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=arduino-files-18
-PKG_VERSION:=1.8.2
+PKG_VERSION:=1.8.3
 PKG_RELEASE:=1
 
 PKG_SOURCE_URL:=http://download.arduino.org/IDE/$(PKG_VERSION)/
 PKG_SOURCE:=arduino-$(PKG_VERSION)-linux32.tar.xz
-PKG_MD5SUM:=d284f3079632fa3d95caefe534fdc1cf
+# PKG_MD5SUM:=d284f3079632fa3d95caefe534fdc1cf
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/arduino-$(PKG_VERSION)
 
