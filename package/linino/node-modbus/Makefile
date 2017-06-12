@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=modbus
 PKG_NAME:=node-$(PKG_NPM_NAME)
-PKG_VERSION:=0.0.15
+PKG_VERSION:=0.0.16
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NPM_NAME)-$(PKG_VERSION).tgz
@@ -17,7 +17,7 @@ PKG_SOURCE_URL:=http://registry.npmjs.com/$(PKG_NPM_NAME)/-/
 # PKG_MD5SUM:=f68e9c828c1b55ba00445d3e09872325
 
 PKG_BUILD_DEPENDS:=node
-PKG_NODE_VERSION:=6.10.3
+PKG_NODE_VERSION:=6.11.0
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -42,13 +42,12 @@ endef
 EXTRA_CXXFLAGS =+ $(FPIC)
 
 define Build/Compile
-	$(MAKE_FLAGS) \
-    PATH="/usr/bin/:$(PATH)" \
+    $(MAKE_FLAGS) \
     GYPFLAGS="-Dv8_use_mips_abi_hardfloat=false -Dv8_can_use_fpu_instructions=false" \
     npm_config_arch=mips \
     npm_config_nodedir=$(BUILD_DIR)/node-v$(PKG_NODE_VERSION)/ \
     PREFIX="$(PKG_INSTALL_DIR)/usr/" \
-    $(STAGING_DIR_HOST)/bin/npm install --target_arch=mips -g $(PKG_BUILD_DIR)
+    $(STAGING_DIR_HOST)/bin/npm install --target_arch=mips --build-from-source -g $(PKG_BUILD_DIR)
 endef
 
 define Package/node-modbus/install
