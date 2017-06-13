@@ -1,0 +1,10 @@
+--- a/CMakeLists.txt	2016-12-24 00:01:32.000000000 +0100
++++ b/CMakeLists.txt	2017-06-12 18:33:34.766263256 +0200
+@@ -42,7 +42,6 @@
+ 
+ # Add the CMake directory for custon CMake modules
+ set(CMAKE_MODULE_PATH "${LAPACK_SOURCE_DIR}/CMAKE" ${CMAKE_MODULE_PATH})
+-include(PreventInSourceBuilds)
+ include(PreventInBuildInstalls)
+ 
+ if(UNIX)
