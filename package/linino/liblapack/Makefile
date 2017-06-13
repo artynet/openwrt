@@ -3,16 +3,17 @@
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
-#-DCMAKE_INSTALL_PREFIX=/home/arturo/Scaricati/TARBALLS/lapack-3.6.0/build/install_temp -DBUILD_SHARED_LIBS=ON ../
+#
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=liblapack
-PKG_VERSION:=3.6.1
+PKG_VERSION:=3.7.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=lapack-$(PKG_VERSION).tgz
 PKG_SOURCE_URL:=http://www.netlib.org/lapack/
+PKG_MD5SUM:=697bb8d67c7d336a0f339cc9dd0fa72f
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/lapack-$(PKG_VERSION)
 
@@ -24,7 +25,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
 
 define Package/liblapack
-  TITLE:=Free open source implementation of the Object Exchange (OBEX) protocol.
+  TITLE:=Linear Algebra PACKage.
   SECTION:=libs
   DEFAULT:=m
   CATEGORY:=Libraries
