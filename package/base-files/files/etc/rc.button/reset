@@ -6,15 +6,22 @@
 
 logger "$BUTTON pressed for $SEEN seconds"
 
-if [ "$SEEN" -lt 1 ]
+if [ "$SEEN" -gt 5 -a "$SEEN" -lt 10 ]
 then
-	echo "REBOOT" > /dev/console
+	echo "REBOOT WIFI" > /dev/console
 	sync
-	reboot
-elif [ "$SEEN" -gt 5 ]
+	logger "resetting wifi"
+	sleep 2
+	wifi-reset-and-reboot
+	exit 0
+elif [ "$SEEN" -gt 25 ]
 then
 	echo "FACTORY RESET" > /dev/console
+	logger "resetting to factory defaults"
+	sleep 2
+	rm /root/.osjs/settings.json
 	jffs2reset -y && reboot &
+	exit 0
 fi
 
 return 0
