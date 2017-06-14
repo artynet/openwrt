@@ -1,0 +1,26 @@
+#!/bin/sh
+
+lingpio export &> /dev/null
+echo out > /sys/class/gpio/D4/direction
+echo 1 > /sys/class/gpio/D4/value					#START BUTTON
+echo in > /sys/class/gpio/D4/direction
+echo out > /sys/class/gpio/D2/direction
+echo out > /sys/class/gpio/D8/direction
+#echo out > /sys/class/gpio/D6/direction
+START=0
+while true; do
+	but_STATUS=$(cat /sys/class/gpio/D4/value)
+	#echo $but_STATUS
+	if [ "$but_STATUS" -eq "0" ]; #pullup
+	then
+		if [ "$START" -eq "0" ];then
+			echo 0 > /sys/class/gpio/D8/value
+			echo 0 > /sys/class/gpio/D6/value
+			test-nrf-esp /root/primoTest/BIN/sketch_test_primoV2.ino-merged.hex /root/primoTest/BIN/sketch_test_primo_NFC.ino-merged.hex \
+				/root/primoTest/BIN/WifiRestServer-PRIMO.ino-merged.hex
+			START=1
+		fi
+	else
+		START=0
+	fi
+done
