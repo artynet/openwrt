@@ -1,0 +1,205 @@
+#!/bin/sh
+
+LOGFILE="/tmp/primo_test_part2.log"																							#global file log name
+PROGRAM_BLE_GPIO_NFC="/root/primoTest/BIN/sketch_test_primoV2.ino-merged.hex"   #test ble_gpio firmware binary
+PROGRAM_FW_PROD="/root/primoTest/BIN/WifiRestServer-NFC-PRIMO.ino-merged.hex"   		#production nrf firmware binary
+
+#================= DEBUG FUNCTION ========================
+
+DONE(){
+
+	python /root/primoTest/Blink_REST.py &	#blink led 9 on the primo board
+
+}
+
+ERROR() {
+
+	python /root/primoTest/Blink_LED_ERROR.py & #blink led 8 on the primo board
+	exit
+
+}
+
+PRIMO_PORT(){		#check ACM device of the primo board
+
+	check_port="false"
+	for i in /dev/ttyACM*
+	do
+		# echo $i
+		if `udevadm info -a -n $i | grep -q "DAPLink"`
+		then
+			check_port="true"
+			port=$i
+		fi
+	done
+
+	if [ $check_port == "false" ]
+	then
+		ERROR
+	fi
+
+}
+
+#================= PRIMO BATTERY TEST =================
+test_Battery(){
+
+	echo 1 > /sys/bus/iio/devices/iio\:device0/enable		#enable analog device
+	echo 0 > /sys/class/gpio/D2/value										#test battery charge
+	sleep 1
+	read1=$(cat /sys/bus/iio/devices/iio\:device0/in_voltage_A0_raw)
+	read2=$(cat /sys/bus/iio/devices/iio\:device0/in_voltage_A0_raw)
+	read3=$(cat /sys/bus/iio/devices/iio\:device0/in_voltage_A0_raw)
+	readA0=$((read1+read2+read3))
+	readM0=$((readA0/3))
+
+	echo 1 > /sys/class/gpio/D2/value			#test battery discharge
+	sleep 1
+	read4=$(cat /sys/bus/iio/devices/iio\:device0/in_voltage_A1_raw)
+	read5=$(cat /sys/bus/iio/devices/iio\:device0/in_voltage_A1_raw)
+	read6=$(cat /sys/bus/iio/devices/iio\:device0/in_voltage_A1_raw)
+	readA1=$((read4+read5+read6))
+	readM1=$((readA1/3))
+
+	if [ "$readM0" -le "40" -a "$readM0" -ge "110" ];        #need to check the gap
+	then
+		echo "ERROR: battery charge fail, value: $readM0" >> $LOGFILE
+		ERROR
+	fi
+
+	echo "OK: battery charge pass, value: $readM0" >> $LOGFILE
+
+	if [ "$readM1" -le "30" -a "$readM1" -ge "100" ];
+	then
+		echo echo "ERROR: battery discharge fail, value: $readM1" >> $LOGFILE
+		ERROR
+	fi
+
+	echo "OK: battery discharge pass, value: $readM1" >> $LOGFILE
+	echo 0 > /sys/class/gpio/D2/value   #to enable Primo usb
+}
+
+#================= PRIMO NFC TEST ========================
+
+test_NFC(){
+
+  neard &
+  sleep 1
+  TIMEOUT=10
+  SUBSTRING="Representation ="
+  COMMAND="/usr/bin/ncl-demo poll"
+  expect -c "set timeout $TIMEOUT; spawn $COMMAND; expect \"$SUBSTRING\"" | grep 'Representation =' > /tmp/flashout_nfc
+  sed -i /spawn/d /tmp/flashout_nfc
+	STATUS=$(grep -c "Representation" /tmp/nfclog.txt)
+	if [ "$STATUS" != "1" ];
+	then
+		echo "ERROR: test nfc fail" >> $LOGFILE
+		ERROR
+	fi
+
+	echo "OK: test nfc done" >> $LOGFILE
+}
+#================== PRIMO BLE/GPIO/IR TEST ============================
+
+test_BLE_GPIO(){
+
+	openocd -f board/arduino_primo.cfg -c "program $PROGRAM_BLE_GPIO_NFC verify reset exit" --log_output /tmp/flashout_ble_gpio
+	sleep 1
+	if grep -q "Error:" /tmp/flashout_ble_gpio
+	then
+		echo "ERROR: unable to upload BLE_GPIO_NFC firmware" >> $LOGFILE
+		ERROR
+	fi
+	echo "OK: uploaded BLE-GPIO firmware" >> $LOGFILE
+	sleep 3
+	PRIMO_PORT
+	stty -F $port 115200
+	sleep 1
+	timeout 5 cat $port > /tmp/flashout_mac
+
+	check_ble="false"
+	while read -r line
+	do
+  		name="$line"
+    	#echo $name
+		if `echo $name | grep -q "ERROR"`
+		then
+			echo $name > /tmp/flashout_mac
+			ERROR
+		elif `echo $name | grep -q "Arduino-Primo"`
+		then
+			check_ble="true"
+			echo $name > /tmp/flashout_mac
+		  fi
+	done < /tmp/flashout_mac
+	
+	if [ $check_ble == "false" ]
+	then
+		echo "ERROR: test BLE fail" >> $LOGFILE
+		ERROR
+	fi
+
+	echo "OK: test BLE done" >> $LOGFILE
+
+}
+
+#==========PRIMO PRRODUCTION FIRMWARE AND WIFI TEST ====================
+
+upload_NRF_production_fw(){
+
+	openocd -f board/arduino_primo.cfg -c "program $PROGRAM_FW_PROD verify reset exit" --log_output /tmp/flashout_primo_rest
+
+	if grep -q "Error:" /tmp/flashout_primo_rest
+	then
+		echo "ERROR: unable to upload production firmware" >> $LOGFILE
+		ERROR
+	fi
+	echo "OK: uploaded production firmware" >> $LOGFILE
+
+	SSID=$(cat /tmp/flashout_mac)								#read SSID
+	echo "OK: primo SSID $SSID" >> $LOGFILE
+	sh /osjs/bin/arduino-wifi-connect.sh $SSID open "" 1	#connect to primo board
+	sleep 10
+	IP=192.168.240.1
+	PORTCONN=8080
+	PIN=9
+	#set pin 9 in output mode
+	curl http://$IP:$PORTCONN/arduino/mode/$PIN/output >> /tmp/flashout_rest_mode
+	curl http://$IP:$PORTCONN/arduino/mode/$PIN/output >> /tmp/flashout_rest_mode
+	MODE=$(grep -c "OUTPUT" /tmp/flashout_rest_mode)
+	if [ "$MODE" != "1" ];
+	then
+		echo "ERROR: rest call fail" >> $LOGFILE
+		ERROR
+	fi
+	echo "OK: rest call done" >> $LOGFILE
+
+
+}
+
+#================================================================
+#======================== MAIN ==================================
+
+killall python &> /dev/null
+killall neard &> /dev/null
+killall curl &> /dev/null
+
+sh /root/primoTest/set_your_network.sh
+
+rm $LOGFILE	&> /dev/null				#delete previous log file
+rm /tmp/flashout_* &> /dev/null
+
+touch $LOGFILE  								#file log
+
+if [ ! `which openocd` ]				#openocd check
+then
+    echo "ERROR: OpenOCD is not installed on your system ! Please take care of it before running again this script !" >> $LOGFILE
+fi
+
+#test_Battery
+#sleep 5
+test_BLE_GPIO
+sleep 2
+test_NFC
+sleep 10
+upload_NRF_production_fw
+
+DONE
