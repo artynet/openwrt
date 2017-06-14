@@ -1,0 +1,31 @@
+#!/bin/sh
+
+[ "${ACTION}" = "released" ] || exit 0
+
+. /lib/functions.sh
+
+logger "$BUTTON pressed for $SEEN seconds"
+
+if [ "$SEEN" -lt 2 ]
+then
+	if [ ! -d "/sys/class/gpio/D2" ]
+	then
+		echo 106 > /sys/class/gpio/expert
+	fi
+	if [ ! -d "/sys/class/gpio/D8" ] 
+	then
+		echo 112 > /sys/class/gpio/expert
+	fi
+	echo out > /sys/class/gpio/D2/output
+	echo out > /sys/class/gpio/D8/output
+	echo 1 > /sys/class/gpio/D8/value
+	sleep 1
+	echo 0 > /sys/class/gpio/D8/value
+	sleep 1
+	echo 1 > /sys/class/gpio/D8/value
+	sleep 1
+	echo 0 > /sys/class/gpio/D8/value
+	test-nrf-esp 
+fi
+
+return 0
