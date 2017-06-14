@@ -1,0 +1,27 @@
+#!/bin/sh
+
+[ "${ACTION}" = "released" ] || exit 0
+
+. /lib/functions.sh
+
+logger "$BUTTON pressed for $SEEN seconds"
+
+if [ "$SEEN" -gt 5 -a "$SEEN" -lt 10 ]
+then
+	echo "REBOOT WIFI" > /dev/console
+	sync
+	logger "resetting wifi"
+	sleep 2
+	wifi-reset-and-reboot
+	exit 0
+elif [ "$SEEN" -gt 25 ]
+then
+	echo "FACTORY RESET" > /dev/console
+	logger "resetting to factory defaults"
+	sleep 2
+	rm /root/.osjs/settings.json
+	jffs2reset -y && reboot &
+	exit 0
+fi
+
+return 0
