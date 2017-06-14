@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-hologram
 PKG_VERSION:=0.5.13
-PKG_RELEASE:=8
+PKG_RELEASE:=10
 
 PKG_REVISION:=v0.5.13
 
@@ -46,6 +46,23 @@ define Package/python-hologram/install
 	$(CP) \
 		$(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
 		$(1)$(PYTHON_PKG_DIR)
+
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/hologram $(1)/usr/bin
+
+	$(INSTALL_DIR) $(1)/lib/udev/rules.d
+	$(INSTALL_DATA) ./files/83-ublox-iota.rules $(1)/lib/udev/rules.d
+endef
+
+define Package/lora-gateway/postinst
+#!/bin/sh
+# check if we are on real system
+if [ -z "$${IPKG_INSTROOT}" ]; then
+        echo "Refreshing udev rules..."
+        udevadm control --reload-rules
+		udevadm trigger
+fi
+exit 0
 endef
 
 $(eval $(call BuildPackage,python-hologram))
