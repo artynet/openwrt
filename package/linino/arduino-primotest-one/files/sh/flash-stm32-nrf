@@ -1,0 +1,120 @@
+#!/bin/sh
+
+LOGFILE="/tmp/primo_test_part1.log"																		#global file log name
+PROGRAM_STM_BL="/root/primoTest/BIN/stm32f103xb_bl.hex"   						#stm bootloader binary
+PROGRAM_STM_FW="/root/primoTest/BIN/stm32f103xb_primo_if.hex"   			#stm firmware binary
+PROGRAM_NRF_FW="/root/primoTest/BIN/Button_test_v21.ino-merged.hex"   #nrf firmware binary
+PROGRAM_ESP_FW="/root/primoTest/BIN/ArduinoFirmwareEsp.bin"						#esp firmware
+PROGRAM_ESP_WP="/root/primoTest/BIN/ArduinoWebPanelEsp.bin"						#esp webpanel fw
+
+#================= LED DEBUG FUNCTION ========================
+
+DONE() {
+	echo timer > /sys/class/leds/usb/trigger 	#blink on usb led
+}
+
+ERROR() {
+	echo default-on > /sys/class/leds/usb/trigger
+	exit
+}
+
+START() {
+	echo none > /sys/class/leds/usb/trigger
+	sleep 1
+	DONE
+	sleep 1
+	echo none > /sys/class/leds/usb/trigger
+}
+
+#================= STM32 BOOTLOADER FUNCTION =================
+
+bootloader_STM(){
+	openocd -f board/stm32_primo.cfg -c "cmsis_dap_serial $CMSIS_SERIAL" -c "program $PROGRAM_STM_BL verify reset exit" --log_output /tmp/flashout-stm32-bl
+
+	if grep -q "Error:" /tmp/flashout-stm32-bl || grep -q "failed" /tmp/flashout-stm32-bl
+	   then
+			 echo "ERROR: STM bootloader flash fail" >> $LOGFILE
+	     ERROR
+	fi
+	echo "OK: STM bootloader flash done" >> $LOGFILE
+
+}
+
+#================= STM32 FIRMWARE FUNCTION ========================
+
+firmware_STM(){
+
+	openocd -f board/stm32_primo.cfg -c "cmsis_dap_serial $CMSIS_SERIAL" -c "program $PROGRAM_STM_FW verify reset exit" --log_output /tmp/flashout-stm32-primo-if
+	# check for error
+	if grep -q "Error:" /tmp/flashout-stm32-primo-if || grep -q "failed" /tmp/flashout-stm32-primo-if
+	   then
+			 echo "ERROR: STM firmware flash fail" >> $LOGFILE
+			 ERROR
+	fi
+	echo "OK: STM firmware flash done" >> $LOGFILE
+
+}
+
+#================== ESP FIRMWARE FUNCTION ============================
+
+firmware_ESP(){
+
+	python /root/primoTest/esptool/esptool.py -p /dev/ttyUSB0 -b 115200 write_flash -ff 80m -fm qio -fs 4MB 0x0000 $PROGRAM_ESP_FW 0x00300000 $PROGRAM_ESP_WP > /tmp/flashout-ESP
+
+	if grep -q "A fatal error" /tmp/flashout-ESP
+	   then
+			 echo "ERROR: ESP flash fail" >> $LOGFILE
+	     ERROR
+	fi
+	echo "OK: ESP flash done" >> $LOGFILE
+
+}
+
+#================== NRF FIRMWARE FUNCTION=============================
+
+firmware_NRF(){
+
+	CMSIS_PRIMO=$(lsusb -d 2a03:805a -v | grep iSerial | awk '{ print $3 }')       #get primo serial id
+	openocd -f board/arduino_primo.cfg -c "cmsis_dap_serial $CMSIS_PRIMO" -c "program $PROGRAM_NRF_FW verify reset exit" --log_output /tmp/flashout-primo-blink
+	# check for error
+	if grep -q "Error:" /tmp/flashout-primo-blink || grep -q "failed" /tmp/flashout-primo-blink
+	   then
+			 echo "ERROR: NRF flash fail" >> $LOGFILE
+			 ERROR
+	fi
+
+	echo "OK: NRF flash done" >> $LOGFILE
+
+}
+
+#================================================================
+#======================== MAIN ==================================
+
+rm /tmp/flashout-* &> /dev/null		#delete previous log files
+rm $LOGFILE &> /dev/null
+
+touch $LOGFILE
+
+CMSIS_SERIAL=$(lsusb -d 03eb:2141 -v | grep iSerial | awk '{ print $3 }')       #get cmsis_dap serial ID
+
+sleep 2
+START						#blink usb led to show the start of the flash test
+
+if [ ! `which openocd` ]				#openocd check
+then
+    echo "OpenOCD is not installed on your system ! Please take care of it before running again this script !" >> $LOGFILE
+    ERROR
+fi
+
+bootloader_STM
+sleep 1
+firmware_STM
+sleep 5
+firmware_ESP
+# sleep 1
+# openocd -f board/stm32_primo.cfg -c "cmsis_dap_serial $CMSIS_SERIAL" &  #force reset
+# sleep 2
+# killall openocd
+sleep 2
+firmware_NRF
+DONE
