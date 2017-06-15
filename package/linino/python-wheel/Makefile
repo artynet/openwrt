@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=wheel
-PKG_VERSION:=0.29.0
-PKG_RELEASE:=3
+PKG_VERSION:=0.30.0a0
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/w/wheel/
-# PKG_MD5SUM:=6f9e9a617ffb904c6eb4f5b4696790db
+PKG_SOURCE_URL:=https://pypi.python.org/packages/a7/37/947b4329c4a3c72093b6c8e9b4be8c7f10c32dbb78848d3a234ce01c059d/
+PKG_MD5SUM:=aa1145d48e4da2f9415eac2d51468a83
 
 include $(INCLUDE_DIR)/package.mk
 $(call include_mk, python-package.mk)
