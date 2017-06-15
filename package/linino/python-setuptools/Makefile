@@ -3,17 +3,17 @@
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
-# 
+#
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-setuptools
-PKG_VERSION:=18.5
+PKG_VERSION:=28.0.0
 PKG_RELEASE:=1
 
 PKG_SOURCE:=setuptools-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/s/setuptools/
-PKG_MD5SUM:=533c868f01169a3085177dffe5e768bb
+PKG_SOURCE_URL:=https://pypi.python.org/packages/f7/94/eee867605a99ac113c4108534ad7c292ed48bf1d06dfe7b63daa51e49987/
+PKG_MD5SUM:=9b23df90e1510c7353a5cf07873dcd22
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/setuptools-$(PKG_VERSION)
 
@@ -55,4 +55,3 @@ endef
 
 $(eval $(call PyPackage,python-setuptools))
 $(eval $(call BuildPackage,python-setuptools))
-
