@@ -1,0 +1,11 @@
+--- a/Makefile	2015-10-08 02:50:12.000000000 +0200
++++ b/Makefile	2017-06-12 17:07:07.847255939 +0200
+@@ -167,5 +167,8 @@
+ clean:
+ 	rm -f *.o
+ 
++install:
++	@echo "finished !"
++
+ .f.o: 
+ 	$(FORTRAN) $(OPTS) -c $< -o $@
