@@ -3,17 +3,17 @@
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
-# 
+#
 
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-pip
-PKG_VERSION:=8.1.2
+PKG_VERSION:=9.0.1
 PKG_RELEASE:=1
 
 PKG_SOURCE:=pip-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/e7/a8/7556133689add8d1a54c0b14aeff0acb03c64707ce100ecd53934da1aa13/
-PKG_MD5SUM:=87083c0b9867963b29f7aba3613e8f4a
+PKG_SOURCE_URL:=https://pypi.python.org/packages/11/b6/abcb525026a4be042b486df43905d6893fb04f05aac21c32c638e939e447/
+PKG_MD5SUM:=35f01da33009719497f01a4ba69d63c9
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/python-pip-$(PKG_VERSION)
 PKG_UNPACK=$(HOST_TAR) -C $(PKG_BUILD_DIR) --strip-components=1 -xzf $(DL_DIR)/$(PKG_SOURCE)
@@ -56,4 +56,3 @@ endef
 
 $(eval $(call PyPackage,python-pip))
 $(eval $(call BuildPackage,python-pip))
-
