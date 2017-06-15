@@ -16,7 +16,7 @@ PKG_RELEASE:=6
 
 PKG_SOURCE:=Python-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://www.python.org/ftp/python/$(PKG_VERSION)
-# PKG_MD5SUM:=38d530f7efc373d64a8fb1637e3baaa7
+PKG_MD5SUM:=53b43534153bb2a0363f08bae8b9d990
 
 PKG_LICENSE:=PSF
 PKG_LICENSE_FILES:=LICENSE Modules/_ctypes/libffi_msvc/LICENSE Modules/_ctypes/darwin/LICENSE Modules/_ctypes/libffi/LICENSE Modules/_ctypes/libffi_osx/LICENSE Tools/pybench/LICENSE
