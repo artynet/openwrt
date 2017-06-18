@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014 Arduino LLC
+# Copyright (C) 2014-2017 Arduino LLC
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,21 +9,20 @@ include $(TOPDIR)/rules.mk
 
 PKG_NPM_NAME:=arduino-firmata
 PKG_NAME:=node-$(PKG_NPM_NAME)
-PKG_VERSION:=0.3.3
-PKG_RELEASE:=1
+PKG_VERSION:=0.3.4
+PKG_RELEASE:=21
 
-PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/shokai/node-arduino-firmata.git
-PKG_SOURCE_VERSION:=16e76007edf218d72df590adbd711ac6b7432845
-PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_SOURCE_VERSION)
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NPM_NAME)-$(PKG_VERSION).tgz
+PKG_SOURCE_URL:=http://registry.npmjs.org/$(PKG_NPM_NAME)/-/
+PKG_MD5SUM:=46357c4b4ae08ff30b2a2d0a32ec419d
 
-PKG_BUILD_DEPENDS:=node
+PKG_USE_MIPS16:=0
+
 PKG_NODE_VERSION:=6.11.0
 
 PKG_MAINTAINER:=John Crispin <blogic@openwrt.org>
 PKG_LICENSE:=MIT
-PKG_LICENSE_FILE:=LICENSE.txt
+PKG_LICENSE_FILES:=LICENSE.txt
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -32,36 +31,32 @@ define Package/node-arduino-firmata
   SUBMENU:=Node.js
   SECTION:=lang
   CATEGORY:=Languages
-  DEPENDS:=+node +node-serialport
-  TITLE:=Node.js package to access serial ports for reading and writing
-  URL:=https://www.npmjs.org/package/serialport
+  TITLE:=Arduino Firmata implementation for Node.js
+  URL:=https://www.npmjs.com/package/arduino-firmata
 endef
 
 define Package/node-arduino-firmata/description
- Node.js package to access serial ports for reading and writing OR Welcome your robotic JavaScript overlords. Better yet, program them!
+ Arduino Firmata implementation for Node.js
 endef
 
-define Build/Prepare
-	/bin/tar xzf $(DL_DIR)/$(PKG_SOURCE) -C $(PKG_BUILD_DIR) --strip-components 1
-	$(Build/Patch)
-endef
+TAR_OPTIONS+= --strip-components 1
+TAR_CMD=$(HOST_TAR) -C $(1) $(TAR_OPTIONS)
 
-EXTRA_LDFLAGS="-L$(TOOLCHAIN_DIR)/lib/ -Wl,-rpath-link $(TOOLCHAIN_DIR)/lib/" \
+NODEJS_CPU:=$(subst powerpc,ppc,$(subst aarch64,arm64,$(subst x86_64,x64,$(subst i386,ia32,$(ARCH)))))
 
 define Build/Compile
+	$(MAKE_VARS) \
 	$(MAKE_FLAGS) \
-	npm_config_arch=$(CONFIG_ARCH) \
+	npm_config_arch=$(NODEJS_CPU) \
 	npm_config_nodedir=$(BUILD_DIR)/node-v$(PKG_NODE_VERSION)/ \
+	npm_config_cache=$(STAGING_DIR_HOST)/share/node/npm-cache \
 	PREFIX="$(PKG_INSTALL_DIR)/usr/" \
-	$(STAGING_DIR_HOST)/bin/npm install -g $(PKG_BUILD_DIR)
+	npm install --build-from-source --target_arch=$(NODEJS_CPU) -g $(PKG_BUILD_DIR)
 endef
 
 define Package/node-arduino-firmata/install
-	mkdir -p $(1)/usr/lib/node
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/* $(1)/usr/lib/node
-	rm -rf $(1)/usr/lib/node/arduino-firmata/node_modules/serialport/ 
-	$(CP) -r ./files/* $(1)/
+	$(INSTALL_DIR) $(1)/usr/lib/node
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/node_modules/* $(1)/usr/lib/node/
 endef
 
 $(eval $(call BuildPackage,node-arduino-firmata))
-
