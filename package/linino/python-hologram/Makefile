@@ -54,7 +54,7 @@ define Package/python-hologram/install
 	$(INSTALL_DATA) ./files/83-ublox-iota.rules $(1)/lib/udev/rules.d
 endef
 
-define Package/lora-gateway/postinst
+define Package/python-hologram/postinst
 #!/bin/sh
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
