@@ -12,7 +12,7 @@ PKG_VERSION:=1.15.5
 PKG_RELEASE:=1
 
 PKG_SOURCE:=setuptools_scm-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/packages/source/s/setuptools_scm/
+PKG_SOURCE_URL:=https://pypi.python.org/packages/03/ac/dbb718dd284d41164ceeb3e3d007a1b2b15a688582076833f3fca67ae313/
 PKG_MD5SUM:=13400b4b3fa128fbda1ee52a855c4eb1
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/setuptools_scm-$(PKG_VERSION)
@@ -37,10 +37,7 @@ define Package/python-setuptools-scm/description
 endef
 
 define Build/Compile
-	$(call Build/Compile/PyMod,,\
-		install --root="$(PKG_INSTALL_DIR)" --prefix="/usr" \
-		--single-version-externally-managed \
-	)
+	$(call Build/Compile/PyMod,,install --prefix=/usr --root="$(PKG_INSTALL_DIR)")
 endef
 
 define Build/InstallDev
@@ -50,10 +47,11 @@ define Build/InstallDev
 		$(PYTHON_LIB_DIR)
 endef
 
-# define PyPackage/python-setuptools-scm/install
-# 	$(INSTALL_DIR) $(1)/usr/bin
-# 	$(CP) $(PKG_INSTALL_DIR)/usr/bin/* $(1)/usr/bin/
-# endef
+define Package/python-setuptools-scm/install
+	$(INSTALL_DIR) $(1)$(PYTHON_PKG_DIR)
+	$(CP) \
+	    $(PKG_INSTALL_DIR)$(PYTHON_PKG_DIR)/* \
+	    $(1)$(PYTHON_PKG_DIR)
+endef
 
-$(eval $(call PyPackage,python-setuptools-scm))
 $(eval $(call BuildPackage,python-setuptools-scm))
