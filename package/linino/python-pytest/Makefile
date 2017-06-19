@@ -11,10 +11,9 @@ PKG_NAME:=python-pytest
 PKG_VERSION:=3.1.1
 PKG_RELEASE:=7
 
-# PKG_REVISION:=$(PKG_VERSION)
-
 PKG_SOURCE:=pytest-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/pypi/pytest/
+PKG_SOURCE_URL:=https://pypi.python.org/packages/96/51/8fa6bdb9c80e21a90e162f6774da2506497ef0c92afae8ba654c3a5ce4c3/
+PKG_MD5SUM:=dfb110518cacc5b26ec5dd79877feb16
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/pytest-$(PKG_VERSION)
 
