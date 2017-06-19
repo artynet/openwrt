@@ -14,8 +14,8 @@ PKG_MAINTAINER:=Micke Prag <micke.prag@telldus.se>
 PKG_LICENSE:=Python-2.0
 
 PKG_SOURCE:=hjson-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://pypi.python.org/pypi/python-hjson/
-# PKG_MD5SUM:=794506184df83ef2290de0d18803dd11
+PKG_SOURCE_URL:=https://pypi.python.org/packages/89/15/4da8c596166476dde42d3ce1bb4b59e4e805cb9cf1429830db1199762871/
+PKG_MD5SUM:=3895ae6bad760b692a0afa7e62af11ab
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/hjson-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=python
@@ -38,7 +38,7 @@ define Package/python-hjson/description
 endef
 
 define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix="$(PKG_INSTALL_DIR)/usr")
+	$(call Build/Compile/PyMod,,install --prefix=/usr --root="$(PKG_INSTALL_DIR)")
 endef
 
 define Package/python-hjson/install

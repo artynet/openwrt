@@ -14,8 +14,8 @@ PKG_MAINTAINER:=Micke Prag <micke.prag@telldus.se>
 PKG_LICENSE:=Python-2.0
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
-PKG_SOURCE_URL:=https://pypi.python.org/pypi/python-wifi/
-# PKG_MD5SUM:=794506184df83ef2290de0d18803dd11
+PKG_SOURCE_URL:=https://pypi.python.org/packages/bc/ab/c49f97516f78c2b0cacb4f45873abc4ca9872942a9c4c19ded8052c8edda/
+PKG_MD5SUM:=033227169230286a63b9c059e7465c77
 
 # PKG_BUILD_DIR:=$(BUILD_DIR)/pyserial-$(PKG_VERSION)
 PKG_BUILD_DEPENDS:=python
@@ -39,7 +39,7 @@ define Package/python-wifi/description
 endef
 
 define Build/Compile
-	$(call Build/Compile/PyMod,,install --prefix="$(PKG_INSTALL_DIR)/usr")
+	$(call Build/Compile/PyMod,,install --prefix=/usr --root="$(PKG_INSTALL_DIR)")
 endef
 
 define Package/python-wifi/install
