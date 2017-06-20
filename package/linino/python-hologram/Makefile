@@ -8,10 +8,10 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-hologram
-PKG_VERSION:=0.5.13
-PKG_RELEASE:=10
+PKG_VERSION:=0.5.14
+PKG_RELEASE:=5
 
-PKG_REVISION:=v0.5.13
+PKG_REVISION:=v$(PKG_VERSION)
 
 PKG_SOURCE_PROTO:=git
 
@@ -30,7 +30,7 @@ define Package/python-hologram
   TITLE:=Hologram Python SDK
   DEFAULT:=m
   URL:=https://github.com/hologram-io/hologram-python.git
-  DEPENDS:=+python +python-light +python-pyserial +python-pppd +python-wifi +python-hjson +python-pytest
+  DEPENDS:=+python +python-light +python-pyserial +python-pppd +python-wifi +python-hjson +python-pytest +python-sdk-auth
 endef
 
 define Package/python-hologram/description
@@ -62,6 +62,22 @@ if [ -z "$${IPKG_INSTROOT}" ]; then
         udevadm control --reload-rules
 		udevadm trigger
 fi
+exit 0
+endef
+
+define Package/python-hologram/postrm
+#!/bin/sh
+# check if we are on real system
+if `grep -qs '/opt' /proc/mounts`
+then
+	PREFIX="/opt/usr"
+else
+	PREFIX="/usr"
+fi
+
+for q in Exceptions Hologram hologram_python-$(PKG_VERSION)-py2.7.egg-info scripts; do
+	rm -rf $$PREFIX/lib/python2.7/site-packages/$$q
+done
 exit 0
 endef
 
