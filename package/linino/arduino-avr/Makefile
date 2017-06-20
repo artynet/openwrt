@@ -11,7 +11,7 @@ PKG_NAME:=arduino-avr
 PKG_VERSION:=1.6.19
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://download.arduino.org/IDE/$(PKG_VERSION)/
+PKG_SOURCE_URL:=http://download.linino.org/pkg-src/
 PKG_SOURCE:=arduino-avr-$(PKG_VERSION).tar.bz2
 # PKG_MD5SUM:=d284f3079632fa3d95caefe534fdc1cf
 
