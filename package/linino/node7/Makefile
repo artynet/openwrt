@@ -105,9 +105,9 @@ HOST_CONFIGURE_ARGS:= \
 HOST_CONFIGURE_CMD:=python ./configure
 
 define Build/Prepare
-        $(Build/Prepare/Default)
-		# using sed
-		$(SED) "s#<(mkpeephole_exec)#$(MKTOOL)#g" -i $(FILE_V8_GYP)
+	$(Build/Prepare/Default)
+	# using sed
+	$(SED) "s#<(mkpeephole_exec)#$(MKTOOL)#g" -i $(FILE_V8_GYP)
 endef
 
 define Host/Install
