@@ -109,6 +109,11 @@ deflinino: scripts/config/conf prepare-tmpinfo FORCE
 	@if [ -e $(HOME)/.openwrt/deflinino ]; then cp $(HOME)/.openwrt/deflinino .config; fi
 	$< --defconfig=.config Config.in
 
+deflocal: scripts/config/conf prepare-tmpinfo FORCE
+	touch .config
+	@if [ -e $(TOPDIR)/configfiles/lininoconfig ]; then cp $(TOPDIR)/configfiles/lininoconfig .config; fi
+	$< --defconfig=.config Config.in
+
 confdefault-y=allyes
 confdefault-m=allmod
 confdefault-n=allno
