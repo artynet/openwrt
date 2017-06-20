@@ -11,7 +11,7 @@ PKG_NAME:=arduino-samd
 PKG_VERSION:=1.6.15
 PKG_RELEASE:=1
 
-PKG_SOURCE_URL:=http://download.arduino.org/IDE/$(PKG_VERSION)/
+PKG_SOURCE_URL:=http://download.linino.org/pkg-src/
 PKG_SOURCE:=arduino-samd-$(PKG_VERSION).tar.bz2
 # PKG_MD5SUM:=d284f3079632fa3d95caefe534fdc1cf
 
@@ -31,7 +31,7 @@ endef
 # Distribution URL doesn't always have the correct version
 # Using the OpenWrt/Linino mirror provides a stable version
 define Download/cmsis
-	URL:=https://download.linino.org/pkg-src/
+	URL:=http://download.linino.org/pkg-src/
 	FILE:=CMSIS-4.5.0.tar.bz2
 	# MD5SUM:=$(MD5SUM_NODE)
 endef
@@ -39,7 +39,7 @@ endef
 # Distribution URL doesn't always have the correct version
 # Using the OpenWrt/Linino mirror provides a stable version
 define Download/cmsisatmel
-	URL:=https://download.linino.org/pkg-src/
+	URL:=http://download.linino.org/pkg-src/
 	FILE:=CMSIS-Atmel-1.1.0.tar.bz2
 	# MD5SUM:=$(MD5SUM_NODE)
 endef
