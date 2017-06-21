@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-hologram
-PKG_VERSION:=0.5.14
-PKG_RELEASE:=5
+PKG_VERSION:=0.5.15
+PKG_RELEASE:=1
 
 PKG_REVISION:=v$(PKG_VERSION)
 
