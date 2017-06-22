@@ -8,8 +8,8 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-hologram
-PKG_VERSION:=0.5.15
-PKG_RELEASE:=1
+PKG_VERSION:=0.5.16
+PKG_RELEASE:=2
 
 PKG_REVISION:=v$(PKG_VERSION)
 
@@ -58,9 +58,9 @@ define Package/python-hologram/postinst
 #!/bin/sh
 # check if we are on real system
 if [ -z "$${IPKG_INSTROOT}" ]; then
-        echo "Refreshing udev rules..."
+        echo -e "\nRefreshing udev rules...\n"
         udevadm control --reload-rules
-		udevadm trigger
+        udevadm trigger
 fi
 exit 0
 endef
@@ -75,9 +75,17 @@ else
 	PREFIX="/usr"
 fi
 
-for q in Exceptions Hologram hologram_python-$(PKG_VERSION)-py2.7.egg-info scripts; do
+# completely uninstall package and python EGG
+for q in Exceptions Hologram hologram_python-$(PKG_VERSION)-py2.7.egg-info scripts UtilClasses; do
 	rm -rf $$PREFIX/lib/python2.7/site-packages/$$q
 done
+
+# refreshing UDEV rules
+if [ -z "$${IPKG_INSTROOT}" ]; then
+        echo -e "\nRefreshing udev rules...\n"
+        udevadm control --reload-rules
+        udevadm trigger
+fi
 exit 0
 endef
 
