@@ -2,7 +2,7 @@ diff --git a/tools/gyp/pylib/gyp/generator/make.py b/tools/gyp/pylib/gyp/generat
 index f7f519b3e6..0fc5be2dd6 100644
 --- a/tools/gyp/pylib/gyp/generator/make.py
 +++ b/tools/gyp/pylib/gyp/generator/make.py
-@@ -177,7 +177,7 @@ quiet_cmd_alink = LIBTOOL-STATIC $@
+@@ -201,7 +201,7 @@ quiet_cmd_alink = LIBTOOL-STATIC $@
  cmd_alink = rm -f $@ && ./gyp-mac-tool filter-libtool libtool $(GYP_LIBTOOLFLAGS) -static -o $@ $(filter %.o,$^)
  
  quiet_cmd_link = LINK($(TOOLSET)) $@
