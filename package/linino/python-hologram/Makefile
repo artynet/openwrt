@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=python-hologram
 PKG_VERSION:=0.5.16
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_REVISION:=v$(PKG_VERSION)
 
@@ -30,7 +30,7 @@ define Package/python-hologram
   TITLE:=Hologram Python SDK
   DEFAULT:=m
   URL:=https://github.com/hologram-io/hologram-python.git
-  DEPENDS:=+python +python-light +python-pyserial +python-pppd +python-wifi +python-hjson +python-pytest +python-sdk-auth
+  DEPENDS:=+python +python-light +python-pyserial +python-pppd +python-wifi +python-hjson +python-pytest +python-sdk-auth +procps-ps
 endef
 
 define Package/python-hologram/description
