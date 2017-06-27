@@ -1,0 +1,17 @@
+diff --git a/Hologram/Network/Modem/ModemMode/pppd.py b/Hologram/Network/Modem/ModemMode/pppd.py
+index bbe3141..cb8c4e3 100644
+--- a/Hologram/Network/Modem/ModemMode/pppd.py
++++ b/Hologram/Network/Modem/ModemMode/pppd.py
+@@ -43,12 +43,6 @@ class PPPConnection(object):
+ 
+         self._commands = []
+ 
+-        if kwargs.pop('sudo', True):
+-            sudo_path = kwargs.pop('sudo_path', '/usr/bin/sudo')
+-            if not os.path.isfile(sudo_path) or not os.access(sudo_path, os.X_OK):
+-                raise IOError('%s not found' % sudo_path)
+-            self._commands.append(sudo_path)
+-
+         pppd_path = kwargs.pop('pppd_path', '/usr/sbin/pppd')
+         if not os.path.isfile(pppd_path) or not os.access(pppd_path, os.X_OK):
+             raise IOError('%s not found' % pppd_path)
