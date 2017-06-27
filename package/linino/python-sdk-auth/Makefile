@@ -30,7 +30,7 @@ define Package/python-sdk-auth
   TITLE:=sdk auth for hologram
   DEFAULT:=m
   URL:=https://pypi.python.org/pypi/hjson
-  DEPENDS:=+python +python-hologram
+  DEPENDS:=+python +python-light
 endef
 
 define Package/python-sdk-auth/description
