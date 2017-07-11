@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
-# PKG_MD5SUM:=83e4b9a291a18a7ca1be29aadcabd561
+PKG_MD5SUM:=a72dfb6839e173e3cb2460b85d78f75c
 
 PKG_BUILD_DEPENDS:=python/host node7/host
 PKG_INSTALL:=1
