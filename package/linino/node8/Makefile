@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=node8
-PKG_VERSION:=v8.1.3
+PKG_VERSION:=v8.1.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=node-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=http://nodejs.org/dist/$(PKG_VERSION)
-PKG_MD5SUM:=b764a96d2b4e76709339c8c55f3d8951
+PKG_MD5SUM:=06b4632a4a2ab1f08e8b46de6c593567
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/node-$(PKG_VERSION)
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/node-$(PKG_VERSION)
@@ -51,7 +51,7 @@ endef
 define Package/node8/config
 	menu "Module Selection"
 
-	config NODEJS_ICU
+	config NODEJS_8_ICU
 		bool "enable i18n features"
 		default y
 
@@ -71,7 +71,7 @@ CONFIGURE_ARGS:= \
 	--shared-openssl \
 	--prefix=/usr
 
-ifeq ($(CONFIG_NODEJS_ICU),y)
+ifeq ($(CONFIG_NODEJS_8_ICU),y)
 CONFIGURE_ARGS+= \
 	--with-intl=system-icu
 else
