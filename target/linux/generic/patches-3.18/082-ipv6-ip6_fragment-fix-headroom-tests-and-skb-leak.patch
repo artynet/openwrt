@@ -44,22 +44,22 @@ Closes 20532
 
 --- a/net/ipv6/ip6_output.c
 +++ b/net/ipv6/ip6_output.c
-@@ -597,20 +597,22 @@ int ip6_fragment(struct sk_buff *skb, in
+@@ -600,20 +600,22 @@ int ip6_fragment(struct sk_buff *skb, in
  	}
  	mtu -= hlen + sizeof(struct frag_hdr);
- 
+
 +	hroom = LL_RESERVED_SPACE(rt->dst.dev);
  	if (skb_has_frag_list(skb)) {
  		int first_len = skb_pagelen(skb);
  		struct sk_buff *frag2;
- 
+
  		if (first_len - hlen > mtu ||
  		    ((first_len - hlen) & 7) ||
 -		    skb_cloned(skb))
 +		    skb_cloned(skb) ||
 +		    skb_headroom(skb) < (hroom + sizeof(struct frag_hdr)))
  			goto slow_path;
- 
+
  		skb_walk_frags(skb, frag) {
  			/* Correct geometry. */
  			if (frag->len > mtu ||
@@ -67,18 +67,18 @@ Closes 20532
 -			    skb_headroom(frag) < hlen)
 +			    skb_headroom(frag) < (hlen + hroom + sizeof(struct frag_hdr)))
  				goto slow_path_clean;
- 
+
  			/* Partially cloned skb? */
-@@ -627,8 +629,6 @@ int ip6_fragment(struct sk_buff *skb, in
- 
+@@ -630,8 +632,6 @@ int ip6_fragment(struct sk_buff *skb, in
+
  		err = 0;
  		offset = 0;
 -		frag = skb_shinfo(skb)->frag_list;
 -		skb_frag_list_init(skb);
  		/* BUILD HEADER */
- 
+
  		*prevhdr = NEXTHDR_FRAGMENT;
-@@ -636,8 +636,11 @@ int ip6_fragment(struct sk_buff *skb, in
+@@ -639,8 +639,11 @@ int ip6_fragment(struct sk_buff *skb, in
  		if (!tmp_hdr) {
  			IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)),
  				      IPSTATS_MIB_FRAGFAILS);
@@ -88,14 +88,14 @@ Closes 20532
  		}
 +		frag = skb_shinfo(skb)->frag_list;
 +		skb_frag_list_init(skb);
- 
+
  		__skb_pull(skb, hlen);
  		fh = (struct frag_hdr *)__skb_push(skb, sizeof(struct frag_hdr));
-@@ -735,7 +738,6 @@ slow_path:
+@@ -738,7 +741,6 @@ slow_path:
  	 */
- 
+
  	*prevhdr = NEXTHDR_FRAGMENT;
 -	hroom = LL_RESERVED_SPACE(rt->dst.dev);
  	troom = rt->dst.dev->needed_tailroom;
- 
+
  	/*

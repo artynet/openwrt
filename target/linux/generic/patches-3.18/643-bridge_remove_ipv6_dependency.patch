@@ -1,9 +1,9 @@
 --- a/include/net/addrconf.h
 +++ b/include/net/addrconf.h
-@@ -88,6 +88,12 @@ int ipv6_rcv_saddr_equal(const struct so
+@@ -90,6 +90,12 @@ int ipv6_rcv_saddr_equal(const struct so
  void addrconf_join_solict(struct net_device *dev, const struct in6_addr *addr);
  void addrconf_leave_solict(struct inet6_dev *idev, const struct in6_addr *addr);
- 
+
 +extern int			(*ipv6_dev_get_saddr_hook)(struct net *net,
 +						const struct net_device *dev,
 +						const struct in6_addr *daddr,
@@ -27,10 +27,10 @@
 +++ b/net/ipv6/Makefile
 @@ -45,6 +45,7 @@ obj-y += addrconf_core.o exthdrs_core.o
  obj-$(CONFIG_INET) += output_core.o protocol.o $(ipv6-offload)
- 
+
  obj-$(subst m,y,$(CONFIG_IPV6)) += inet6_hashtables.o
 +obj-$(subst m,y,$(CONFIG_IPV6)) += inet6_stubs.o
- 
+
  ifneq ($(CONFIG_IPV6),)
  obj-$(CONFIG_NET_UDP_TUNNEL) += ip6_udp_tunnel.o
 --- a/net/ipv6/addrconf.c
@@ -38,7 +38,7 @@
 @@ -1318,7 +1318,7 @@ out:
  	return ret;
  }
- 
+
 -int ipv6_dev_get_saddr(struct net *net, const struct net_device *dst_dev,
 +static int __ipv6_dev_get_saddr(struct net *net, const struct net_device *dst_dev,
  		       const struct in6_addr *daddr, unsigned int prefs,
@@ -49,23 +49,23 @@
  	return 0;
  }
 -EXPORT_SYMBOL(ipv6_dev_get_saddr);
- 
+
  int __ipv6_get_lladdr(struct inet6_dev *idev, struct in6_addr *addr,
  		      u32 banned_flags)
-@@ -5469,6 +5468,9 @@ int __init addrconf_init(void)
- 
+@@ -5473,6 +5472,9 @@ int __init addrconf_init(void)
+
  	ipv6_addr_label_rtnl_register();
- 
+
 +	BUG_ON(ipv6_dev_get_saddr_hook != NULL);
 +	rcu_assign_pointer(ipv6_dev_get_saddr_hook, __ipv6_dev_get_saddr);
 +
  	return 0;
  errout:
  	rtnl_af_unregister(&inet6_ops);
-@@ -5488,6 +5490,9 @@ void addrconf_cleanup(void)
+@@ -5492,6 +5494,9 @@ void addrconf_cleanup(void)
  	struct net_device *dev;
  	int i;
- 
+
 +	rcu_assign_pointer(ipv6_dev_get_saddr_hook, NULL);
 +	synchronize_rcu();
 +

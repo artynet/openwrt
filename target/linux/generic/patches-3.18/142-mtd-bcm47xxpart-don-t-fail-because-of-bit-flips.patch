@@ -21,7 +21,7 @@ Signed-off-by: Rafał Miłecki <zajec5@gmail.com>
  	uint32_t buf;
  	size_t bytes_read;
 +	int err;
- 
+
 -	if (mtd_read(master, offset, sizeof(buf), &bytes_read,
 -		     (uint8_t *)&buf) < 0) {
 -		pr_err("mtd_read error while parsing (offset: 0x%X)!\n",
@@ -33,18 +33,18 @@ Signed-off-by: Rafał Miłecki <zajec5@gmail.com>
 +			offset, err);
  		goto out_default;
  	}
- 
+
 @@ -95,6 +97,7 @@ static int bcm47xxpart_parse(struct mtd_
  	int trx_part = -1;
  	int last_trx_part = -1;
  	int possible_nvram_sizes[] = { 0x8000, 0xF000, 0x10000, };
 +	int err;
- 
+
  	/*
  	 * Some really old flashes (like AT45DB*) had smaller erasesize-s, but
 @@ -128,10 +131,11 @@ static int bcm47xxpart_parse(struct mtd_
  		}
- 
+
  		/* Read beginning of the block */
 -		if (mtd_read(master, offset, BCM47XXPART_BYTES_TO_READ,
 -			     &bytes_read, (uint8_t *)buf) < 0) {
@@ -57,10 +57,10 @@ Signed-off-by: Rafał Miłecki <zajec5@gmail.com>
 +			       offset, err);
  			continue;
  		}
- 
-@@ -254,10 +258,11 @@ static int bcm47xxpart_parse(struct mtd_
+
+@@ -252,10 +256,11 @@ static int bcm47xxpart_parse(struct mtd_
  		}
- 
+
  		/* Read middle of the block */
 -		if (mtd_read(master, offset + 0x8000, 0x4,
 -			     &bytes_read, (uint8_t *)buf) < 0) {
@@ -73,10 +73,10 @@ Signed-off-by: Rafał Miłecki <zajec5@gmail.com>
 +			       offset, err);
  			continue;
  		}
- 
-@@ -277,10 +282,11 @@ static int bcm47xxpart_parse(struct mtd_
+
+@@ -275,10 +280,11 @@ static int bcm47xxpart_parse(struct mtd_
  		}
- 
+
  		offset = master->size - possible_nvram_sizes[i];
 -		if (mtd_read(master, offset, 0x4, &bytes_read,
 -			     (uint8_t *)buf) < 0) {
@@ -89,4 +89,3 @@ Signed-off-by: Rafał Miłecki <zajec5@gmail.com>
 +			       offset, err);
  			continue;
  		}
- 

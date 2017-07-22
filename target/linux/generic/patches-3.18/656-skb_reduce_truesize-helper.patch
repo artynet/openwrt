@@ -14,10 +14,10 @@ when needed.
 
 --- a/include/linux/skbuff.h
 +++ b/include/linux/skbuff.h
-@@ -2068,6 +2068,24 @@ static inline void pskb_trim_unique(stru
+@@ -2069,6 +2069,24 @@ static inline void pskb_trim_unique(stru
  	BUG_ON(err);
  }
- 
+
 +/*
 + * Caller wants to reduce memory needs before queueing skb
 + * The (expensive) copy should not be be done in fast path.

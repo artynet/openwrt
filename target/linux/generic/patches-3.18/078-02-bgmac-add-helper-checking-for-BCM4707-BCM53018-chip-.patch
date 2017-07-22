@@ -21,7 +21,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 @@ -26,6 +26,17 @@ static const struct bcma_device_id bgmac
  };
  MODULE_DEVICE_TABLE(bcma, bgmac_bcma_tbl);
- 
+
 +static inline bool bgmac_is_bcm4707_family(struct bgmac *bgmac)
 +{
 +	switch (bgmac->core->bus->chipinfo.id) {
@@ -42,7 +42,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
  	struct bcma_device *core = bgmac->core;
 -	struct bcma_chipinfo *ci = &core->bus->chipinfo;
  	u8 imode;
- 
+
 -	if (ci->id == BCMA_CHIP_ID_BCM4707 ||
 -	    ci->id == BCMA_CHIP_ID_BCM53018) {
 +	if (bgmac_is_bcm4707_family(bgmac)) {
@@ -51,7 +51,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
  			      BGMAC_BCMA_IOCTL_SW_CLKEN);
 @@ -1050,9 +1059,7 @@ static void bgmac_chip_reset(struct bgma
  	}
- 
+
  	/* Request Misc PLL for corerev > 2 */
 -	if (core->id.rev > 2 &&
 -	    ci->id != BCMA_CHIP_ID_BCM4707 &&
@@ -63,7 +63,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 @@ -1188,8 +1195,7 @@ static void bgmac_enable(struct bgmac *b
  		break;
  	}
- 
+
 -	if (ci->id != BCMA_CHIP_ID_BCM4707 &&
 -	    ci->id != BCMA_CHIP_ID_BCM53018) {
 +	if (!bgmac_is_bcm4707_family(bgmac)) {
@@ -71,7 +71,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
  		rxq_ctl &= ~BGMAC_RXQ_CTL_MDP_MASK;
  		bp_clk = bcma_pmu_get_bus_clock(&bgmac->core->bus->drv_cc) /
 @@ -1467,14 +1473,12 @@ static int bgmac_fixed_phy_register(stru
- 
+
  static int bgmac_mii_register(struct bgmac *bgmac)
  {
 -	struct bcma_chipinfo *ci = &bgmac->core->bus->chipinfo;
@@ -79,12 +79,12 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
  	struct phy_device *phy_dev;
  	char bus_id[MII_BUS_ID_SIZE + 3];
  	int i, err = 0;
- 
+
 -	if (ci->id == BCMA_CHIP_ID_BCM4707 ||
 -	    ci->id == BCMA_CHIP_ID_BCM53018)
 +	if (bgmac_is_bcm4707_family(bgmac))
  		return bgmac_fixed_phy_register(bgmac);
- 
+
  	mii_bus = mdiobus_alloc();
 @@ -1545,7 +1549,6 @@ static void bgmac_mii_unregister(struct
  /* http://bcm-v4.sipsolutions.net/mac-gbit/gmac/chipattach */
@@ -94,13 +94,12 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
  	struct net_device *net_dev;
  	struct bgmac *bgmac;
  	struct ssb_sprom *sprom = &core->bus->sprom;
-@@ -1626,8 +1629,7 @@ static int bgmac_probe(struct bcma_devic
+@@ -1631,8 +1634,7 @@ static int bgmac_probe(struct bcma_devic
  	bgmac_chip_reset(bgmac);
- 
+
  	/* For Northstar, we have to take all GMAC core out of reset */
 -	if (ci->id == BCMA_CHIP_ID_BCM4707 ||
 -	    ci->id == BCMA_CHIP_ID_BCM53018) {
 +	if (bgmac_is_bcm4707_family(bgmac)) {
  		struct bcma_device *ns_core;
  		int ns_gmac;
- 

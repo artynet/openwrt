@@ -3,7 +3,7 @@
 @@ -15,6 +15,8 @@
  #include <linux/mtd/mtd.h>
  #include <linux/mtd/partitions.h>
- 
+
 +#include <uapi/linux/magic.h>
 +
  /*
@@ -16,13 +16,13 @@
 -#define SQSH_MAGIC			0x71736873	/* shsq */
 +#define SHSQ_MAGIC			0x71736873	/* shsq (weird ZTE H218N endianness) */
 +#define UBI_EC_MAGIC			0x23494255	/* UBI# */
- 
+
  struct trx_header {
  	uint32_t magic;
 @@ -50,7 +53,7 @@ struct trx_header {
  	uint32_t offset[3];
  } __packed;
- 
+
 -static void bcm47xxpart_add_part(struct mtd_partition *part, char *name,
 +static void bcm47xxpart_add_part(struct mtd_partition *part, const char *name,
  				 u64 offset, uint32_t mask_flags)
@@ -31,7 +31,7 @@
 @@ -58,6 +61,26 @@ static void bcm47xxpart_add_part(struct
  	part->mask_flags = mask_flags;
  }
- 
+
 +static const char *bcm47xxpart_trx_data_part_name(struct mtd_info *master,
 +						  size_t offset)
 +{
@@ -58,7 +58,7 @@
 @@ -73,8 +96,12 @@ static int bcm47xxpart_parse(struct mtd_
  	int last_trx_part = -1;
  	int possible_nvram_sizes[] = { 0x8000, 0xF000, 0x10000, };
- 
+
 -	if (blocksize <= 0x10000)
 -		blocksize = 0x10000;
 +	/*
@@ -67,7 +67,7 @@
 +	 */
 +	if (blocksize < 0x1000)
 +		blocksize = 0x1000;
- 
+
  	/* Alloc */
  	parts = kzalloc(sizeof(struct mtd_partition) * BCM47XXPART_MAX_PARTS,
 @@ -186,8 +213,11 @@ static int bcm47xxpart_parse(struct mtd_
@@ -83,9 +83,9 @@
  						     offset + trx->offset[i],
  						     0);
  				i++;
-@@ -205,7 +235,8 @@ static int bcm47xxpart_parse(struct mtd_
+@@ -203,7 +233,8 @@ static int bcm47xxpart_parse(struct mtd_
  		}
- 
+
  		/* Squashfs on devices not using TRX */
 -		if (buf[0x000 / 4] == SQSH_MAGIC) {
 +		if (le32_to_cpu(buf[0x000 / 4]) == SQUASHFS_MAGIC ||

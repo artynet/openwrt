@@ -6,32 +6,32 @@
  	IFF_XMIT_DST_RELEASE_PERM	= 1<<22,
 +	IFF_NO_IP_ALIGN			= 1<<23,
  };
- 
+
  #define IFF_802_1Q_VLAN			IFF_802_1Q_VLAN
 @@ -1253,6 +1254,7 @@ enum netdev_priv_flags {
  #define IFF_LIVE_ADDR_CHANGE		IFF_LIVE_ADDR_CHANGE
  #define IFF_MACVLAN			IFF_MACVLAN
  #define IFF_XMIT_DST_RELEASE_PERM	IFF_XMIT_DST_RELEASE_PERM
 +#define IFF_NO_IP_ALIGN		IFF_NO_IP_ALIGN
- 
+
  /**
   *	struct net_device - The DEVICE structure.
 @@ -1523,6 +1525,11 @@ struct net_device {
  	const struct ethtool_ops *ethtool_ops;
  	const struct forwarding_accel_ops *fwd_ops;
- 
+
 +#ifdef CONFIG_ETHERNET_PACKET_MANGLE
 +	void (*eth_mangle_rx)(struct net_device *dev, struct sk_buff *skb);
 +	struct sk_buff *(*eth_mangle_tx)(struct net_device *dev, struct sk_buff *skb);
 +#endif
 +
  	const struct header_ops *header_ops;
- 
+
  	unsigned int		flags;
 @@ -1587,6 +1594,10 @@ struct net_device {
  	void			*ax25_ptr;
  	struct wireless_dev	*ieee80211_ptr;
- 
+
 +#ifdef CONFIG_ETHERNET_PACKET_MANGLE
 +	void			*phy_ptr; /* PHY device specific data */
 +#endif
@@ -41,10 +41,10 @@
   */
 --- a/include/linux/skbuff.h
 +++ b/include/linux/skbuff.h
-@@ -2054,6 +2054,10 @@ static inline int pskb_trim(struct sk_bu
+@@ -2055,6 +2055,10 @@ static inline int pskb_trim(struct sk_bu
  	return (len < skb->len) ? __pskb_trim(skb, len) : 0;
  }
- 
+
 +extern struct sk_buff *__netdev_alloc_skb_ip_align(struct net_device *dev,
 +		unsigned int length, gfp_t gfp);
 +
@@ -52,10 +52,10 @@
  /**
   *	pskb_trim_unique - remove end from a paged unique (not cloned) buffer
   *	@skb: buffer to alter
-@@ -2180,16 +2184,6 @@ static inline struct sk_buff *dev_alloc_
+@@ -2181,16 +2185,6 @@ static inline struct sk_buff *dev_alloc_
  }
- 
- 
+
+
 -static inline struct sk_buff *__netdev_alloc_skb_ip_align(struct net_device *dev,
 -		unsigned int length, gfp_t gfp)
 -{
@@ -72,9 +72,9 @@
 --- a/net/Kconfig
 +++ b/net/Kconfig
 @@ -25,6 +25,12 @@ menuconfig NET
- 
+
  if NET
- 
+
 +config ETHERNET_PACKET_MANGLE
 +	bool
 +	help
@@ -86,10 +86,10 @@
  	help
 --- a/net/core/dev.c
 +++ b/net/core/dev.c
-@@ -2623,10 +2623,20 @@ static int xmit_one(struct sk_buff *skb,
+@@ -2619,10 +2619,20 @@ static int xmit_one(struct sk_buff *skb,
  	if (!list_empty(&ptype_all))
  		dev_queue_xmit_nit(skb, dev);
- 
+
 -	len = skb->len;
 -	trace_net_dev_start_xmit(skb, dev);
 -	rc = netdev_start_xmit(skb, dev, txq, more);
@@ -108,7 +108,7 @@
 +	} else {
 +		rc = NETDEV_TX_OK;
 +	}
- 
+
  	return rc;
  }
 --- a/net/core/skbuff.c
@@ -118,13 +118,13 @@
  #include <linux/prefetch.h>
  #include <linux/if_vlan.h>
 +#include <linux/if.h>
- 
+
  #include <net/protocol.h>
  #include <net/dst.h>
-@@ -469,6 +470,22 @@ struct sk_buff *__netdev_alloc_skb(struc
+@@ -471,6 +472,22 @@ struct sk_buff *__netdev_alloc_skb(struc
  }
  EXPORT_SYMBOL(__netdev_alloc_skb);
- 
+
 +struct sk_buff *__netdev_alloc_skb_ip_align(struct net_device *dev,
 +		unsigned int length, gfp_t gfp)
 +{
@@ -148,7 +148,7 @@
 +++ b/net/ethernet/eth.c
 @@ -200,6 +200,12 @@ __be16 eth_type_trans(struct sk_buff *sk
  	const struct ethhdr *eth;
- 
+
  	skb->dev = dev;
 +
 +#ifdef CONFIG_ETHERNET_PACKET_MANGLE

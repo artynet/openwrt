@@ -24,7 +24,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
  {
 -	struct fib_table *table;
 +	int err = -ENETUNREACH;
- 
+
 -	table = fib_get_table(net, RT_TABLE_LOCAL);
 -	if (!fib_table_lookup(table, flp, res, FIB_LOOKUP_NOREF))
 -		return 0;
@@ -45,7 +45,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 +
 +	return err;
  }
- 
+
  #else /* CONFIG_IP_MULTIPLE_TABLES */
 @@ -247,20 +250,25 @@ static inline int fib_lookup(struct net
  			     struct fib_result *res)
@@ -91,7 +91,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 @@ -109,6 +109,7 @@ struct fib_table *fib_new_table(struct n
  	return tb;
  }
- 
+
 +/* caller must hold either rtnl or rcu read lock */
  struct fib_table *fib_get_table(struct net *net, u32 id)
  {
@@ -99,7 +99,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 @@ -119,15 +120,11 @@ struct fib_table *fib_get_table(struct n
  		id = RT_TABLE_MAIN;
  	h = id & (FIB_TABLE_HASHSZ - 1);
- 
+
 -	rcu_read_lock();
  	head = &net->ipv4.fib_table_hash[h];
  	hlist_for_each_entry_rcu(tb, head, tb_hlist) {
@@ -116,7 +116,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 @@ -167,16 +164,18 @@ static inline unsigned int __inet_dev_ad
  	if (ipv4_is_multicast(addr))
  		return RTN_MULTICAST;
- 
+
 +	rcu_read_lock();
 +
  	local_table = fib_get_table(net, RT_TABLE_LOCAL);
@@ -133,15 +133,15 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 +	rcu_read_unlock();
  	return ret;
  }
- 
+
 @@ -923,7 +922,7 @@ no_promotions:
  #undef BRD1_OK
  }
- 
+
 -static void nl_fib_lookup(struct fib_result_nl *frn, struct fib_table *tb)
 +static void nl_fib_lookup(struct net *net, struct fib_result_nl *frn)
  {
- 
+
  	struct fib_result       res;
 @@ -933,6 +932,11 @@ static void nl_fib_lookup(struct fib_res
  		.flowi4_tos = frn->fl_tos,
@@ -152,7 +152,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 +	rcu_read_lock();
 +
 +	tb = fib_get_table(net, frn->tb_id_in);
- 
+
  	frn->err = -ENOENT;
  	if (tb) {
 @@ -949,6 +953,8 @@ static void nl_fib_lookup(struct fib_res
@@ -162,7 +162,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 +
 +	rcu_read_unlock();
  }
- 
+
  static void nl_fib_input(struct sk_buff *skb)
 @@ -956,7 +962,6 @@ static void nl_fib_input(struct sk_buff
  	struct net *net;
@@ -170,41 +170,41 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
  	struct nlmsghdr *nlh;
 -	struct fib_table *tb;
  	u32 portid;
- 
+
  	net = sock_net(skb->sk);
-@@ -971,9 +976,7 @@ static void nl_fib_input(struct sk_buff
+@@ -972,9 +977,7 @@ static void nl_fib_input(struct sk_buff
  	nlh = nlmsg_hdr(skb);
- 
+
  	frn = (struct fib_result_nl *) nlmsg_data(nlh);
 -	tb = fib_get_table(net, frn->tb_id_in);
 -
 -	nl_fib_lookup(frn, tb);
 +	nl_fib_lookup(net, frn);
- 
+
  	portid = NETLINK_CB(skb).portid;      /* netlink portid */
  	NETLINK_CB(skb).portid = 0;        /* from kernel */
 --- a/net/ipv4/fib_rules.c
 +++ b/net/ipv4/fib_rules.c
 @@ -81,27 +81,25 @@ static int fib4_rule_action(struct fib_r
  		break;
- 
+
  	case FR_ACT_UNREACHABLE:
 -		err = -ENETUNREACH;
 -		goto errout;
 +		return -ENETUNREACH;
- 
+
  	case FR_ACT_PROHIBIT:
 -		err = -EACCES;
 -		goto errout;
 +		return -EACCES;
- 
+
  	case FR_ACT_BLACKHOLE:
  	default:
 -		err = -EINVAL;
 -		goto errout;
 +		return -EINVAL;
  	}
- 
+
 +	rcu_read_lock();
 +
  	tbl = fib_get_table(rule->fr_net, rule->table);
@@ -214,7 +214,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 +		err = fib_table_lookup(tbl, &flp->u.ip4,
 +				       (struct fib_result *)arg->result,
 +				       arg->flags);
- 
+
 -	err = fib_table_lookup(tbl, &flp->u.ip4, (struct fib_result *) arg->result, arg->flags);
 -	if (err > 0)
 -		err = -EAGAIN;
@@ -222,13 +222,13 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 +	rcu_read_unlock();
  	return err;
  }
- 
+
 --- a/net/ipv4/fib_trie.c
 +++ b/net/ipv4/fib_trie.c
 @@ -1181,72 +1181,6 @@ err:
  	return err;
  }
- 
+
 -/* should be called with rcu_read_lock */
 -static int check_leaf(struct fib_table *tb, struct trie *t, struct tnode *l,
 -		      t_key key,  const struct flowi4 *flp,
@@ -301,7 +301,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 @@ -1254,6 +1188,7 @@ static inline t_key prefix_mismatch(t_ke
  	return (key ^ prefix) & (prefix | -prefix);
  }
- 
+
 +/* should be called with rcu_read_lock */
  int fib_table_lookup(struct fib_table *tb, const struct flowi4 *flp,
  		     struct fib_result *res, int fib_flags)
@@ -315,16 +315,16 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 -	int ret = 1;
 -
 -	rcu_read_lock();
- 
+
  	n = rcu_dereference(t->trie);
  	if (!n)
 -		goto failed;
 +		return -EAGAIN;
- 
+
  #ifdef CONFIG_IP_FIB_TRIE_STATS
  	this_cpu_inc(stats->gets);
 @@ -1350,7 +1283,7 @@ backtrace:
- 
+
  				pn = node_parent_rcu(pn);
  				if (unlikely(!pn))
 -					goto failed;
@@ -333,7 +333,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
  				this_cpu_inc(stats->backtrack);
  #endif
 @@ -1368,12 +1301,62 @@ backtrace:
- 
+
  found:
  	/* Step 3: Process the leaf, if that fails fall back to backtracing */
 -	ret = check_leaf(tb, t, n, key, flp, res, fib_flags);
@@ -400,4 +400,3 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 +	goto backtrace;
  }
  EXPORT_SYMBOL_GPL(fib_table_lookup);
- 
