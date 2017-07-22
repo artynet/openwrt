@@ -15,7 +15,7 @@ diff --git a/arch/mips/ath79/Makefile b/arch/mips/ath79/Makefile
 index 6c92c89..43f7fa1 100644
 --- a/arch/mips/ath79/Makefile
 +++ b/arch/mips/ath79/Makefile
-@@ -90,7 +90,7 @@ obj-$(CONFIG_ATH79_MACH_LININO_YUN) += mach-linino-yun.o
+@@ -91,7 +91,7 @@ obj-$(CONFIG_ATH79_MACH_LININO_YUN) += mach-linino-yun.o
  obj-$(CONFIG_ATH79_MACH_LININO_ONE) += mach-linino-yun.o
  obj-$(CONFIG_ATH79_MACH_LININO_FREEDOG) += mach-linino-freedog.o
  obj-$(CONFIG_ATH79_MACH_LININO_LEI) += mach-linino-chowchow.o
