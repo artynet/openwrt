@@ -1,15 +1,15 @@
---- a/Makefile.in	2017-05-04 23:07:25.000000000 +0200
-+++ b/Makefile.in	2017-05-07 01:36:44.615135617 +0200
-@@ -2427,7 +2427,7 @@
+--- a/Makefile.in	2017-07-14 11:13:15.000000000 +0200
++++ b/Makefile.in	2017-07-24 20:20:37.974182532 +0200
+@@ -2418,7 +2418,7 @@
  @CLIENT_TRUE@					monitor/uuid.h monitor/uuid.c
  
- @CLIENT_TRUE@client_bluetoothctl_LDADD = gdbus/libgdbus-internal.la @GLIB_LIBS@ @DBUS_LIBS@ \
--@CLIENT_TRUE@				-lreadline
-+@CLIENT_TRUE@				-lreadline -lncurses
+ @CLIENT_TRUE@client_bluetoothctl_LDADD = gdbus/libgdbus-internal.la src/libshared-glib.la \
+-@CLIENT_TRUE@				@GLIB_LIBS@ @DBUS_LIBS@ -lreadline
++@CLIENT_TRUE@				@GLIB_LIBS@ @DBUS_LIBS@ -lreadline -lncurses
  
  @MONITOR_TRUE@monitor_btmon_SOURCES = monitor/main.c monitor/bt.h \
  @MONITOR_TRUE@				monitor/display.h monitor/display.c \
-@@ -2679,7 +2679,7 @@
+@@ -2672,7 +2672,7 @@
  @READLINE_TRUE@						tools/obex-client-tool.c
  
  @READLINE_TRUE@tools_obex_client_tool_LDADD = lib/libbluetooth-internal.la \
@@ -18,7 +18,7 @@
  
  @READLINE_TRUE@tools_obex_server_tool_SOURCES = $(gobex_sources) $(btio_sources) \
  @READLINE_TRUE@						tools/obex-server-tool.c
-@@ -2689,17 +2689,17 @@
+@@ -2682,17 +2682,17 @@
  @READLINE_TRUE@				client/display.h client/display.c
  
  @READLINE_TRUE@tools_bluetooth_player_LDADD = gdbus/libgdbus-internal.la \
@@ -39,7 +39,7 @@
  
  @DEPRECATED_TRUE@@READLINE_TRUE@attrib_gatttool_SOURCES = attrib/gatttool.c attrib/att.c attrib/gatt.c \
  @DEPRECATED_TRUE@@READLINE_TRUE@				attrib/gattrib.c btio/btio.c \
-@@ -2708,7 +2708,7 @@
+@@ -2701,7 +2701,7 @@
  @DEPRECATED_TRUE@@READLINE_TRUE@				client/display.h
  
  @DEPRECATED_TRUE@@READLINE_TRUE@attrib_gatttool_LDADD = lib/libbluetooth-internal.la \
