@@ -1,13 +1,13 @@
 diff --git a/Makefile.tools b/Makefile.tools
-index c0482fb5f..3a86058fd 100644
+index 0fd6dec87..16effb39a 100644
 --- a/Makefile.tools
 +++ b/Makefile.tools
 @@ -10,7 +10,7 @@ client_bluetoothctl_SOURCES = client/main.c \
  					client/gatt.h client/gatt.c \
  					monitor/uuid.h monitor/uuid.c
- client_bluetoothctl_LDADD = gdbus/libgdbus-internal.la @GLIB_LIBS@ @DBUS_LIBS@ \
--				-lreadline
-+				-lreadline -lncurses
+ client_bluetoothctl_LDADD = gdbus/libgdbus-internal.la src/libshared-glib.la \
+-				@GLIB_LIBS@ @DBUS_LIBS@ -lreadline
++				@GLIB_LIBS@ @DBUS_LIBS@ -lreadline -lncurses
  endif
  
  if MONITOR
