@@ -1,9 +1,21 @@
+From 038647a29f2331e32e5d6b2ea7a637a8a6e81046 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Sat, 5 Aug 2017 23:08:48 +0200
+Subject: [PATCH] nodejs build failure due to execvp arg list too long
+
+---
+ .../node-gyp/gyp/pylib/gyp/generator/make.py       | 62 ++++++++++++++++++++--
+ tools/gyp/pylib/gyp/generator/make.py              | 62 ++++++++++++++++++++--
+ 2 files changed, 116 insertions(+), 8 deletions(-)
+
+diff --git a/deps/npm/node_modules/node-gyp/gyp/pylib/gyp/generator/make.py b/deps/npm/node_modules/node-gyp/gyp/pylib/gyp/generator/make.py
+index 64b9dd267b..1ddd95b86b 100644
 --- a/deps/npm/node_modules/node-gyp/gyp/pylib/gyp/generator/make.py
 +++ b/deps/npm/node_modules/node-gyp/gyp/pylib/gyp/generator/make.py
-@@ -144,6 +144,30 @@
+@@ -144,6 +144,30 @@ cmd_alink_thin = rm -f $@ && $(AR.$(TOOLSET)) crsT $@ $(filter %.o,$^)
  quiet_cmd_link = LINK($(TOOLSET)) $@
  cmd_link = $(LINK.$(TOOLSET)) $(GYP_LDFLAGS) $(LDFLAGS.$(TOOLSET)) -o $@ -Wl,--start-group $(LD_INPUTS) -Wl,--end-group $(LIBS)
-
+ 
 +define xargs
 +$(1) $(wordlist 1,1000,$(2))
 +$(if $(word 1001,$(2)),$(call xargs,$(1),$(wordlist 1001,$(words $(2)),$(2))))
@@ -31,10 +43,10 @@
  # We support two kinds of shared objects (.so):
  # 1) shared_library, which is just bundling together many dependent libraries
  # into a link line.
-@@ -188,6 +212,30 @@
+@@ -188,6 +212,30 @@ cmd_alink = rm -f $@ && $(AR.$(TOOLSET)) crs $@ $(filter %.o,$^)
  quiet_cmd_alink_thin = AR($(TOOLSET)) $@
  cmd_alink_thin = rm -f $@ && $(AR.$(TOOLSET)) crsT $@ $(filter %.o,$^)
-
+ 
 +define xargs
 +$(1) $(wordlist 1,1000,$(2))
 +$(if $(word 1001,$(2)),$(call xargs,$(1),$(wordlist 1001,$(words $(2)),$(2))))
@@ -62,7 +74,7 @@
  # Due to circular dependencies between libraries :(, we wrap the
  # special "figure out circular dependencies" flags around the entire
  # input list during linking.
-@@ -1581,11 +1629,17 @@
+@@ -1581,11 +1629,17 @@ $(obj).$(TOOLSET)/$(TARGET)/%%.o: $(obj)/%%%s FORCE_DO_CMD
              "Spaces in alink input filenames not supported (%s)"  % link_dep)
        if (self.flavor not in ('mac', 'openbsd', 'netbsd', 'win') and not
            self.is_standalone_static_library):
@@ -84,12 +96,14 @@
      elif self.type == 'shared_library':
        self.WriteLn('%s: LD_INPUTS := %s' % (
              QuoteSpaces(self.output_binary),
+diff --git a/tools/gyp/pylib/gyp/generator/make.py b/tools/gyp/pylib/gyp/generator/make.py
+index d9adddaa9b..6e2ff057fe 100644
 --- a/tools/gyp/pylib/gyp/generator/make.py
 +++ b/tools/gyp/pylib/gyp/generator/make.py
-@@ -149,6 +149,30 @@
+@@ -149,6 +149,30 @@ cmd_alink_thin = rm -f $@ && $(AR.$(TOOLSET)) crsT $@ $(filter %.o,$^)
  quiet_cmd_link = LINK($(TOOLSET)) $@
- cmd_link = $(LINK.$(TOOLSET)) $(GYP_LDFLAGS) $(LDFLAGS.$(TOOLSET)) -o $@ -Wl,--start-group $(LD_INPUTS) -Wl,--end-group $(LIBS)
-
+ cmd_link = $(LINK.$(TOOLSET)) $(GYP_LDFLAGS) $(LDFLAGS.$(TOOLSET)) -o $@ -Wl,--start-group $(LD_INPUTS) $(LIBS) -Wl,--end-group
+ 
 +define xargs
 +$(1) $(wordlist 1,1000,$(2))
 +$(if $(word 1001,$(2)),$(call xargs,$(1),$(wordlist 1001,$(words $(2)),$(2))))
@@ -117,10 +131,10 @@
  # We support two kinds of shared objects (.so):
  # 1) shared_library, which is just bundling together many dependent libraries
  # into a link line.
-@@ -193,6 +217,30 @@
+@@ -193,6 +217,30 @@ cmd_alink = rm -f $@ && $(AR.$(TOOLSET)) crs $@ $(filter %.o,$^)
  quiet_cmd_alink_thin = AR($(TOOLSET)) $@
  cmd_alink_thin = rm -f $@ && $(AR.$(TOOLSET)) crsT $@ $(filter %.o,$^)
-
+ 
 +define xargs
 +$(1) $(wordlist 1,1000,$(2))
 +$(if $(word 1001,$(2)),$(call xargs,$(1),$(wordlist 1001,$(words $(2)),$(2))))
@@ -148,7 +162,7 @@
  # Due to circular dependencies between libraries :(, we wrap the
  # special "figure out circular dependencies" flags around the entire
  # input list during linking.
-@@ -1589,11 +1637,17 @@
+@@ -1589,11 +1637,17 @@ $(obj).$(TOOLSET)/$(TARGET)/%%.o: $(obj)/%%%s FORCE_DO_CMD
              "Spaces in alink input filenames not supported (%s)"  % link_dep)
        if (self.flavor not in ('mac', 'openbsd', 'win') and not
            self.is_standalone_static_library):
@@ -170,3 +184,6 @@
      elif self.type == 'shared_library':
        self.WriteLn('%s: LD_INPUTS := %s' % (
              QuoteSpaces(self.output_binary),
+-- 
+2.13.0
+
