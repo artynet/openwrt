@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=erlang
 PKG_VERSION:=19.3
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=otp_src_$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:= http://www.erlang.org/download/ \
@@ -21,6 +21,7 @@ PKG_LICENSE_FILES:=EPLICENCE
 PKG_MAINTAINER:=Nicolas Thill <nico@openwrt.org>
 
 PKG_BUILD_DEPENDS:=erlang/host openssl
+PKG_USE_MIPS16:=0
 
 HOST_BUILD_DIR:=$(BUILD_DIR_HOST)/otp_src_$(PKG_VERSION)
 PKG_BUILD_DIR:=$(BUILD_DIR)/otp_src_$(PKG_VERSION)
@@ -235,17 +236,96 @@ $(call Package/erlang/Default/description)
  syntax trees.
 endef
 
+
 define Package/erlang-public-key
 $(call Package/erlang/Default)
-  TITLE:=API module for public-key infrastructure
-  VERSION:=14.1
-  DEPENDS+= +erlang
+  TITLE:=Public Key support
+  VERSION:=1.4
+  DEPENDS+= +erlang +erlang-crypto +erlang-asn1
 endef
 
 define Package/erlang-public-key/description
 $(call Package/erlang/Default/description)
  .
-Provides functions to handle public-key infrastructure.
+ This Erlang/OTP package provides functions to handle public-key infrastructure.
+endef
+
+
+define Package/erlang-tools/description
+$(call Package/erlang/Default/description)
+ .
+ This Erlang/OTP package provides support for misc tools.
+endef
+
+
+define Package/erlang-reltool
+$(call Package/erlang/Default)
+  TITLE:=Erlang reltool support
+  VERSION:=0.7.3
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-reltool/description
+$(call Package/erlang/Default/description)
+ .
+ This Erlang/OTP package provides support for release management.
+endef
+
+
+define Package/erlang-erl-interface
+$(call Package/erlang/Default)
+  TITLE:=Erlang erl_interface support
+  VERSION:=3.9.3
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-erl-interface/description
+$(call Package/erlang/Default/description)
+ .
+ This Erlang/OTP package provides support for erlang interoperability with other languages.
+endef
+
+# additional
+
+define Package/erlang-tools
+$(call Package/erlang/Default)
+  TITLE:=Erlang tools support
+  VERSION:=2.9.1
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-tools/description
+$(call Package/erlang/Default/description)
+ .
+ This Erlang/OTP package provides support for misc tools.
+endef
+
+
+define Package/erlang-reltool
+$(call Package/erlang/Default)
+  TITLE:=Erlang reltool support
+  VERSION:=0.7.3
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-reltool/description
+$(call Package/erlang/Default/description)
+ .
+ This Erlang/OTP package provides support for release management.
+endef
+
+
+define Package/erlang-erl-interface
+$(call Package/erlang/Default)
+  TITLE:=Erlang erl_interface support
+  VERSION:=3.9.3
+  DEPENDS+= +erlang
+endef
+
+define Package/erlang-erl-interface/description
+$(call Package/erlang/Default/description)
+ .
+ This Erlang/OTP package provides support for erlang interoperability with other languages.
 endef
 
 # Host
@@ -254,6 +334,8 @@ HOST_CONFIGURE_ARGS += \
 	--disable-hipe \
 	--disable-smp-support \
 	--without-javac
+
+HOST_CFLAGS += -D_GNU_SOURCE
 
 define Host/Compile
 	$(MAKE) -C $(HOST_BUILD_DIR) all
@@ -280,6 +362,7 @@ CONFIGURE_VARS += \
 	erl_xcomp_getaddrinfo=no \
 	erl_xcomp_sysroot="$(STAGING_DIR)"
 
+EXTRA_CFLAGS+=-D_GNU_SOURCE
 EXTRA_LDFLAGS+=-lz
 
 define Build/Compile
@@ -307,7 +390,7 @@ define Package/erlang/install
 	done
 	$(INSTALL_DIR) $(1)/usr/lib/erlang
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/erlang/erts-* $(1)/usr/lib/erlang/
-	rm -rf $(1)/usr/lib/erlang/erts-*/{doc,include,lib,man,src}
+	rm -rf $(1)/usr/lib/erlang/erts-*/{doc,lib,man,src}
 	rm -rf $(1)/usr/lib/erlang/erts-*/bin/*.src
 	$(INSTALL_DIR) $(1)/usr/lib/erlang/releases
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/erlang/releases/* $(1)/usr/lib/erlang/releases/
@@ -375,3 +458,6 @@ $(eval $(call BuildModule,ssh,ssh))
 $(eval $(call BuildModule,ssl,ssl))
 $(eval $(call BuildModule,syntax-tools,syntax_tools))
 $(eval $(call BuildModule,public-key,public_key))
+$(eval $(call BuildModule,tools,tools))
+$(eval $(call BuildModule,reltool,reltool))
+$(eval $(call BuildModule,erl-interface,erl_interface))
