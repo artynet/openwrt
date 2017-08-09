@@ -315,19 +315,6 @@ $(call Package/erlang/Default/description)
 endef
 
 
-define Package/erlang-erl-interface
-$(call Package/erlang/Default)
-  TITLE:=Erlang erl_interface support
-  VERSION:=3.9.3
-  DEPENDS+= +erlang
-endef
-
-define Package/erlang-erl-interface/description
-$(call Package/erlang/Default/description)
- .
- This Erlang/OTP package provides support for erlang interoperability with other languages.
-endef
-
 # Host
 
 HOST_CONFIGURE_ARGS += \
