@@ -1,7 +1,7 @@
 diff -aur otp_src_17.3/erts/emulator/drivers/common/efile_drv.c otp_src_17.3-new/erts/emulator/drivers/common/efile_drv.c
 --- a/erts/emulator/drivers/common/efile_drv.c	2014-09-16 21:10:57.000000000 +0200
 +++ b/erts/emulator/drivers/common/efile_drv.c	2014-10-28 15:58:42.396163381 +0100
-@@ -4130,15 +4130,15 @@
+@@ -4131,15 +4131,15 @@
  	d->c.sendfile.port = desc->port;
  	d->c.sendfile.q_mtx = desc->q_mtx;
  
@@ -23,7 +23,7 @@ diff -aur otp_src_17.3/erts/emulator/drivers/common/efile_drv.c otp_src_17.3-new
 diff -aur otp_src_17.3/erts/emulator/drivers/unix/unix_efile.c otp_src_17.3-new/erts/emulator/drivers/unix/unix_efile.c
 --- a/erts/emulator/drivers/unix/unix_efile.c	2014-09-16 21:10:57.000000000 +0200
 +++ b/erts/emulator/drivers/unix/unix_efile.c	2014-10-28 15:56:53.708165665 +0100
-@@ -508,11 +508,11 @@
+@@ -511,11 +511,11 @@
  	return 0;
      }
  

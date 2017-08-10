@@ -1,6 +1,6 @@
 --- a/erts/emulator/Makefile.in
 +++ b/erts/emulator/Makefile.in
-@@ -674,7 +674,7 @@ $(OBJDIR)/beam_emu.o: beam/beam_emu.c
+@@ -704,7 +704,7 @@ $(OBJDIR)/beam_emu.o: beam/beam_emu.c
  endif
 
  $(OBJDIR)/%.o: beam/%.c
