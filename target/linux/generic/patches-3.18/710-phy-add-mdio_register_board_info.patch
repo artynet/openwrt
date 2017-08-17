@@ -1,9 +1,9 @@
 --- a/drivers/net/phy/mdio_bus.c
 +++ b/drivers/net/phy/mdio_bus.c
 @@ -38,6 +38,8 @@
- 
+
  #include <asm/irq.h>
- 
+
 +#include "mdio-boardinfo.h"
 +
  /**
@@ -12,7 +12,7 @@
 @@ -335,9 +337,21 @@ void mdiobus_free(struct mii_bus *bus)
  }
  EXPORT_SYMBOL(mdiobus_free);
- 
+
 +static void mdiobus_setup_phydev_from_boardinfo(struct mii_bus *bus,
 +						struct phy_device *phydev,
 +						struct mdio_board_info *bi)
@@ -29,12 +29,12 @@
  	struct phy_device *phydev;
 +	struct mdio_board_entry *be;
  	int err;
- 
+
  	phydev = get_phy_device(bus, addr, false);
 @@ -350,6 +364,12 @@ struct phy_device *mdiobus_scan(struct m
  	 */
  	of_mdiobus_link_phydev(bus, phydev);
- 
+
 +	mutex_lock(&__mdio_board_lock);
 +	list_for_each_entry(be, &__mdio_board_list, list)
 +		mdiobus_setup_phydev_from_boardinfo(bus, phydev,
@@ -46,9 +46,9 @@
  		phy_device_free(phydev);
 --- a/include/linux/phy.h
 +++ b/include/linux/phy.h
-@@ -785,4 +785,22 @@ int __init mdio_bus_init(void);
+@@ -789,4 +789,22 @@ int __init mdio_bus_init(void);
  void mdio_bus_exit(void);
- 
+
  extern struct bus_type mdio_bus_type;
 +
 +struct mdio_board_info {
@@ -72,9 +72,9 @@
 --- a/drivers/net/phy/Kconfig
 +++ b/drivers/net/phy/Kconfig
 @@ -12,6 +12,10 @@ menuconfig PHYLIB
- 
+
  if PHYLIB
- 
+
 +config MDIO_BOARDINFO
 +	bool
 +	default y
@@ -85,9 +85,9 @@
 --- a/drivers/net/phy/Makefile
 +++ b/drivers/net/phy/Makefile
 @@ -2,6 +2,8 @@
- 
+
  libphy-objs			:= phy.o phy_device.o mdio_bus.o
- 
+
 +obj-$(CONFIG_MDIO_BOARDINFO)	+= mdio-boardinfo.o
 +
  obj-$(CONFIG_PHYLIB)		+= libphy.o
