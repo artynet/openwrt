@@ -1,0 +1,44 @@
+From 492f545df67f6831e041dbc4403a51299640572f Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Mon, 18 Apr 2016 10:50:31 +0200
+Subject: [PATCH 79/83] fixing header files from kernel v4.1.0
+
+---
+ include/linux/fwnode.h   | 175 +++++++----------------------------------------
+ 1 files changed, 69 insertions(+), 161 deletions(-)
+
+diff --git a/include/linux/fwnode.h b/include/linux/fwnode.h
+index a55fce9..0408545 100644
+--- /dev/null   2016-10-07 09:59:12.833700872 +0200
++++ include/linux/fwnode.h      2016-09-18 00:54:14.000000000 +0200
+@@ -0,0 +1,27 @@
++/*
++ * fwnode.h - Firmware device node object handle type definition.
++ *
++ * Copyright (C) 2015, Intel Corporation
++ * Author: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ */
++
++#ifndef _LINUX_FWNODE_H_
++#define _LINUX_FWNODE_H_
++
++enum fwnode_type {
++       FWNODE_INVALID = 0,
++       FWNODE_OF,
++       FWNODE_ACPI,
++       FWNODE_PDATA,
++};
++
++struct fwnode_handle {
++       enum fwnode_type type;
++       struct fwnode_handle *secondary;
++};
++
++#endif
+
+--
+2.10.1
