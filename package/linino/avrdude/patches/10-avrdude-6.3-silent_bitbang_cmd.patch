@@ -2,7 +2,7 @@ Index: bitbang.c
 ===================================================================
 --- a/bitbang.c	(revisione 1183)
 +++ b/bitbang.c	(copia locale)
-@@ -339,7 +339,7 @@
+@@ -331,7 +331,7 @@
      res[i] = bitbang_txrx(pgm, cmd[i]);
    }
  
