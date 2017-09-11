@@ -13,7 +13,7 @@ PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.savannah.gnu.org/releases/avrdude
-# PKG_MD5SUM:=9db8c25b935d34234b9b1ba16ad55fd5
+PKG_MD5SUM:=58bb42049122cf80fe4f4d0ce36d92ee
 
 PKG_MAINTAINER:=Ted Hess <thess@kitschensync.net>
 PKG_LICENSE:=GPL-2.0
@@ -23,13 +23,14 @@ PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
+include $(INCLUDE_DIR)/nls.mk
 
 define Package/avrdude
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=AVR Downloader/UploaDEr
   URL:=http://www.nongnu.org/avrdude/
-  DEPENDS:=+libncurses +libreadline +libusb-compat +libftdi1 +libelf1
+  DEPENDS:=+libncurses +libreadline +libusb-compat +libftdi1 +libelf1 $(INTL_DEPENDS)
 endef
 
 define Package/avrdude/description
