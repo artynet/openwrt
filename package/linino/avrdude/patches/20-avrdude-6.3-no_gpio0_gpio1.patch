@@ -2,7 +2,7 @@ Index: linuxgpio.c
 ===================================================================
 --- a/linuxgpio.c
 +++ b/linuxgpio.c
-260c260
+263c263
 <   for (i=0; i<N_PINS; i++) {
 ---
 >   for (i=2; i<N_PINS; i++) {
