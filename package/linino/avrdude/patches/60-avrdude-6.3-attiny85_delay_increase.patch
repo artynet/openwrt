@@ -1,6 +1,6 @@
 --- a/avrdude.conf.in	2015-04-02 23:54:05.862556159 +0000
 +++ b/avrdude.conf.in	2015-04-03 00:07:02.156406668 +0000
-@@ -9756,7 +9756,7 @@
+@@ -9765,7 +9765,7 @@
       avr910_devcode   = 0x20;
       signature        = 0x1e 0x93 0x0b;
       reset            = io;
@@ -9,7 +9,7 @@
  
       pgm_enable       = "1 0 1 0  1 1 0 0    0 1 0 1  0 0 1 1",
                          "x x x x  x x x x    x x x x  x x x x";
-@@ -9822,7 +9822,7 @@
+@@ -9831,7 +9831,7 @@
  			  "  x   x   x   x      x   x   x   x";
  
  	mode		= 0x41;
@@ -18,7 +18,7 @@
  	blocksize	= 4;
  	readsize	= 256;
         ;
-@@ -9831,8 +9831,8 @@
+@@ -9840,8 +9840,8 @@
           size            = 8192;
           page_size       = 64;
           num_pages       = 128;
