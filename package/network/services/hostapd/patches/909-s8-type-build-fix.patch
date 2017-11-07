@@ -1,0 +1,10 @@
+--- a/src/drivers/linux_wext.h	2017-11-07 15:27:26.000000000 +0100
++++ b/src/drivers/linux_wext.h	2017-11-07 15:52:03.940888250 +0100
+@@ -26,6 +26,7 @@
+ typedef uint16_t __u16;
+ typedef int16_t __s16;
+ typedef uint8_t __u8;
++typedef int8_t __s8;
+ #ifndef __user
+ #define __user
+ #endif /* __user */
