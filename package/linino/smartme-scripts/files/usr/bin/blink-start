@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo "timer" > /sys/class/leds/led0/trigger
+echo $1 > /sys/class/leds/led0/delay_on
+echo $1 > /sys/class/leds/led0/delay_off
