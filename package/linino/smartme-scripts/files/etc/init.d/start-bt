@@ -1,0 +1,28 @@
+#!/bin/sh /etc/rc.common
+# Copyright (C) 2006 OpenWrt.org
+
+START=99
+
+HCIATTACH=/usr/bin/hciattach
+HCICONFIG=/usr/bin/hciconfig
+
+# looking for BT card
+TESTCARD=`$HCICONFIG | awk {'print $1'} | head -n1 | sed -e s/\://g`
+
+hcicheck() {
+
+    # check if the device is already activated
+    [ ! -z $TESTCARD ] && echo "already activated !" && exit 0
+
+}
+
+start() {
+    # hci check
+    hcicheck
+
+    # initialise BT chip at 921600 bps
+    $HCIATTACH /dev/ttyAMA0 bcm43xx 921600 noflow -
+
+    # activating
+    $HCICONFIG hci0 up
+}
