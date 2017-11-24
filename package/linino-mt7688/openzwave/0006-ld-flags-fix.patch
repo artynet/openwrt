@@ -1,0 +1,110 @@
+diff --git a/cpp/build/Makefile b/cpp/build/Makefile
+index 4ee8a4c5..fd977af3 100644
+--- a/cpp/build/Makefile
++++ b/cpp/build/Makefile
+@@ -23,44 +23,12 @@ top_srcdir := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../../)
+ 
+ include $(top_srcdir)/cpp/build/support.mk
+ 
+-#Mac prefers a dylib, not a so
+-ifeq ($(UNAME),Darwin)
+-SHARED_LIB_NAME=libopenzwave-$(VERSION).dylib
+-SHARED_LIB_UNVERSIONED=libopenzwave.dylib
+-else
+ SHARED_LIB_NAME=libopenzwave.so.$(VERSION)
+ SHARED_LIB_UNVERSIONED=libopenzwave.so
+-endif
+-
+-#if we are on a Mac, add these flags and libs to the compile and link phases 
+-ifeq ($(UNAME),Darwin)
+-CFLAGS	+= -c -DDARWIN
+-TARCH	+= -arch i386 -arch x86_64
+-LDFLAGS += -dynamiclib -install_name "$(DESTDIR)/$(instlibdir)/$(SHARED_LIB_NAME)"
+-LIBS	+= -framework IOKit -framework CoreFoundation -arch i386 -arch x86_64
+-else ifeq ($(UNAME),FreeBSD)
+-LDFLAGS+= -shared -lusb -Wl,-soname,$(SHARED_LIB_NAME)
+-
+-# Pre FreeBSD 10.2 we have no native, or "old" native iconv.h (non-posix compliant
+-# const modifiers)
+-# For these, require libiconv pkg to be installed.
+-ifeq ($(shell test $$(uname -U) -ge 1002000; echo $$?),1)
+-# <10.2
+-ifeq (,$(wildcard /usr/local/include/iconv.h))
+-$(error FreeBSD pre 10.2: Please install libiconv from ports)
+-else
+-# Installed, use it
+-CFLAGS += -I/usr/local/include
+-# User application *must* use -liconv; we don't do any linking from this file since we only
+-# build a library.
+-endif
+-endif
+-# For 10.2 and later, use iconv from base, no extra include path required.
+ 
+-else
+ LDFLAGS += -shared -Wl,-soname,$(SHARED_LIB_NAME)
+ LIBS 	+=
+-endif
++
+ CFLAGS  += $(CPPFLAGS)
+ 
+ #where to put the temporary library
+@@ -76,10 +44,6 @@ VPATH = $(top_srcdir)/cpp/src:$(top_srcdir)/cpp/src/command_classes:$(top_srcdir
+ 
+ tinyxml := $(notdir $(wildcard $(top_srcdir)/cpp/tinyxml/*.cpp))
+ 
+-ifeq ($(BITBAKE_ENV),1)
+-ar_option := "rc"
+-endif
+-
+ cclasses := $(notdir $(wildcard $(top_srcdir)/cpp/src/command_classes/*.cpp))
+ vclasses := $(notdir $(wildcard $(top_srcdir)/cpp/src/value_classes/*.cpp))
+ pform := $(notdir $(wildcard $(top_srcdir)/cpp/src/platform/*.cpp)) \
+@@ -124,7 +88,7 @@ $(LIBDIR)/$(SHARED_LIB_NAME):	$(patsubst %.cpp,$(OBJDIR)/%.o,$(tinyxml)) \
+ 			$(patsubst %.cpp,$(OBJDIR)/%.o,$(indep)) \
+ 			$(OBJDIR)/vers.o
+ 	@echo "Linking Shared Library"
+-	@$(LD) $(LDFLAGS) $(TARCH) -o $@ $+ $(LIBS)
++	$(LD) $(LDFLAGS) $(TARCH) -o $@ $+ $(LIBS)
+ 	@ln -sf $(SHARED_LIB_NAME) $(LIBDIR)/$(SHARED_LIB_UNVERSIONED)
+ 
+ $(top_builddir)/libopenzwave.pc: $(top_srcdir)/cpp/build/libopenzwave.pc.in $(PKGCONFIG)
+diff --git a/cpp/build/support.mk b/cpp/build/support.mk
+index 3e3cc048..1300a4bf 100644
+--- a/cpp/build/support.mk
++++ b/cpp/build/support.mk
+@@ -43,35 +43,13 @@ endif
+ # version number to use on the shared library
+ VERSION := $(VERSION_MAJ).$(VERSION_MIN)
+ 
+-# using seting from bitbake
+-ifeq ($(BITBAKE_ENV),1)
+-CC     := $(CC)
+-CXX    := $(CXX)
+-LD     := $(CXX)
+-AR     := $(AR)
+-RANLIB := $(RANLIB)
+-else
+-
+ # support Cross Compiling options
+-ifeq ($(UNAME),FreeBSD)
+-# Actually hide behind c++ which works for both clang based 10.0 and earlier(?)
+-CC     := $(CROSS_COMPILE)cc
+-CXX    := $(CROSS_COMPILE)c++
+-LD     := $(CROSS_COMPILE)c++
+-else
+ CC     := $(CROSS_COMPILE)gcc
+ CXX    := $(CROSS_COMPILE)g++
+ LD     := $(CROSS_COMPILE)g++
+-endif
+-ifeq ($(UNAME),Darwin)
+-AR     := libtool -static -o 
+-RANLIB := ranlib
+-else
+ AR     := $(CROSS_COMPILE)ar rc
+ RANLIB := $(CROSS_COMPILE)ranlib
+-endif
+ 
+-endif
+ SED    := sed
+ 
+ 

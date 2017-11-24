@@ -1,0 +1,52 @@
+#!/bin/sh
+
+boardname=$(awk '/machine/ {print tolower($4)}' /proc/cpuinfo)
+
+case $boardname in
+	'lei')
+		# Check for Lei V04
+		if [ -d /sys/class/gpio15 ]
+		then
+			GPIO=gpio15
+		else
+			GPIO=gpio14
+		fi
+		OE_LEVEL=0
+		PROGRAMMER=linuxgpio-lei;;
+	*)
+		GPIO=gpio21
+		OE_LEVEL=1
+		PROGRAMMER=linuxgpio;;
+esac
+
+OE_PATH=/sys/class/gpio/$GPIO/value
+OE_VALUE=$(cat $OE_PATH)
+
+# unbind spi_gpio driver
+echo spi_gpio.1 > /sys/bus/platform/drivers/spi_gpio/unbind
+
+# remove SPI driver to avoid conflicts while AVR programming (killing console)
+TTY_PLAIN=$(lsmod | grep spi_tty_plain)
+if [ "x$TTY_PLAIN" != "x" ]; then
+	kill -9 `ps w | grep ash | grep login | tr -s ' '| cut -d" " -f2`
+	if [ "$?" != "0" ]; then
+		exit
+	fi
+fi
+
+# program AVR
+echo $OE_LEVEL > $OE_PATH
+
+# read efuse settings
+avrdude  -q -q -c $PROGRAMMER -C /etc/avrdude.conf -p m32u4 -U efuse:r:/tmp/efuse:d
+read EFUSE < /tmp/efuse
+rm -f /tmp/efuse
+if [ "x$EFUSE" = "x203" ] # 203 = 0xCB
+then
+	avrdude -c $PROGRAMMER -C /etc/avrdude.conf -p m32u4 -U lfuse:w:0xFF:m -U hfuse:w:0xD8:m -U efuse:w:0xCB:m -Uflash:w:$1:i $2
+else
+	avrdude -c $PROGRAMMER -C /etc/avrdude.conf -p m32u4 -U lfuse:w:0xFF:m -U hfuse:w:0xD8:m -U efuse:w:0xFB:m -Uflash:w:$1:i $2
+fi
+
+# bind spi_gpio driver
+echo spi_gpio.1 > /sys/bus/platform/drivers/spi_gpio/bind

@@ -1,0 +1,41 @@
+From 0bc7f3b710c0d49f037f80806c46463e752b8133 Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Fri, 17 Nov 2017 18:00:37 +0100
+Subject: [PATCH 3/5] no udev
+
+---
+ cpp/build/Makefile                             | 2 +-
+ cpp/src/platform/unix/SerialControllerImpl.cpp | 4 ----
+ 2 files changed, 1 insertion(+), 5 deletions(-)
+
+diff --git a/cpp/build/Makefile b/cpp/build/Makefile
+index 12f7dec9..c4e6a1a6 100644
+--- a/cpp/build/Makefile
++++ b/cpp/build/Makefile
+@@ -59,7 +59,7 @@ endif
+ 
+ else
+ LDFLAGS += -shared -Wl,-soname,$(SHARED_LIB_NAME)
+-LIBS 	+= -ludev
++LIBS 	+=
+ endif
+ CFLAGS  += $(CPPFLAGS)
+ 
+diff --git a/cpp/src/platform/unix/SerialControllerImpl.cpp b/cpp/src/platform/unix/SerialControllerImpl.cpp
+index b52b74fb..6ff56b6d 100644
+--- a/cpp/src/platform/unix/SerialControllerImpl.cpp
++++ b/cpp/src/platform/unix/SerialControllerImpl.cpp
+@@ -34,10 +34,6 @@
+ #include "SerialControllerImpl.h"
+ #include "platform/Log.h"
+ 
+-#ifdef __linux__
+-#include <libudev.h>
+-#endif
+-
+ using namespace OpenZWave;
+ 
+ //-----------------------------------------------------------------------------
+-- 
+2.15.0
+

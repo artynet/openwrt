@@ -1,0 +1,31 @@
+diff --git a/cpp/build/Makefile b/cpp/build/Makefile
+index 8b704250..f0109687 100644
+--- a/cpp/build/Makefile
++++ b/cpp/build/Makefile
+@@ -15,7 +15,7 @@
+ # what flags we will use for compiling in debug mode
+ DEBUG_CFLAGS    := -Wall -Wno-unknown-pragmas -Wno-inline -Wno-format -Werror -Wno-error=sequence-point -Wno-sequence-point -ggdb -DDEBUG -fPIC  -DSYSCONFDIR="\"$(PREFIX)/etc/openzwave/\""
+ # what flags we will use for compiling in release mode
+-RELEASE_CFLAGS  := -Wall -Wno-unknown-pragmas -Werror -Wno-format -Wno-error=sequence-point -Wno-sequence-point -O3 -DNDEBUG -fPIC  -DSYSCONFDIR="\"$(PREFIX)/etc/openzwave/\""
++RELEASE_CFLAGS  := -Wall -Wno-unknown-pragmas -Werror -Wno-format -Wno-error=sequence-point -Wno-sequence-point -O3 -DNDEBUG -fPIC  -DSYSCONFDIR="\"/etc/openzwave/\""
+ #what flags we will use for linking in debug mode
+ DEBUG_LDFLAGS	:= -g
+ 
+@@ -143,7 +143,7 @@ $(LIBDIR)/libopenzwave.a:	$(patsubst %.cpp,$(OBJDIR)/%.o,$(tinyxml)) \
+ 			$(patsubst %.cpp,$(OBJDIR)/%.o,$(indep)) \
+ 			$(OBJDIR)/vers.o
+ 	@echo "Linking Static Library"
+-	@$(AR) $(ar_option) $@ $+
++	@$(AR) q $@ $+
+ 	@$(RANLIB) $@
+ 
+ $(LIBDIR)/$(SHARED_LIB_NAME):	$(patsubst %.cpp,$(OBJDIR)/%.o,$(tinyxml)) \
+@@ -165,7 +165,7 @@ $(top_builddir)/libopenzwave.pc: $(top_srcdir)/cpp/build/libopenzwave.pc.in $(PK
+ 		-e 's|[@]exec_prefix@|$(PREFIX)/bin|g' \
+ 		-e 's|[@]libdir@|$(instlibdir)|g' \
+ 		-e 's|[@]includedir@|$(includedir)/|g' \
+-                -e 's|[@]sysconfdir@|$(sysconfdir)/|g' \
++                -e 's|[@]sysconfdir@|/etc/openzwave/|g' \
+                 -e 's|[@]gitversion@|$(GITVERSION)|g' \
+                 -e 's|[@]docdir@|$(docdir)/|g' \
+ 		-e 's|[@]VERSION@|$(VERSION)|g' \
