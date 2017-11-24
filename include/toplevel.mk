@@ -105,9 +105,9 @@ defconfig: scripts/config/conf prepare-tmpinfo FORCE
 	$< --defconfig=.config Config.in
 
 defrespeaker: scripts/config/conf prepare-tmpinfo FORCE
-       touch .config
-       @if [ -e $(TOPDIR)/configfiles/respeakerconfig ]; then cp $(TOPDIR)/configfiles/respeakerconfig .config; fi
-       $< --defconfig=.config Config.in
+	touch .config
+	@if [ -e $(TOPDIR)/configfiles/respeakerconfig ]; then cp $(TOPDIR)/configfiles/respeakerconfig .config; fi
+	$< --defconfig=.config Config.in
 
 confdefault-y=allyes
 confdefault-m=allmod
