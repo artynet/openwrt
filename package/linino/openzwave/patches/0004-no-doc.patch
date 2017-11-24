@@ -1,0 +1,32 @@
+From 4699983e8b896891c8564b77324c426945719fbf Mon Sep 17 00:00:00 2001
+From: Arturo Rinaldi <arty.net2@gmail.com>
+Date: Fri, 17 Nov 2017 18:04:14 +0100
+Subject: [PATCH 4/5] no doc
+
+---
+ cpp/build/Makefile | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/cpp/build/Makefile b/cpp/build/Makefile
+index c4e6a1a6..4ee8a4c5 100644
+--- a/cpp/build/Makefile
++++ b/cpp/build/Makefile
+@@ -180,15 +180,8 @@ $(top_builddir)/Doxyfile: $(top_srcdir)/docs/Doxyfile.in $(top_srcdir)/cpp/src/v
+ 		-e 's|[@]VERSION@|$(VERSION).$(VERSION_REV)|g' \
+ 		< "$<" > "$@"
+ 
+-ifeq ($(DOXYGEN),)
+ doc:
+ 		$(warning Documentation not being built)
+-else
+-doc: $(top_builddir)/Doxyfile
+-	@echo "Creating Documentation at $(top_builddir)/docs/api/"
+-	@mkdir -p $(top_builddir)/docs/api/
+-	@cd $(top_builddir); $(DOXYGEN)
+-endif
+ 
+ install: $(LIBDIR)/$(SHARED_LIB_NAME) doc $(top_builddir)/libopenzwave.pc $(top_builddir)/ozw_config
+ 	@echo "Installing Shared Library"
+-- 
+2.15.0
+

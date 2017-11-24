@@ -1,0 +1,28 @@
+diff --git a/cpp/src/platform/unix/SerialControllerImpl.cpp b/cpp/src/platform/unix/SerialControllerImpl.cpp
+index b52b74fb..6ff56b6d 100644
+--- a/cpp/src/platform/unix/SerialControllerImpl.cpp
++++ b/cpp/src/platform/unix/SerialControllerImpl.cpp
+@@ -34,10 +34,6 @@
+ #include "SerialControllerImpl.h"
+ #include "platform/Log.h"
+ 
+-#ifdef __linux__
+-#include <libudev.h>
+-#endif
+-
+ using namespace OpenZWave;
+ 
+ //-----------------------------------------------------------------------------
+diff --git a/cpp/build/Makefile b/cpp/build/Makefile
+index 8b704250..ac845294 100644
+--- a/cpp/build/Makefile
++++ b/cpp/build/Makefile
+@@ -59,7 +59,7 @@ endif
+ 
+ else
+ LDFLAGS += -shared -Wl,-soname,$(SHARED_LIB_NAME)
+-LIBS 	+= -ludev
++LIBS 	+=
+ endif
+ CFLAGS  += $(CPPFLAGS)
+ 
