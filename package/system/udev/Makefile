@@ -107,8 +107,8 @@ define Build/InstallDev
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/libudev.h $(1)/usr/include
 	$(INSTALL_DIR) $(1)/usr/share/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/usr/share/pkgconfig/udev.pc $(1)/usr/share/pkgconfig
-	$(INSTALL_DIR) $(1)/lib
-	$(CP) $(PKG_INSTALL_DIR)/lib/libudev.so* $(1)/lib
+	$(INSTALL_DIR) $(1)/lib $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/lib/libudev.so* $(1)/lib $(1)/usr/lib
 	$(INSTALL_DIR) $(1)/usr/lib/pkgconfig
 	$(CP) $(PKG_INSTALL_DIR)/lib/pkgconfig/libudev.pc $(1)/usr/lib/pkgconfig
 endef
@@ -136,8 +136,8 @@ define Package/udev/install
 			95-udev-late.rules) \
 		$(1)/lib/udev/rules.d
 
-	$(INSTALL_DIR) $(1)/lib
-	$(CP) $(PKG_INSTALL_DIR)/lib/libudev.so* $(1)/lib
+	$(INSTALL_DIR) $(1)/lib $(1)/usr/lib
+	$(CP) $(PKG_INSTALL_DIR)/lib/libudev.so* $(1)/lib $(1)/usr/lib
 
 	$(INSTALL_DIR) $(1)/lib/udev
 ifneq ($(udev-extra-lib-bin-y),)
