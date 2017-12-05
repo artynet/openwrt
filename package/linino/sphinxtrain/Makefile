@@ -8,12 +8,20 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=sphinxtrain
-PKG_VERSION:=1.0.8
+PKG_VERSION:=1.0.8+5prealpha
 PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/cmusphinx
+PKG_REV:=eb8bfba
 
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/cmusphinx/sphinxtrain.git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REV)
+PKG_SOURCE_VERSION=$(PKG_REV)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REV).tar.gz
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
+
+PKG_FIXUP:=libtool autoreconf
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
