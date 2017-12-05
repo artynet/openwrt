@@ -8,11 +8,23 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=pocketsphinx
-PKG_VERSION:=0.8
+PKG_VERSION:=0.8+5prealpha
 PKG_RELEASE:=2
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=@SF/cmusphinx
+# PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+# PKG_SOURCE_URL:=@SF/cmusphinx
+
+PKG_REV:=b386775
+
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/cmusphinx/pocketsphinx.git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REV)
+PKG_SOURCE_VERSION=$(PKG_REV)
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_REV).tar.gz
+
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
+
+PKG_BUILD_DEPENDS:=swig/host
 
 PKG_FIXUP:=libtool autoreconf
 PKG_INSTALL:=1
@@ -22,7 +34,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/pocketsphinx
 	SECTION:=libs
 	CATEGORY:=Libraries
-	TITLE:=pocketsphinx-0.8
+	TITLE:=pocketsphinx
 	DEPENDS:=+libc +libstdcpp +libpthread +sphinxbase
 endef
 
@@ -33,7 +45,8 @@ endef
 
 CONFIGURE_ARGS += \
 	--without-python \
-	--without-lapack
+	--without-lapack \
+	--with-sphinxbase=$(BUILD_DIR)/sphinxbase-0.8+5prealpha-95d0574
 
 TARGET_LDFLAGS +=-Wl,-rpath-link=$(STAGING_DIR)/usr/lib/pulseaudio
 
