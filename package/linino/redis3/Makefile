@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=redis
-PKG_VERSION:=3.2.8
+PKG_VERSION:=3.2.11
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.redis.io/releases/
-PKG_MD5SUM:=c91867a18ae0c5f7bb61a7c1120d80b4
+# PKG_MD5SUM:=c91867a18ae0c5f7bb61a7c1120d80b4
 
 PKG_INSTALL:=1
 
